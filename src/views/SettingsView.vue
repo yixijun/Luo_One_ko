@@ -367,7 +367,7 @@ onMounted(async () => {
 
 
 <style scoped>
-.settings-view { min-height: 100vh; padding: 24px; overflow-y: auto; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16162a 100%); color: #fff; }
+.settings-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding: 24px; overflow-y: auto; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16162a 100%); color: #fff; }
 .settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; max-width: 800px; margin-left: auto; margin-right: auto; }
 .settings-header h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
 .back-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid #2d2d44; border-radius: 8px; background: #1a1a2e; color: #fff; cursor: pointer; transition: all 0.2s; }
@@ -458,4 +458,5 @@ onMounted(async () => {
   .account-actions { width: 100%; }
 }
 </style>
+
 
