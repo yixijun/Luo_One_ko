@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
@@ -176,7 +176,7 @@ onMounted(async () => {
         </form>
       </div>
       <div v-if="activeTab === 'accounts'" class="panel">
-        <div class="panel-header"><h2>邮箱账户</h2><button class="btn primary" @click="openAddAccountModal">添加账户</button></div>
+        <div class="panel-header"><h2>邮箱账户</h2><button class="btn primary" @click="openAddAccountModal">+ 添加账户</button></div>
         <div v-if="accounts.length === 0" class="empty-state">暂无邮箱账户，点击上方按钮添加</div>
         <div v-else class="account-list">
           <div v-for="account in accounts" :key="account.id" class="account-item">
@@ -186,7 +186,7 @@ onMounted(async () => {
               <span :class="['account-status', { enabled: account.enabled }]">{{ account.enabled ? '已启用' : '已禁用' }}</span>
             </div>
             <div class="account-actions">
-              <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试连接</button>
+              <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
               <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
               <button class="btn small" @click="openEditAccountModal(account)">编辑</button>
               <button class="btn small danger" @click="deleteAccount(account.id)">删除</button>
@@ -243,58 +243,62 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.settings-view { max-width: 800px; margin: 0 auto; padding: 20px; }
-.settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-.settings-header h1 { margin: 0; font-size: 24px; }
-.back-btn { display: flex; align-items: center; gap: 4px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; }
-.back-btn:hover { background: #f5f5f5; }
-.message { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
-.message.success { background: #d4edda; color: #155724; }
-.message.error { background: #f8d7da; color: #721c24; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid #ddd; margin-bottom: 20px; flex-wrap: wrap; }
-.tab { padding: 10px 16px; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #666; }
-.tab:hover { color: #333; }
-.tab.active { color: #007bff; border-bottom-color: #007bff; }
-.panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.panel h2 { margin: 0 0 20px; font-size: 18px; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.settings-view { min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16162a 100%); color: #fff; }
+.settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; max-width: 800px; margin-left: auto; margin-right: auto; }
+.settings-header h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
+.back-btn { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid #2d2d44; border-radius: 8px; background: #1a1a2e; color: #fff; cursor: pointer; transition: all 0.2s; }
+.back-btn:hover { background: rgba(255,255,255,0.05); border-color: #646cff; }
+.message { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; }
+.message.success { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); color: #4caf50; }
+.message.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.3); color: #f44336; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid #2d2d44; margin-bottom: 24px; max-width: 800px; margin-left: auto; margin-right: auto; flex-wrap: wrap; }
+.tab { padding: 12px 20px; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #888; font-size: 0.9375rem; transition: all 0.2s; }
+.tab:hover { color: #fff; }
+.tab.active { color: #646cff; border-bottom-color: #646cff; }
+.tab-content { max-width: 800px; margin: 0 auto; }
+.panel { background: #1a1a2e; border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+.panel h2 { margin: 0 0 24px; font-size: 1.125rem; font-weight: 600; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .panel-header h2 { margin: 0; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #333; }
-.form-group.checkbox label { display: flex; align-items: center; gap: 8px; font-weight: normal; }
-.form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"], .form-group input[type="number"], .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-.form-group input:disabled { background: #f5f5f5; color: #999; }
-.form-group .hint { margin: 6px 0 0; font-size: 12px; color: #666; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 0.875rem; font-weight: 500; }
+.form-group.checkbox label { display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer; }
+.form-group.checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #646cff; }
+.form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid #2d2d44; border-radius: 8px; background: #2d2d44; color: #fff; font-size: 0.9375rem; box-sizing: border-box; }
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #646cff; box-shadow: 0 0 0 3px rgba(100,108,255,0.15); }
+.form-group input:disabled { background: rgba(45,45,68,0.5); color: #666; }
+.form-group input::placeholder { color: #666; }
+.hint { margin: 8px 0 0; font-size: 0.75rem; color: #666; }
 .form-row { display: flex; gap: 12px; }
 .form-row .form-group { flex: 1; }
 .form-row .form-group.small { flex: 0 0 100px; }
-.btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 14px; }
-.btn:hover { background: #f5f5f5; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn.primary { background: #007bff; border-color: #007bff; color: white; }
-.btn.primary:hover { background: #0056b3; }
-.btn.danger { color: #dc3545; border-color: #dc3545; }
-.btn.danger:hover { background: #dc3545; color: white; }
-.btn.small { padding: 6px 12px; font-size: 12px; }
-.empty-state { text-align: center; padding: 40px; color: #666; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border: 1px solid #2d2d44; border-radius: 8px; background: transparent; color: #fff; font-size: 0.9375rem; cursor: pointer; transition: all 0.2s; }
+.btn:hover { background: rgba(255,255,255,0.05); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.primary { background: #646cff; border-color: #646cff; }
+.btn.primary:hover:not(:disabled) { background: #535bf2; }
+.btn.danger { color: #f44336; border-color: rgba(244,67,54,0.5); }
+.btn.danger:hover { background: rgba(244,67,54,0.15); }
+.btn.small { padding: 8px 12px; font-size: 0.8125rem; }
+.empty-state { text-align: center; padding: 48px 24px; color: #888; }
 .account-list { display: flex; flex-direction: column; gap: 12px; }
-.account-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border: 1px solid #eee; border-radius: 6px; flex-wrap: wrap; gap: 10px; }
+.account-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 1px solid #2d2d44; border-radius: 8px; background: #2d2d44; flex-wrap: wrap; gap: 12px; }
 .account-info { display: flex; flex-direction: column; gap: 4px; }
 .account-email { font-weight: 500; }
-.account-name { font-size: 12px; color: #666; }
-.account-status { font-size: 12px; color: #999; }
-.account-status.enabled { color: #28a745; }
+.account-name { font-size: 0.8125rem; color: #888; }
+.account-status { font-size: 0.75rem; color: #666; }
+.account-status.enabled { color: #4caf50; }
 .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.modal { background: white; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
-.modal-header h3 { margin: 0; font-size: 18px; }
-.close-btn { border: none; background: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 30px; height: 30px; }
-.close-btn:hover { color: #333; }
-.close-btn::after { content: ''; }
-.modal-body { padding: 20px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid #eee; }
-.test-result { padding: 12px; border-radius: 6px; margin-top: 12px; }
-.test-result.success { background: #d4edda; color: #155724; }
-.test-result.error { background: #f8d7da; color: #721c24; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: #1a1a2e; border-radius: 16px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid #2d2d44; }
+.modal-header h3 { margin: 0; font-size: 1.125rem; }
+.close-btn { width: 32px; height: 32px; border: none; background: transparent; font-size: 24px; cursor: pointer; color: #888; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+.close-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.modal-body { padding: 24px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 16px 24px; border-top: 1px solid #2d2d44; }
+.test-result { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 8px; margin-top: 16px; }
+.test-result.success { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); color: #4caf50; }
+.test-result.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.3); color: #f44336; }
+@media (max-width: 640px) { .settings-view { padding: 16px; } .tabs { overflow-x: auto; flex-wrap: nowrap; } .tab { white-space: nowrap; padding: 10px 14px; font-size: 0.875rem; } .panel { padding: 16px; } .form-row { flex-direction: column; } .form-row .form-group.small { flex: 1; } .account-item { flex-direction: column; align-items: flex-start; } .account-actions { width: 100%; } }
 </style>
