@@ -1,5 +1,178 @@
-# Vue 3 + TypeScript + Vite
+# 洛一 (Luo One) - 前端应用
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+洛一是一个前后端分离的多邮箱管理系统。本仓库为前端应用，使用 Vue 3 + TypeScript 开发，支持 Web、桌面端和移动端。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## 功能特性
+
+- 📱 **多平台支持**: Web、Electron 桌面端、Capacitor 移动端
+- 📧 **邮件管理**: 多邮箱统一管理、邮件收发、附件处理
+- 💬 **聊天式界面**: 以气泡形式展示邮件，直观易用
+- 🤖 **智能处理展示**: 显示验证码、广告标识、重要度等处理结果
+- 📲 **移动端优化**: 滑动导航、触觉反馈、安全区域适配
+- 🔒 **安全通信**: 内置反向代理，支持 HTTPS
+
+## 技术栈
+
+- **框架**: Vue 3 + TypeScript
+- **构建工具**: Vite
+- **状态管理**: Pinia
+- **路由**: Vue Router
+- **HTTP 客户端**: Axios
+- **桌面端**: Electron
+- **移动端**: Capacitor
+
+## 项目结构
+
+```
+Luo_One_ko/
+├── src/
+│   ├── api/                    # API 调用层
+│   ├── components/             # 组件
+│   │   ├── layout/             # 布局组件
+│   │   ├── email/              # 邮件组件
+│   │   └── mobile/             # 移动端组件
+│   ├── views/                  # 页面视图
+│   │   └── mobile/             # 移动端视图
+│   ├── stores/                 # Pinia 状态管理
+│   ├── composables/            # 组合式函数
+│   ├── router/                 # 路由配置
+│   └── types/                  # TypeScript 类型
+├── server/                     # 生产环境服务器
+├── electron/                   # Electron 桌面端
+├── capacitor/                  # Capacitor 移动端
+├── public/                     # 静态资源
+├── vite.config.ts
+└── package.json
+```
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- npm 或 yarn
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 开发模式
+
+```bash
+# 启动开发服务器
+npm run dev
+```
+
+访问 `http://localhost:5173`
+
+### 生产构建
+
+```bash
+# 构建 Web 版本
+npm run build
+
+# 构建服务器
+npm run build:server
+```
+
+## 多平台部署
+
+### Web 端
+
+```bash
+# 构建
+npm run build
+npm run build:server
+
+# 运行生产服务器
+npm run start:server
+```
+
+配置环境变量：
+- `BACKEND_URL`: 后端服务地址（默认 `http://localhost:8080`）
+- `PORT`: 服务端口（默认 `3000`）
+
+### Electron 桌面端
+
+```bash
+# 构建 Electron
+npm run build:electron
+
+# 打包应用
+npm run package:electron
+```
+
+支持平台：
+- Windows (exe/msi)
+- macOS (dmg/pkg)
+- Linux (AppImage/deb)
+
+### Capacitor 移动端
+
+```bash
+# 构建 Web 资源
+npm run build
+
+# 同步到原生项目
+npx cap sync
+
+# 打开 iOS 项目
+npx cap open ios
+
+# 打开 Android 项目
+npx cap open android
+```
+
+详细说明请参考 [capacitor/README.md](./capacitor/README.md)
+
+## 移动端交互
+
+移动端采用专属导航交互：
+
+- **默认视图**: 邮件列表
+- **右滑**: 显示邮箱账户列表
+- **点击邮件**: 进入邮件详情
+- **左滑/返回**: 返回上一级
+
+## 配置
+
+### 开发环境代理
+
+在 `vite.config.ts` 中配置：
+
+```typescript
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    }
+  }
+}
+```
+
+### 生产环境
+
+设置环境变量 `BACKEND_URL` 指向后端服务地址。
+
+## 页面说明
+
+| 路径 | 页面 | 描述 |
+|------|------|------|
+| /login | 登录页 | 用户登录 |
+| / | 主页 | 邮件列表和详情 |
+| /settings | 设置页 | 用户设置、邮箱配置、AI 配置 |
+| /compose | 写邮件 | 编辑和发送邮件 |
+| /mobile | 移动端主页 | 移动端邮件列表 |
+| /mobile/accounts | 移动端账户 | 移动端邮箱账户列表 |
+| /mobile/email/:id | 移动端详情 | 移动端邮件详情 |
+
+## 后端项目
+
+后端项目位于独立仓库：[Luo_One_core](https://github.com/yixijun/Luo_One_core)
+
+## 许可证
+
+MIT License
