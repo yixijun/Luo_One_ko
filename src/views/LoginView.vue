@@ -76,6 +76,9 @@ function openSettings() {
 // 设置弹窗
 const showSettingsModal = ref(false);
 const apiKeyInput = ref(apiKeyManager.getApiKey() || '');
+const isTestingConnection = ref(false);
+const connectionStatus = ref<'idle' | 'success' | 'error'>('idle');
+const connectionMessage = ref('');
 
 function saveSettings() {
   if (apiKeyInput.value.trim()) {
@@ -88,7 +91,61 @@ function saveSettings() {
 
 function closeSettings() {
   apiKeyInput.value = apiKeyManager.getApiKey() || '';
+  connectionStatus.value = 'idle';
+  connectionMessage.value = '';
   showSettingsModal.value = false;
+}
+
+// 测试服务器连接
+async function testConnection() {
+  if (!apiKeyInput.value.trim()) {
+    connectionStatus.value = 'error';
+    connectionMessage.value = '请先输入 API 密钥';
+    return;
+  }
+  
+  isTestingConnection.value = true;
+  connectionStatus.value = 'idle';
+  connectionMessage.value = '';
+  
+  try {
+    // 临时设置 API 密钥用于测试
+    const originalKey = apiKeyManager.getApiKey();
+    apiKeyManager.setApiKey(apiKeyInput.value.trim());
+    
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/health`.replace('/api/health', '/health'), {
+      method: 'GET',
+      headers: {
+        'X-API-Key': apiKeyInput.value.trim(),
+      },
+    });
+    
+    // 恢复原来的 API 密钥
+    if (originalKey) {
+      apiKeyManager.setApiKey(originalKey);
+    } else {
+      apiKeyManager.removeApiKey();
+    }
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.status === 'ok') {
+        connectionStatus.value = 'success';
+        connectionMessage.value = '服务器连接正常';
+      } else {
+        connectionStatus.value = 'error';
+        connectionMessage.value = '服务器响应异常';
+      }
+    } else {
+      connectionStatus.value = 'error';
+      connectionMessage.value = `连接失败: HTTP ${response.status}`;
+    }
+  } catch (err) {
+    connectionStatus.value = 'error';
+    connectionMessage.value = `连接失败: ${(err as Error).message || '网络错误'}`;
+  } finally {
+    isTestingConnection.value = false;
+  }
 }
 </script>
 
@@ -219,6 +276,36 @@ function closeSettings() {
               />
             </div>
             <p class="hint">API 密钥用于连接后端服务，请从管理员处获取</p>
+          </div>
+          
+          <!-- 测试连接按钮 -->
+          <div class="test-connection">
+            <button 
+              class="test-btn" 
+              @click="testConnection"
+              :disabled="isTestingConnection || !apiKeyInput.trim()"
+            >
+              <span v-if="isTestingConnection" class="loading-spinner small"></span>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <span>{{ isTestingConnection ? '测试中...' : '测试连接' }}</span>
+            </button>
+            
+            <!-- 连接状态 -->
+            <div v-if="connectionStatus !== 'idle'" class="connection-status" :class="connectionStatus">
+              <svg v-if="connectionStatus === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              <span>{{ connectionMessage }}</span>
+            </div>
           </div>
         </div>
         <div class="modal-actions">
@@ -567,6 +654,78 @@ function closeSettings() {
 
 .btn.primary:hover {
   background: var(--primary-hover, #535bf2);
+}
+
+/* 测试连接 */
+.test-connection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.test-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color, #2d2d44);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary, #fff);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.test-btn:hover:not(:disabled) {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  border-color: var(--primary-color, #646cff);
+}
+
+.test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.connection-status.success {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--success-color, #4caf50);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.connection-status.error {
+  background: rgba(244, 67, 54, 0.15);
+  color: var(--error-color, #f44336);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.connection-status svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 /* 响应式布局 */

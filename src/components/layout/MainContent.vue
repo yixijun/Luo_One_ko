@@ -2,12 +2,12 @@
 /**
  * 洛一 (Luo One) 邮箱管理系统 - 主内容区组件
  * Requirements: 8.2, 8.3, 8.4
- * 实现三栏布局：邮箱列表、邮件列表、邮件内容
+ * 实现邮件列表和邮件内容展示
  */
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
-import type { Email, EmailAccount } from '@/types';
+import type { Email } from '@/types';
 
 const accountStore = useAccountStore();
 const emailStore = useEmailStore();
@@ -19,7 +19,6 @@ const sortBy = ref<'date' | 'from'>('date');
 const selectedEmail = ref<Email | null>(null);
 
 // 计算属性
-const accounts = computed(() => accountStore.accounts);
 const currentAccount = computed(() => accountStore.currentAccount);
 const emails = computed(() => emailStore.emails);
 const loading = computed(() => emailStore.loading);
@@ -32,13 +31,6 @@ watch(sortBy, (newSort) => {
     sort: newSort,
   });
 });
-
-// 选择邮箱账户
-function selectAccount(account: EmailAccount) {
-  accountStore.setCurrentAccount(account);
-  selectedEmail.value = null;
-  emailStore.fetchEmails({ accountId: account.id, sort: sortBy.value });
-}
 
 // 选择邮件
 async function selectEmail(email: Email) {
@@ -108,42 +100,7 @@ onMounted(() => {
 
 <template>
   <main class="main-content">
-    <!-- 左栏：邮箱账户列表（紧凑版） -->
-    <div class="accounts-panel">
-      <div class="panel-header">
-        <h3>邮箱</h3>
-      </div>
-      <div class="accounts-list">
-        <button
-          class="account-item compact"
-          :class="{ active: !currentAccount }"
-          @click="accountStore.setCurrentAccount(null); emailStore.fetchEmails({ sort: sortBy })"
-        >
-          <div class="account-avatar all">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
-          </div>
-          <span class="account-label">全部</span>
-        </button>
-        
-        <button
-          v-for="account in accounts"
-          :key="account.id"
-          class="account-item compact"
-          :class="{ active: currentAccount?.id === account.id, disabled: !account.enabled }"
-          @click="selectAccount(account)"
-          :title="account.email"
-        >
-          <div class="account-avatar">
-            {{ (account.displayName || account.email).charAt(0).toUpperCase() }}
-          </div>
-          <span class="account-label">{{ account.displayName || account.email.split('@')[0] }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 中栏：邮件列表 -->
+    <!-- 邮件列表 -->
     <div class="emails-panel">
       <div class="panel-header">
         <h3>{{ currentAccount?.displayName || currentAccount?.email || '全部邮件' }}</h3>
@@ -336,15 +293,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 左栏：邮箱账户列表 */
-.accounts-panel {
-  width: 80px;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--panel-bg, #1a1a2e);
-  border-right: 1px solid var(--border-color, #2d2d44);
-}
-
+/* 邮件列表 */
 .panel-header {
   padding: 12px;
   border-bottom: 1px solid var(--border-color, #2d2d44);
@@ -360,75 +309,6 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
-.accounts-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.account-item.compact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 8px 4px;
-  margin-bottom: 4px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary, #888);
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.account-item.compact:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #fff);
-}
-
-.account-item.compact.active {
-  background-color: var(--active-bg, rgba(100, 108, 255, 0.15));
-  color: var(--primary-color, #646cff);
-}
-
-.account-item.compact.disabled {
-  opacity: 0.5;
-}
-
-.account-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--avatar-bg, #3d3d5c);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary, #fff);
-}
-
-.account-avatar.all {
-  background-color: var(--primary-color, #646cff);
-}
-
-.account-avatar.all svg {
-  width: 18px;
-  height: 18px;
-  color: #fff;
-}
-
-.account-label {
-  font-size: 0.6875rem;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* 中栏：邮件列表 */
 .emails-panel {
   width: 320px;
   display: flex;
@@ -789,10 +669,6 @@ onMounted(() => {
 
 /* 响应式布局 */
 @media (max-width: 1024px) {
-  .accounts-panel {
-    display: none;
-  }
-  
   .emails-panel {
     width: 280px;
   }
