@@ -87,7 +87,16 @@ function goToSettings() {
 
 // 同步邮件
 async function syncEmails() {
-  await emailStore.syncEmails();
+  // 如果有选中的账户，同步该账户；否则同步所有账户
+  const currentAccountId = accountStore.currentAccountId;
+  if (currentAccountId) {
+    await emailStore.syncEmails({ accountId: currentAccountId });
+  } else {
+    // 同步所有启用的账户
+    for (const account of accountStore.enabledAccounts) {
+      await emailStore.syncEmails({ accountId: account.id });
+    }
+  }
   await emailStore.fetchEmails();
 }
 
