@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  洛一 (Luo One) 邮箱管理系统 - iOS 配置模板
+  Requirements: 13.7
+  
+  注意：此文件为模板，实际的 Info.plist 将在运行 `npx cap add ios` 后生成
+  此模板用于记录需要配置的关键项
+-->
+<plist version="1.0">
+<dict>
+    <!-- 应用基本信息 -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleDisplayName</key>
+    <string>洛一</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>one.luo.ko</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>洛一</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <!-- 启动画面配置 -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    
+    <!-- 支持的设备方向 -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    
+    <!-- 状态栏配置 -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <true/>
+    
+    <!-- 安全区域配置 -->
+    <key>UIRequiresFullScreen</key>
+    <false/>
+    
+    <!-- 网络配置 -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    
+    <!-- 权限说明 -->
+    <key>NSCameraUsageDescription</key>
+    <string>洛一需要访问相机以拍摄附件照片</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>洛一需要访问相册以选择附件图片</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>洛一需要保存附件到相册</string>
+    
+    <!-- URL Scheme 配置 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>one.luo.ko</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>luoone</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  洛一 (Luo One) 邮箱管理系统 - Android 字符串资源模板
+  Requirements: 13.7
+-->
+<resources>
+    <string name="app_name">洛一</string>
+    <string name="title_activity_main">洛一</string>
+    <string name="package_name">one.luo.ko</string>
+    <string name="custom_url_scheme">luoone</string>
+</resources>
