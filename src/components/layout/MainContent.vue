@@ -24,6 +24,9 @@ const emails = computed(() => emailStore.emails);
 const loading = computed(() => emailStore.loading);
 const hasEmails = computed(() => emailStore.hasEmails);
 
+// 删除状态
+const isDeleting = ref(false);
+
 // 监听排序变化
 watch(sortBy, (newSort) => {
   emailStore.fetchEmails({
@@ -37,6 +40,24 @@ async function selectEmail(email: Email) {
   selectedEmail.value = email;
   if (!email.isRead) {
     await emailStore.markAsRead(email.id);
+  }
+}
+
+// 删除邮件
+async function deleteEmail() {
+  if (!selectedEmail.value || isDeleting.value) return;
+  
+  const confirmed = window.confirm('确定要删除这封邮件吗？');
+  if (!confirmed) return;
+  
+  isDeleting.value = true;
+  try {
+    const success = await emailStore.deleteEmail(selectedEmail.value.id);
+    if (success) {
+      selectedEmail.value = null;
+    }
+  } finally {
+    isDeleting.value = false;
   }
 }
 
@@ -167,8 +188,22 @@ onMounted(() => {
     <!-- 右栏：邮件内容（聊天气泡形式） -->
     <div class="content-panel">
       <template v-if="selectedEmail">
-        <div class="panel-header">
+        <div class="panel-header content-header">
           <h3>{{ selectedEmail.subject || '(无主题)' }}</h3>
+          <button 
+            class="delete-btn" 
+            @click="deleteEmail"
+            :disabled="isDeleting"
+            title="删除邮件"
+          >
+            <svg v-if="!isDeleting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            <span v-else class="loading-spinner small"></span>
+          </button>
         </div>
         
         <div class="email-content">
@@ -307,6 +342,54 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content-header h3 {
+  flex: 1;
+  margin-right: 12px;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-btn:hover:not(:disabled) {
+  color: var(--error-color, #f44336);
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.delete-btn .loading-spinner.small {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
 }
 
 .emails-panel {
