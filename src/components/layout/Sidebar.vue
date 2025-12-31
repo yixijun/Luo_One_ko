@@ -21,6 +21,10 @@ const loading = computed(() => accountStore.loading);
 // 删除状态
 const deletingAccountId = ref<number | null>(null);
 
+// 测试连接状态
+const testingAccountId = ref<number | null>(null);
+const testResult = ref<{ accountId: number; success: boolean; message: string } | null>(null);
+
 // 选择邮箱账户
 function selectAccount(account: EmailAccount) {
   accountStore.setCurrentAccount(account);
@@ -36,6 +40,32 @@ function showAllEmails() {
 // 跳转到写邮件页面
 function goToCompose() {
   router.push('/compose');
+}
+
+// 测试账户连接
+async function testAccountConnection(account: EmailAccount, event: Event) {
+  event.stopPropagation();
+  
+  testingAccountId.value = account.id;
+  testResult.value = null;
+  
+  try {
+    const result = await accountStore.testConnection(account.id);
+    testResult.value = {
+      accountId: account.id,
+      success: result.success,
+      message: result.message
+    };
+    
+    // 5秒后自动清除结果
+    setTimeout(() => {
+      if (testResult.value?.accountId === account.id) {
+        testResult.value = null;
+      }
+    }, 5000);
+  } finally {
+    testingAccountId.value = null;
+  }
 }
 
 // 删除账户
@@ -146,7 +176,27 @@ onMounted(() => {
                 <span class="account-name">{{ account.displayName || account.email }}</span>
                 <span class="account-email" v-if="account.displayName">{{ account.email }}</span>
                 <span class="account-sync">{{ formatLastSync(account.lastSyncAt) }}</span>
+                <!-- 测试结果显示 -->
+                <span 
+                  v-if="testResult?.accountId === account.id" 
+                  class="test-result"
+                  :class="{ success: testResult.success, error: !testResult.success }"
+                >
+                  {{ testResult.success ? '✓ 连接成功' : `✗ ${testResult.message}` }}
+                </span>
               </div>
+            </button>
+            <button 
+              class="test-account-btn"
+              @click="testAccountConnection(account, $event)"
+              :disabled="testingAccountId === account.id"
+              title="测试连接"
+            >
+              <svg v-if="testingAccountId !== account.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <span v-else class="loading-spinner small"></span>
             </button>
             <button 
               class="delete-account-btn"
@@ -329,6 +379,24 @@ onMounted(() => {
   color: var(--text-tertiary, #666);
 }
 
+.test-result {
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.test-result.success {
+  color: var(--success-color, #4caf50);
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.test-result.error {
+  color: var(--error-color, #f44336);
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
 .account-wrapper {
   display: flex;
   align-items: center;
@@ -358,8 +426,47 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.account-wrapper:hover .delete-account-btn {
+.test-account-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.account-wrapper:hover .delete-account-btn,
+.account-wrapper:hover .test-account-btn {
   opacity: 1;
+}
+
+.test-account-btn:hover:not(:disabled) {
+  color: var(--primary-color, #646cff);
+  background-color: rgba(100, 108, 255, 0.1);
+}
+
+.test-account-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-account-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.test-account-btn .loading-spinner.small {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
 }
 
 .delete-account-btn:hover:not(:disabled) {
