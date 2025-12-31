@@ -103,7 +103,23 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.post('/emails/send', data);
+      // 转换为后端期望的 snake_case 格式
+      const payload: Record<string, unknown> = {
+        account_id: data.accountId,
+        to: data.to,
+        subject: data.subject,
+        body: data.body,
+      };
+      if (data.cc && data.cc.length > 0) {
+        payload.cc = data.cc;
+      }
+      if (data.bcc && data.bcc.length > 0) {
+        payload.bcc = data.bcc;
+      }
+      if (data.attachments && data.attachments.length > 0) {
+        payload.attachments = data.attachments;
+      }
+      await apiClient.post('/emails/send', payload);
       return true;
     } catch (err) {
       error.value = (err as Error).message || '发送邮件失败';
@@ -118,7 +134,12 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.post('/emails/sync', data);
+      // 转换为后端期望的 snake_case 格式
+      const payload: Record<string, unknown> = {};
+      if (data.accountId) {
+        payload.account_id = data.accountId;
+      }
+      await apiClient.post('/emails/sync', payload);
       return true;
     } catch (err) {
       error.value = (err as Error).message || '同步邮件失败';
