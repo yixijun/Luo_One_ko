@@ -72,25 +72,17 @@ export function usePlatform() {
       return 'electron';
     }
     
-    // 检测 Capacitor
+    // 检测 Capacitor (只有在 Capacitor 环境中才识别为原生)
     // @ts-expect-error - Capacitor 注入的属性
-    if (window.Capacitor) {
+    if (window.Capacitor && window.Capacitor.isNativePlatform?.()) {
       // @ts-expect-error - Capacitor 注入的属性
       const capacitorPlatform = window.Capacitor.getPlatform?.();
       if (capacitorPlatform === 'ios') return 'ios';
       if (capacitorPlatform === 'android') return 'android';
     }
     
-    // 通过 User Agent 检测移动设备
-    const ua = navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) {
-      // 可能是 Safari 浏览器中的 iOS
-      return 'ios';
-    }
-    if (/android/.test(ua)) {
-      return 'android';
-    }
-    
+    // 默认为 Web 平台
+    // 不再通过 User Agent 检测移动设备，因为这会导致桌面浏览器被误识别
     return 'web';
   };
   
