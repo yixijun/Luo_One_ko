@@ -16,8 +16,6 @@ const userStore = useUserStore();
 // 表单数据
 const username = ref('');
 const password = ref('');
-const apiKey = ref(apiKeyManager.getApiKey() || '');
-const rememberApiKey = ref(!!apiKeyManager.getApiKey());
 const showPassword = ref(false);
 
 // 状态
@@ -27,27 +25,24 @@ const errorMessage = ref('');
 // 表单验证
 const isFormValid = computed(() => {
   return username.value.trim() !== '' && 
-         password.value.trim() !== '' && 
-         apiKey.value.trim() !== '';
+         password.value.trim() !== '' &&
+         apiKeyManager.getApiKey();
 });
 
 // 处理登录
 async function handleLogin() {
   if (!isFormValid.value || isSubmitting.value) return;
   
+  // 检查 API 密钥
+  if (!apiKeyManager.getApiKey()) {
+    errorMessage.value = '请先在右下角设置中配置 API 密钥';
+    return;
+  }
+  
   isSubmitting.value = true;
   errorMessage.value = '';
   
   try {
-    // 保存 API 密钥
-    if (rememberApiKey.value) {
-      apiKeyManager.setApiKey(apiKey.value.trim());
-    } else {
-      apiKeyManager.removeApiKey();
-      // 临时设置用于本次请求
-      apiKeyManager.setApiKey(apiKey.value.trim());
-    }
-    
     // 调用登录
     const success = await userStore.login({
       username: username.value.trim(),
@@ -60,10 +55,6 @@ async function handleLogin() {
       router.push(redirect || '/');
     } else {
       errorMessage.value = userStore.error || '登录失败，请检查用户名和密码';
-      // 如果登录失败且不记住密钥，清除临时设置的密钥
-      if (!rememberApiKey.value) {
-        apiKeyManager.removeApiKey();
-      }
     }
   } catch (err) {
     errorMessage.value = (err as Error).message || '登录失败，请稍后重试';
@@ -75,6 +66,29 @@ async function handleLogin() {
 // 切换密码显示
 function togglePasswordVisibility() {
   showPassword.value = !showPassword.value;
+}
+
+// 打开设置
+function openSettings() {
+  showSettingsModal.value = true;
+}
+
+// 设置弹窗
+const showSettingsModal = ref(false);
+const apiKeyInput = ref(apiKeyManager.getApiKey() || '');
+
+function saveSettings() {
+  if (apiKeyInput.value.trim()) {
+    apiKeyManager.setApiKey(apiKeyInput.value.trim());
+  } else {
+    apiKeyManager.removeApiKey();
+  }
+  showSettingsModal.value = false;
+}
+
+function closeSettings() {
+  apiKeyInput.value = apiKeyManager.getApiKey() || '';
+  showSettingsModal.value = false;
 }
 </script>
 
@@ -101,33 +115,6 @@ function togglePasswordVisibility() {
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <span>{{ errorMessage }}</span>
-        </div>
-
-        <!-- API 密钥输入 -->
-        <div class="form-group">
-          <label for="apiKey" class="form-label">API 密钥</label>
-          <div class="input-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
-            <input
-              id="apiKey"
-              v-model="apiKey"
-              type="text"
-              class="form-input"
-              placeholder="请输入 API 密钥"
-              autocomplete="off"
-            />
-          </div>
-          <div class="checkbox-wrapper">
-            <input
-              id="rememberApiKey"
-              v-model="rememberApiKey"
-              type="checkbox"
-              class="checkbox-input"
-            />
-            <label for="rememberApiKey" class="checkbox-label">记住 API 密钥</label>
-          </div>
         </div>
 
         <!-- 用户名输入 -->
@@ -201,6 +188,45 @@ function togglePasswordVisibility() {
         </p>
       </div>
     </div>
+
+    <!-- 右下角设置按钮 -->
+    <button class="settings-fab" @click="openSettings" title="后端设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+
+    <!-- 设置弹窗 -->
+    <div v-if="showSettingsModal" class="modal-overlay" @click.self="closeSettings">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>后端设置</h3>
+          <button class="close-btn" @click="closeSettings">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">API 密钥</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              <input
+                v-model="apiKeyInput"
+                type="text"
+                class="form-input"
+                placeholder="请输入后端 API 密钥"
+              />
+            </div>
+            <p class="hint">API 密钥用于连接后端服务，请从管理员处获取</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" @click="closeSettings">取消</button>
+          <button class="btn primary" @click="saveSettings">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -213,6 +239,7 @@ function togglePasswordVisibility() {
   min-height: 100vh;
   padding: 20px;
   background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16162a 100%);
+  position: relative;
 }
 
 .login-container {
@@ -357,26 +384,6 @@ function togglePasswordVisibility() {
   height: 18px;
 }
 
-.checkbox-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.checkbox-input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary-color, #646cff);
-  cursor: pointer;
-}
-
-.checkbox-label {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #888);
-  cursor: pointer;
-}
-
 .login-btn {
   display: flex;
   align-items: center;
@@ -435,6 +442,133 @@ function togglePasswordVisibility() {
   line-height: 1.5;
 }
 
+/* 右下角设置按钮 */
+.settings-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--panel-bg, #1a1a2e);
+  border: 1px solid var(--border-color, #2d2d44);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+}
+
+.settings-fab:hover {
+  background: var(--primary-color, #646cff);
+  color: #fff;
+  border-color: var(--primary-color, #646cff);
+}
+
+.settings-fab svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--panel-bg, #1a1a2e);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color, #2d2d44);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-primary, #fff);
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary, #888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  color: var(--text-primary, #fff);
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #666);
+  margin-top: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color, #2d2d44);
+}
+
+.btn {
+  padding: 10px 20px;
+  border: 1px solid var(--border-color, #2d2d44);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.btn.primary {
+  background: var(--primary-color, #646cff);
+  border-color: var(--primary-color, #646cff);
+}
+
+.btn.primary:hover {
+  background: var(--primary-hover, #535bf2);
+}
+
 /* 响应式布局 */
 @media (max-width: 480px) {
   .login-container {
@@ -447,6 +581,18 @@ function togglePasswordVisibility() {
   
   .login-subtitle {
     font-size: 0.875rem;
+  }
+  
+  .settings-fab {
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .settings-fab svg {
+    width: 20px;
+    height: 20px;
   }
 }
 </style>
