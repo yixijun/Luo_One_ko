@@ -20,13 +20,48 @@ export const useAccountStore = defineStore('account', () => {
   const enabledAccounts = computed(() => accounts.value.filter(a => a.enabled));
   const currentAccountId = computed(() => currentAccount.value?.id);
 
+  // 转换为后端期望的 snake_case 格式
+  function toSnakeCase(data: Partial<EmailAccount>): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    if (data.email !== undefined) result.email = data.email;
+    if (data.displayName !== undefined) result.display_name = data.displayName;
+    if (data.imapHost !== undefined) result.imap_host = data.imapHost;
+    if (data.imapPort !== undefined) result.imap_port = data.imapPort;
+    if (data.smtpHost !== undefined) result.smtp_host = data.smtpHost;
+    if (data.smtpPort !== undefined) result.smtp_port = data.smtpPort;
+    if (data.username !== undefined) result.username = data.username;
+    if (data.password !== undefined) result.password = data.password;
+    if (data.useSSL !== undefined) result.use_ssl = data.useSSL;
+    if (data.enabled !== undefined) result.enabled = data.enabled;
+    return result;
+  }
+
+  // 转换后端响应为前端 camelCase 格式
+  function toCamelCase(data: Record<string, unknown>): EmailAccount {
+    return {
+      id: data.id as number,
+      userId: data.user_id as number,
+      email: data.email as string,
+      displayName: (data.display_name as string) || '',
+      imapHost: data.imap_host as string,
+      imapPort: data.imap_port as number,
+      smtpHost: data.smtp_host as string,
+      smtpPort: data.smtp_port as number,
+      username: data.username as string,
+      useSSL: data.use_ssl as boolean,
+      enabled: data.enabled as boolean,
+      lastSyncAt: data.last_sync_at as number,
+      createdAt: data.created_at as number,
+    };
+  }
+
   // 获取账户列表
   async function fetchAccounts(): Promise<void> {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get<EmailAccount[]>('/accounts');
-      accounts.value = response.data;
+      const response = await apiClient.get<Record<string, unknown>[]>('/accounts');
+      accounts.value = (response.data || []).map(toCamelCase);
     } catch (err) {
       error.value = (err as Error).message || '获取账户列表失败';
     } finally {
@@ -39,8 +74,9 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.post<EmailAccount>('/accounts', data);
-      accounts.value.push(response.data);
+      const payload = toSnakeCase(data);
+      const response = await apiClient.post<Record<string, unknown>>('/accounts', payload);
+      accounts.value.push(toCamelCase(response.data));
       return true;
     } catch (err) {
       error.value = (err as Error).message || '添加账户失败';
@@ -56,13 +92,15 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.put<EmailAccount>(`/accounts/${id}`, data);
+      const payload = toSnakeCase(data);
+      const response = await apiClient.put<Record<string, unknown>>(`/accounts/${id}`, payload);
+      const updated = toCamelCase(response.data);
       const index = accounts.value.findIndex(a => a.id === id);
       if (index !== -1) {
-        accounts.value[index] = response.data;
+        accounts.value[index] = updated;
       }
       if (currentAccount.value?.id === id) {
-        currentAccount.value = response.data;
+        currentAccount.value = updated;
       }
       return true;
     } catch (err) {
