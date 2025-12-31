@@ -51,7 +51,7 @@ export const useAccountStore = defineStore('account', () => {
       username: data.username as string,
       useSSL: data.use_ssl as boolean,
       enabled: data.enabled as boolean,
-      syncDays: (data.sync_days as number) ?? 7,
+      syncDays: (data.sync_days as number) ?? -1,
       lastSyncAt: data.last_sync_at as number,
       createdAt: data.created_at as number,
     };
