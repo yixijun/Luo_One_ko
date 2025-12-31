@@ -81,9 +81,12 @@ apiClient.interceptors.response.use(
   (response) => {
     // 自动解包后端返回的 { success: true, data: ... } 格式
     if (response.data && typeof response.data === 'object' && 'success' in response.data) {
-      if (response.data.success && response.data.data !== undefined) {
-        // 将 response.data 替换为实际数据
-        response.data = response.data.data;
+      if (response.data.success) {
+        // 如果有 data 字段，返回 data；否则返回整个响应（用于删除等操作）
+        if (response.data.data !== undefined) {
+          response.data = response.data.data;
+        }
+        // 删除成功等操作没有 data 字段，保持原样
       }
     }
     return response;
