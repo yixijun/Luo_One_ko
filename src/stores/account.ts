@@ -145,6 +145,38 @@ export const useAccountStore = defineStore('account', () => {
     }
   }
 
+  // 直接测试连接（不保存账户）
+  async function testConnectionDirect(data: {
+    imapHost: string;
+    imapPort: number;
+    smtpHost: string;
+    smtpPort: number;
+    username: string;
+    password: string;
+    useSSL: boolean;
+  }): Promise<TestConnectionResponse> {
+    loading.value = true;
+    error.value = null;
+    try {
+      const payload = {
+        imap_host: data.imapHost,
+        imap_port: data.imapPort,
+        smtp_host: data.smtpHost,
+        smtp_port: data.smtpPort,
+        username: data.username,
+        password: data.password,
+        use_ssl: data.useSSL,
+      };
+      const response = await apiClient.post<TestConnectionResponse>('/accounts/test', payload);
+      return response.data;
+    } catch (err) {
+      error.value = (err as Error).message || '测试连接失败';
+      return { success: false, message: error.value };
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 切换账户启用状态
   async function toggleEnabled(id: number): Promise<boolean> {
     const account = accounts.value.find(a => a.id === id);
@@ -182,6 +214,7 @@ export const useAccountStore = defineStore('account', () => {
     updateAccount,
     deleteAccount,
     testConnection,
+    testConnectionDirect,
     toggleEnabled,
     setCurrentAccount,
     setCurrentAccountById,
