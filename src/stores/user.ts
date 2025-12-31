@@ -26,6 +26,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null;
     try {
       const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+      // 响应拦截器已自动解包 { success: true, data: ... } 格式
       tokenManager.setToken(response.data.token);
       await fetchProfile();
       return true;

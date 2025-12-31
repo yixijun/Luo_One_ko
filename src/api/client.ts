@@ -76,9 +76,16 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 响应拦截器 - 处理错误
+// 响应拦截器 - 处理错误和解包数据
 apiClient.interceptors.response.use(
   (response) => {
+    // 自动解包后端返回的 { success: true, data: ... } 格式
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      if (response.data.success && response.data.data !== undefined) {
+        // 将 response.data 替换为实际数据
+        response.data = response.data.data;
+      }
+    }
     return response;
   },
   (error: AxiosError<ApiResponse>) => {
