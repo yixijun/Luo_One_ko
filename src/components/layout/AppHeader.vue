@@ -85,18 +85,43 @@ function goToSettings() {
   router.push('/settings');
 }
 
+// 同步相关
+const showSyncModal = ref(false);
+const syncDays = ref(7);
+const syncDaysOptions = [
+  { value: 1, label: '最近 1 天' },
+  { value: 3, label: '最近 3 天' },
+  { value: 7, label: '最近 7 天' },
+  { value: 14, label: '最近 14 天' },
+  { value: 30, label: '最近 30 天' },
+  { value: 90, label: '最近 90 天' },
+  { value: -1, label: '全部邮件' },
+  { value: 0, label: '增量同步（上次同步后）' },
+];
+
+// 打开同步弹窗
+function openSyncModal() {
+  showSyncModal.value = true;
+}
+
+// 关闭同步弹窗
+function closeSyncModal() {
+  showSyncModal.value = false;
+}
+
 // 同步邮件
 async function syncEmails() {
+  closeSyncModal();
   // 如果有选中的账户，同步该账户；否则同步所有账户
   const currentAccountId = accountStore.currentAccountId;
   if (currentAccountId) {
-    await emailStore.syncEmails({ accountId: currentAccountId });
+    await emailStore.syncEmails({ accountId: currentAccountId, days: syncDays.value });
     // 刷新当前账户的邮件列表
     await emailStore.fetchEmails({ accountId: currentAccountId });
   } else {
     // 同步所有启用的账户
     for (const account of accountStore.enabledAccounts) {
-      await emailStore.syncEmails({ accountId: account.id });
+      await emailStore.syncEmails({ accountId: account.id, days: syncDays.value });
     }
     // 刷新所有邮件列表
     await emailStore.fetchEmails();
@@ -264,7 +289,7 @@ onUnmounted(() => {
     </div>
 
     <div class="header-right">
-      <button class="icon-btn" @click="syncEmails" title="同步邮件">
+      <button class="icon-btn" @click="openSyncModal" title="同步邮件">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
           <path d="M3 3v5h5"/>
@@ -493,6 +518,33 @@ onUnmounted(() => {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- 同步邮件弹窗 -->
+    <div v-if="showSyncModal" class="modal-overlay" @click.self="closeSyncModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>同步邮件</h3>
+          <button class="close-btn" @click="closeSyncModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>收取时间范围</label>
+            <select v-model="syncDays" class="input">
+              <option v-for="opt in syncDaysOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+            <span class="hint">选择要收取的邮件时间范围</span>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="closeSyncModal">取消</button>
+            <button type="button" class="btn primary" @click="syncEmails">
+              开始同步
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>

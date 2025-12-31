@@ -74,6 +74,18 @@ function formatDate(timestamp: number): string {
   return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
+// 格式化收取时间
+function formatReceivedTime(timestamp?: number): string {
+  if (!timestamp) return '';
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString('zh-CN', { 
+    month: 'numeric', 
+    day: 'numeric',
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+}
+
 // 获取发件人名称
 function getSenderName(from: string): string {
   const match = from.match(/^(.+?)\s*<.+>$/);
@@ -152,7 +164,12 @@ function handleSelect(email: Email) {
           <span class="email-date">{{ formatDate(email.date) }}</span>
         </div>
         <div class="email-subject">{{ email.subject || '(无主题)' }}</div>
-        <div class="email-preview">{{ email.body?.substring(0, 80) || '' }}...</div>
+        <div class="email-meta">
+          <span class="email-preview">{{ email.body?.substring(0, 60) || '' }}...</span>
+          <span v-if="email.createdAt" class="received-time" title="收取时间">
+            📥 {{ formatReceivedTime(email.createdAt) }}
+          </span>
+        </div>
         <div class="email-tags" v-if="email.processedResult">
           <span 
             v-if="email.processedResult.verificationCode" 
@@ -291,12 +308,27 @@ function handleSelect(email: Email) {
   text-overflow: ellipsis;
 }
 
+.email-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .email-preview {
   font-size: 0.75rem;
   color: var(--text-secondary, #888);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+}
+
+.received-time {
+  font-size: 0.625rem;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .email-tags {

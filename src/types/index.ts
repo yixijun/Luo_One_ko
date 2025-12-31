@@ -148,4 +148,5 @@ export interface TestConnectionResponse {
 // 同步请求
 export interface SyncRequest {
   accountId?: number;
+  days?: number; // 收取天数，0 表示使用上次同步时间或默认 30 天
 }

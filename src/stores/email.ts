@@ -26,6 +26,14 @@ export const useEmailStore = defineStore('email', () => {
   // 转换后端响应为前端 camelCase 格式
   function toEmailCamelCase(data: Record<string, unknown>): Email {
     const processedResult = data.processed_result as Record<string, unknown> | undefined;
+    
+    // 转换 created_at 时间字符串为时间戳
+    let createdAtTimestamp: number | undefined;
+    if (data.created_at) {
+      const createdAtDate = new Date(data.created_at as string);
+      createdAtTimestamp = Math.floor(createdAtDate.getTime() / 1000);
+    }
+    
     return {
       id: data.id as number,
       accountId: data.account_id as number,
@@ -39,6 +47,7 @@ export const useEmailStore = defineStore('email', () => {
       hasAttachments: data.has_attachments as boolean,
       isRead: data.is_read as boolean,
       folder: (data.folder as Email['folder']) || 'inbox',
+      createdAt: createdAtTimestamp,
       processedResult: processedResult ? {
         id: processedResult.id as number || 0,
         emailId: processedResult.email_id as number || 0,
@@ -178,7 +187,10 @@ export const useEmailStore = defineStore('email', () => {
         error.value = '请选择要同步的邮箱账户';
         return false;
       }
-      const payload = { account_id: data.accountId };
+      const payload: Record<string, unknown> = { account_id: data.accountId };
+      if (data.days && data.days > 0) {
+        payload.days = data.days;
+      }
       await apiClient.post('/emails/sync', payload);
       return true;
     } catch (err) {
