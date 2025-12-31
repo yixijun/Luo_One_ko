@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 侧边栏组件
  * Requirements: 8.2
  */
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
@@ -17,6 +17,9 @@ const emailStore = useEmailStore();
 const accounts = computed(() => accountStore.accounts);
 const currentAccountId = computed(() => accountStore.currentAccountId);
 const loading = computed(() => accountStore.loading);
+
+// 删除状态
+const deletingAccountId = ref<number | null>(null);
 
 // 选择邮箱账户
 function selectAccount(account: EmailAccount) {
@@ -33,6 +36,27 @@ function showAllEmails() {
 // 跳转到写邮件页面
 function goToCompose() {
   router.push('/compose');
+}
+
+// 删除账户
+async function deleteAccount(account: EmailAccount, event: Event) {
+  event.stopPropagation();
+  
+  const confirmed = window.confirm(`确定要删除邮箱账户 "${account.displayName || account.email}" 吗？\n\n该账户下的所有邮件也将被删除。`);
+  if (!confirmed) return;
+  
+  deletingAccountId.value = account.id;
+  try {
+    const success = await accountStore.deleteAccount(account.id);
+    if (success) {
+      // 如果删除的是当前选中的账户，显示全部邮件
+      if (currentAccountId.value === account.id) {
+        showAllEmails();
+      }
+    }
+  } finally {
+    deletingAccountId.value = null;
+  }
 }
 
 // 获取账户状态图标颜色
@@ -101,26 +125,42 @@ onMounted(() => {
         </div>
 
         <template v-else>
-          <button
+          <div
             v-for="account in accounts"
             :key="account.id"
-            class="nav-item account-item"
-            :class="{ active: currentAccountId === account.id, disabled: !account.enabled }"
-            @click="selectAccount(account)"
+            class="account-wrapper"
           >
-            <div class="account-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            <button
+              class="nav-item account-item"
+              :class="{ active: currentAccountId === account.id, disabled: !account.enabled }"
+              @click="selectAccount(account)"
+            >
+              <div class="account-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                <span class="status-dot" :style="{ backgroundColor: getStatusColor(account) }"></span>
+              </div>
+              <div class="account-info">
+                <span class="account-name">{{ account.displayName || account.email }}</span>
+                <span class="account-email" v-if="account.displayName">{{ account.email }}</span>
+                <span class="account-sync">{{ formatLastSync(account.lastSyncAt) }}</span>
+              </div>
+            </button>
+            <button 
+              class="delete-account-btn"
+              @click="deleteAccount(account, $event)"
+              :disabled="deletingAccountId === account.id"
+              title="删除账户"
+            >
+              <svg v-if="deletingAccountId !== account.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
               </svg>
-              <span class="status-dot" :style="{ backgroundColor: getStatusColor(account) }"></span>
-            </div>
-            <div class="account-info">
-              <span class="account-name">{{ account.displayName || account.email }}</span>
-              <span class="account-email" v-if="account.displayName">{{ account.email }}</span>
-              <span class="account-sync">{{ formatLastSync(account.lastSyncAt) }}</span>
-            </div>
-          </button>
+              <span v-else class="loading-spinner small"></span>
+            </button>
+          </div>
         </template>
       </div>
     </nav>
@@ -287,6 +327,60 @@ onMounted(() => {
 .account-sync {
   font-size: 0.6875rem;
   color: var(--text-tertiary, #666);
+}
+
+.account-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.account-wrapper .nav-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.delete-account-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.account-wrapper:hover .delete-account-btn {
+  opacity: 1;
+}
+
+.delete-account-btn:hover:not(:disabled) {
+  color: var(--error-color, #f44336);
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.delete-account-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.delete-account-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.delete-account-btn .loading-spinner.small {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
 }
 
 .loading-state,
