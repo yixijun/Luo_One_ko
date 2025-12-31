@@ -33,6 +33,7 @@ export const useAccountStore = defineStore('account', () => {
     if (data.password !== undefined) result.password = data.password;
     if (data.useSSL !== undefined) result.use_ssl = data.useSSL;
     if (data.enabled !== undefined) result.enabled = data.enabled;
+    if (data.syncDays !== undefined) result.sync_days = data.syncDays;
     return result;
   }
 
@@ -50,6 +51,7 @@ export const useAccountStore = defineStore('account', () => {
       username: data.username as string,
       useSSL: data.use_ssl as boolean,
       enabled: data.enabled as boolean,
+      syncDays: (data.sync_days as number) ?? 7,
       lastSyncAt: data.last_sync_at as number,
       createdAt: data.created_at as number,
     };

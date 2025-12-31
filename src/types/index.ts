@@ -27,6 +27,7 @@ export interface EmailAccount {
   password?: string;
   useSSL: boolean;
   enabled: boolean;
+  syncDays: number; // 收取天数: -1=全部, 0=增量, >0=指定天数
   lastSyncAt: number;
   createdAt?: number;
 }
@@ -148,5 +149,4 @@ export interface TestConnectionResponse {
 // 同步请求
 export interface SyncRequest {
   accountId?: number;
-  days?: number; // 收取天数，0 表示使用上次同步时间或默认 30 天
 }

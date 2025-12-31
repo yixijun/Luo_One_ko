@@ -187,10 +187,7 @@ export const useEmailStore = defineStore('email', () => {
         error.value = '请选择要同步的邮箱账户';
         return false;
       }
-      const payload: Record<string, unknown> = { account_id: data.accountId };
-      if (data.days && data.days > 0) {
-        payload.days = data.days;
-      }
+      const payload = { account_id: data.accountId };
       await apiClient.post('/emails/sync', payload);
       return true;
     } catch (err) {
