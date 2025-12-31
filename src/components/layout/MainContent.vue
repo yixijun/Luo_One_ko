@@ -18,6 +18,10 @@ const sortBy = ref<'date' | 'from'>('date');
 // 当前选中的邮件
 const selectedEmail = ref<Email | null>(null);
 
+// 批量选择模式
+const isSelectMode = ref(false);
+const selectedEmailIds = ref<Set<number>>(new Set());
+
 // 计算属性
 const currentAccount = computed(() => accountStore.currentAccount);
 const emails = computed(() => emailStore.emails);
@@ -26,6 +30,13 @@ const hasEmails = computed(() => emailStore.hasEmails);
 
 // 删除状态
 const isDeleting = ref(false);
+
+// 批量选择计算属性
+const hasSelectedEmails = computed(() => selectedEmailIds.value.size > 0);
+const isAllSelected = computed(() => 
+  emails.value.length > 0 && selectedEmailIds.value.size === emails.value.length
+);
+const selectedCount = computed(() => selectedEmailIds.value.size);
 
 // 监听排序变化
 watch(sortBy, (newSort) => {
@@ -55,6 +66,71 @@ async function deleteEmail() {
     const success = await emailStore.deleteEmail(selectedEmail.value.id);
     if (success) {
       selectedEmail.value = null;
+    }
+  } finally {
+    isDeleting.value = false;
+  }
+}
+
+// 切换选择模式
+function toggleSelectMode() {
+  isSelectMode.value = !isSelectMode.value;
+  if (!isSelectMode.value) {
+    selectedEmailIds.value.clear();
+  }
+}
+
+// 切换单个邮件选择
+function toggleEmailSelection(emailId: number, event: Event) {
+  event.stopPropagation();
+  if (selectedEmailIds.value.has(emailId)) {
+    selectedEmailIds.value.delete(emailId);
+  } else {
+    selectedEmailIds.value.add(emailId);
+  }
+  // 触发响应式更新
+  selectedEmailIds.value = new Set(selectedEmailIds.value);
+}
+
+// 全选/取消全选
+function toggleSelectAll() {
+  if (isAllSelected.value) {
+    selectedEmailIds.value.clear();
+  } else {
+    selectedEmailIds.value = new Set(emails.value.map(e => e.id));
+  }
+}
+
+// 批量删除邮件
+async function batchDeleteEmails() {
+  if (!hasSelectedEmails.value || isDeleting.value) return;
+  
+  const count = selectedEmailIds.value.size;
+  const confirmed = window.confirm(`确定要删除选中的 ${count} 封邮件吗？`);
+  if (!confirmed) return;
+  
+  isDeleting.value = true;
+  try {
+    const idsToDelete = Array.from(selectedEmailIds.value);
+    let successCount = 0;
+    
+    for (const id of idsToDelete) {
+      const success = await emailStore.deleteEmail(id);
+      if (success) {
+        successCount++;
+        selectedEmailIds.value.delete(id);
+      }
+    }
+    
+    // 如果当前选中的邮件被删除，清除选中状态
+    if (selectedEmail.value && !emails.value.find(e => e.id === selectedEmail.value?.id)) {
+      selectedEmail.value = null;
+    }
+    
+    // 退出选择模式
+    if (successCount > 0) {
+      isSelectMode.value = false;
+      selectedEmailIds.value.clear();
     }
   } finally {
     isDeleting.value = false;
@@ -124,9 +200,39 @@ onMounted(() => {
     <!-- 邮件列表 -->
     <div class="emails-panel">
       <div class="panel-header">
-        <h3>{{ currentAccount?.displayName || currentAccount?.email || '全部邮件' }}</h3>
-        <div class="sort-controls">
-          <select v-model="sortBy" class="sort-select">
+        <div class="header-left">
+          <input 
+            v-if="isSelectMode && hasEmails"
+            type="checkbox" 
+            :checked="isAllSelected"
+            @change="toggleSelectAll"
+            class="select-checkbox"
+          />
+          <h3>{{ currentAccount?.displayName || currentAccount?.email || '全部邮件' }}</h3>
+        </div>
+        <div class="header-actions">
+          <button 
+            v-if="isSelectMode && hasSelectedEmails" 
+            class="batch-delete-btn"
+            @click="batchDeleteEmails"
+            :disabled="isDeleting"
+          >
+            <svg v-if="!isDeleting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span v-else class="loading-spinner small"></span>
+            <span>删除 ({{ selectedCount }})</span>
+          </button>
+          <button 
+            class="select-mode-btn"
+            :class="{ active: isSelectMode }"
+            @click="toggleSelectMode"
+            v-if="hasEmails"
+          >
+            {{ isSelectMode ? '取消' : '选择' }}
+          </button>
+          <select v-model="sortBy" class="sort-select" v-if="!isSelectMode">
             <option value="date">按时间</option>
             <option value="from">按发件人</option>
           </select>
@@ -147,10 +253,21 @@ onMounted(() => {
           v-for="email in emails"
           :key="email.id"
           class="email-item"
-          :class="{ active: selectedEmail?.id === email.id, unread: !email.isRead }"
-          @click="selectEmail(email)"
+          :class="{ 
+            active: selectedEmail?.id === email.id, 
+            unread: !email.isRead,
+            selected: selectedEmailIds.has(email.id)
+          }"
+          @click="isSelectMode ? toggleEmailSelection(email.id, $event) : selectEmail(email)"
         >
           <div class="email-sender">
+            <input 
+              v-if="isSelectMode"
+              type="checkbox" 
+              :checked="selectedEmailIds.has(email.id)"
+              @click="toggleEmailSelection(email.id, $event)"
+              class="select-checkbox"
+            />
             <span class="sender-name">{{ getSenderName(email.from) }}</span>
             <span class="email-date">{{ formatDate(email.date) }}</span>
           </div>
@@ -344,6 +461,78 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color, #646cff);
+  flex-shrink: 0;
+}
+
+.select-mode-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color, #2d2d44);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--text-secondary, #888);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.select-mode-btn:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary, #fff);
+}
+
+.select-mode-btn.active {
+  background-color: var(--primary-color, #646cff);
+  border-color: var(--primary-color, #646cff);
+  color: #fff;
+}
+
+.batch-delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--error-color, #f44336);
+  color: #fff;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.batch-delete-btn:hover:not(:disabled) {
+  background-color: #d32f2f;
+}
+
+.batch-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.batch-delete-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
 .content-header {
   display: flex;
   justify-content: space-between;
@@ -444,6 +633,10 @@ onMounted(() => {
 
 .email-item.unread {
   background-color: var(--unread-bg, rgba(100, 108, 255, 0.05));
+}
+
+.email-item.selected {
+  background-color: var(--selected-bg, rgba(100, 108, 255, 0.15));
 }
 
 .email-item.unread .sender-name,
