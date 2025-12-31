@@ -38,6 +38,7 @@ export const useEmailStore = defineStore('email', () => {
       htmlBody: (data.html_body as string) || '',
       hasAttachments: data.has_attachments as boolean,
       isRead: data.is_read as boolean,
+      folder: (data.folder as Email['folder']) || 'inbox',
       processedResult: processedResult ? {
         id: processedResult.id as number || 0,
         emailId: processedResult.email_id as number || 0,
@@ -59,6 +60,7 @@ export const useEmailStore = defineStore('email', () => {
       // 转换参数为 snake_case
       const queryParams: Record<string, unknown> = {};
       if (params.accountId) queryParams.account_id = params.accountId;
+      if (params.folder) queryParams.folder = params.folder;
       if (params.page) queryParams.page = params.page;
       if (params.limit) queryParams.limit = params.limit;
       if (params.sort) queryParams.sort = params.sort;

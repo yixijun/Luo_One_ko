@@ -43,6 +43,9 @@ export interface ProcessedResult {
   processedBy: 'ai' | 'local';
 }
 
+// 邮件文件夹类型
+export type EmailFolder = 'inbox' | 'sent' | 'trash' | 'all';
+
 // 邮件
 export interface Email {
   id: number;
@@ -56,6 +59,7 @@ export interface Email {
   htmlBody: string;
   hasAttachments: boolean;
   isRead: boolean;
+  folder: EmailFolder;
   rawFilePath?: string;
   processedResult?: ProcessedResult;
   createdAt?: number;
@@ -117,6 +121,7 @@ export interface EmailListResponse {
 // 邮件列表查询参数
 export interface EmailListParams {
   accountId?: number;
+  folder?: EmailFolder;
   page?: number;
   limit?: number;
   sort?: 'date' | 'from';

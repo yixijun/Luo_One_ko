@@ -7,13 +7,16 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
-import type { Email } from '@/types';
+import type { Email, EmailFolder } from '@/types';
 
 const accountStore = useAccountStore();
 const emailStore = useEmailStore();
 
 // 排序方式
 const sortBy = ref<'date' | 'from'>('date');
+
+// 当前文件夹
+const currentFolder = ref<EmailFolder>('inbox');
 
 // 当前选中的邮件
 const selectedEmail = ref<Email | null>(null);
@@ -27,6 +30,20 @@ const currentAccount = computed(() => accountStore.currentAccount);
 const emails = computed(() => emailStore.emails);
 const loading = computed(() => emailStore.loading);
 const hasEmails = computed(() => emailStore.hasEmails);
+
+// 文件夹选项
+const folderOptions = [
+  { value: 'inbox', label: '收件箱' },
+  { value: 'sent', label: '已发送' },
+  { value: 'trash', label: '已删除' },
+  { value: 'all', label: '全部' },
+];
+
+// 获取当前文件夹标签
+const currentFolderLabel = computed(() => {
+  const folder = folderOptions.find(f => f.value === currentFolder.value);
+  return folder?.label || '收件箱';
+});
 
 // 删除状态
 const isDeleting = ref(false);
@@ -42,7 +59,20 @@ const selectedCount = computed(() => selectedEmailIds.value.size);
 watch(sortBy, (newSort) => {
   emailStore.fetchEmails({
     accountId: currentAccount.value?.id,
+    folder: currentFolder.value,
     sort: newSort,
+  });
+});
+
+// 监听文件夹变化
+watch(currentFolder, (newFolder) => {
+  selectedEmail.value = null;
+  isSelectMode.value = false;
+  selectedEmailIds.value.clear();
+  emailStore.fetchEmails({
+    accountId: currentAccount.value?.id,
+    folder: newFolder,
+    sort: sortBy.value,
   });
 });
 
@@ -190,7 +220,7 @@ function getImportanceLabel(importance: string): string {
 // 初始化
 onMounted(() => {
   if (!emailStore.hasEmails) {
-    emailStore.fetchEmails({ sort: sortBy.value });
+    emailStore.fetchEmails({ folder: currentFolder.value, sort: sortBy.value });
   }
 });
 </script>
@@ -208,7 +238,7 @@ onMounted(() => {
             @change="toggleSelectAll"
             class="select-checkbox"
           />
-          <h3>{{ currentAccount?.displayName || currentAccount?.email || '全部邮件' }}</h3>
+          <h3>{{ currentFolderLabel }}</h3>
         </div>
         <div class="header-actions">
           <button 
@@ -232,6 +262,11 @@ onMounted(() => {
           >
             {{ isSelectMode ? '取消' : '选择' }}
           </button>
+          <select v-model="currentFolder" class="folder-select" v-if="!isSelectMode">
+            <option v-for="folder in folderOptions" :key="folder.value" :value="folder.value">
+              {{ folder.label }}
+            </option>
+          </select>
           <select v-model="sortBy" class="sort-select" v-if="!isSelectMode">
             <option value="date">按时间</option>
             <option value="from">按发件人</option>
@@ -594,6 +629,7 @@ onMounted(() => {
   align-items: center;
 }
 
+.folder-select,
 .sort-select {
   padding: 4px 8px;
   border: 1px solid var(--border-color, #2d2d44);
