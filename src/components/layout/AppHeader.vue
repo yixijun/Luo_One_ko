@@ -91,13 +91,16 @@ async function syncEmails() {
   const currentAccountId = accountStore.currentAccountId;
   if (currentAccountId) {
     await emailStore.syncEmails({ accountId: currentAccountId });
+    // 刷新当前账户的邮件列表
+    await emailStore.fetchEmails({ accountId: currentAccountId });
   } else {
     // 同步所有启用的账户
     for (const account of accountStore.enabledAccounts) {
       await emailStore.syncEmails({ accountId: account.id });
     }
+    // 刷新所有邮件列表
+    await emailStore.fetchEmails();
   }
-  await emailStore.fetchEmails();
 }
 
 // 切换用户菜单

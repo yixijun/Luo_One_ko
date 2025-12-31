@@ -76,6 +76,18 @@ watch(currentFolder, (newFolder) => {
   });
 });
 
+// 监听账户变化
+watch(currentAccount, (newAccount) => {
+  selectedEmail.value = null;
+  isSelectMode.value = false;
+  selectedEmailIds.value.clear();
+  emailStore.fetchEmails({
+    accountId: newAccount?.id,
+    folder: currentFolder.value,
+    sort: sortBy.value,
+  });
+});
+
 // 选择邮件
 async function selectEmail(email: Email) {
   selectedEmail.value = email;
