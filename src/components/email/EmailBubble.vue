@@ -225,6 +225,29 @@ function handleClick() {
   word-break: break-word;
 }
 
+/* 重置HTML邮件的默认样式 */
+.html-content :deep(*) {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.html-content :deep(blockquote) {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--border-color, #2d2d44);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.html-content :deep(p) {
+  margin: 8px 0;
+}
+
+.html-content :deep(div) {
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
 .html-content :deep(img) {
   max-width: 100%;
   height: auto;
@@ -244,6 +267,20 @@ function handleClick() {
 .html-content :deep(th) {
   border: 1px solid var(--border-color, #2d2d44);
   padding: 8px;
+}
+
+/* 移除邮件中常见的蓝色边框样式 */
+.html-content :deep([style*="border-left"]),
+.html-content :deep([style*="border: "]),
+.html-content :deep([style*="border:"]) {
+  border: none !important;
+  border-left: none !important;
+}
+
+.html-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--border-color, #2d2d44);
+  margin: 16px 0;
 }
 
 .text-content {
