@@ -33,6 +33,7 @@ const isSubmitting = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
+const checkingOAuthConfig = ref(false);
 
 // 用户信息
 const user = computed(() => userStore.user);
@@ -233,6 +234,7 @@ async function openAccountModal() {
   successMessage.value = '';
   errorMessage.value = '';
   showAccountModal.value = true;
+  checkingOAuthConfig.value = true;
   
   // 检查 Google OAuth 配置状态（使用原生 fetch 避免 401 跳转）
   try {
@@ -261,6 +263,8 @@ async function openAccountModal() {
   } catch (err) {
     console.error('[OAuth Config] Fetch error:', err);
     googleOAuthConfigured.value = false;
+  } finally {
+    checkingOAuthConfig.value = false;
   }
 }
 
@@ -585,7 +589,7 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
-          <div v-if="selectedPreset === 'Gmail' && !googleOAuthConfigured" class="account-modal-message warning">
+          <div v-if="selectedPreset === 'Gmail' && !checkingOAuthConfig && !googleOAuthConfigured" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
