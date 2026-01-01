@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -34,6 +34,18 @@ const successMessage = ref('');
 const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
 const checkingOAuthConfig = ref(false);
+
+// 计算属性：是否显示 Gmail OAuth 未配置警告
+const showGmailOAuthWarning = computed(() => {
+  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
+  console.log('[AppHeader] showGmailOAuthWarning computed:', {
+    selectedPreset: selectedPreset.value,
+    checkingOAuthConfig: checkingOAuthConfig.value,
+    googleOAuthConfigured: googleOAuthConfigured.value,
+    result: show
+  });
+  return show;
+});
 
 // 用户信息
 const user = computed(() => userStore.user);
@@ -86,6 +98,7 @@ function applyPreset() {
     accountForm.smtpHost = preset.smtpHost;
     accountForm.smtpPort = preset.smtpPort;
   }
+  console.log('[AppHeader] applyPreset called, selectedPreset:', selectedPreset.value, 'googleOAuthConfigured:', googleOAuthConfigured.value);
 }
 
 function autoSelectPreset() {
@@ -590,7 +603,7 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
-          <div v-if="selectedPreset === 'Gmail' && !checkingOAuthConfig && !googleOAuthConfigured" class="account-modal-message warning">
+          <div v-if="showGmailOAuthWarning" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
