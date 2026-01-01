@@ -35,6 +35,13 @@ const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
 const checkingOAuthConfig = ref(false);
 
+// 计算是否显示 OAuth 未配置警告
+const showOAuthWarning = computed(() => {
+  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
+  console.log('[OAuth Warning] selectedPreset:', selectedPreset.value, 'checkingOAuthConfig:', checkingOAuthConfig.value, 'googleOAuthConfigured:', googleOAuthConfigured.value, 'showWarning:', show);
+  return show;
+});
+
 // 用户信息
 const user = computed(() => userStore.user);
 const userInitial = computed(() => {
@@ -589,7 +596,7 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
-          <div v-if="selectedPreset === 'Gmail' && !checkingOAuthConfig && !googleOAuthConfigured" class="account-modal-message warning">
+          <div v-if="showOAuthWarning" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
