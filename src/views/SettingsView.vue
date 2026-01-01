@@ -141,15 +141,25 @@ async function testBackendConnection() {
       backendUrlManager.setBackendUrl(testUrl);
     }
     
-    // 然后测试连接
-    const response = await apiClient.get('/health', { timeout: 5000 });
-    // 后端返回 { status: 'ok' }，不是包装在 data 里
-    if (response.data?.status === 'ok' || response.status === 200) {
-      backendTestResult.value = { success: true, message: '连接成功' };
-      addLog('success', '后端连接测试成功');
+    // 测试连接 - health 端点不在 /api 下
+    const healthUrl = testUrl ? `${testUrl}/health` : '/api/../health';
+    const response = await fetch(healthUrl, { 
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.status === 'ok') {
+        backendTestResult.value = { success: true, message: '连接成功' };
+        addLog('success', '后端连接测试成功');
+      } else {
+        backendTestResult.value = { success: true, message: '连接成功（响应正常）' };
+        addLog('success', '后端连接测试成功');
+      }
     } else {
-      backendTestResult.value = { success: false, message: '后端响应异常' };
-      addLog('error', '后端响应异常');
+      backendTestResult.value = { success: false, message: `HTTP ${response.status}` };
+      addLog('error', `后端响应错误: ${response.status}`);
     }
   } catch (e) {
     const errMsg = (e as Error).message || '连接失败';
