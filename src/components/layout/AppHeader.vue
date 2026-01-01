@@ -242,14 +242,22 @@ async function openAccountModal() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (apiKey) headers['X-API-Key'] = apiKey;
     
+    console.log('[OAuth Config] Fetching /api/oauth/config with headers:', { hasToken: !!token, hasApiKey: !!apiKey });
     const response = await fetch('/api/oauth/config', { headers });
+    console.log('[OAuth Config] Response status:', response.status);
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('[OAuth Config] Response data:', data);
       googleOAuthConfigured.value = data?.data?.google_enabled ?? false;
+      console.log('[OAuth Config] googleOAuthConfigured:', googleOAuthConfigured.value);
     } else {
+      const errorText = await response.text();
+      console.error('[OAuth Config] Error response:', errorText);
       googleOAuthConfigured.value = false;
     }
-  } catch {
+  } catch (err) {
+    console.error('[OAuth Config] Fetch error:', err);
     googleOAuthConfigured.value = false;
   }
 }
@@ -576,7 +584,7 @@ onUnmounted(() => {
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
           <div v-if="selectedPreset === 'Gmail' && !googleOAuthConfigured" class="account-modal-message warning">
-            Google OAuth 未配置，请先在「设置 → 后端设置」中配置 Google OAuth
+            Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
           <div class="account-modal-field">
