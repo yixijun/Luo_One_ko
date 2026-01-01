@@ -154,18 +154,6 @@ onMounted(() => {
                 <span class="account-sync">{{ formatLastSync(account.lastSyncAt) }}</span>
               </div>
             </button>
-            <button 
-              class="delete-account-btn"
-              @click="deleteAccount(account, $event)"
-              :disabled="deletingAccountId === account.id"
-              title="删除账户"
-            >
-              <svg v-if="deletingAccountId !== account.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              <span v-else class="loading-spinner small"></span>
-            </button>
           </div>
         </template>
       </div>
