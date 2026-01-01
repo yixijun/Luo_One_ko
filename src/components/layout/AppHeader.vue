@@ -543,7 +543,7 @@ onUnmounted(() => {
             <select v-model="selectedPreset" @change="applyPreset">
               <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
             </select>
-            <span class="account-modal-hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码</span>
+            <span class="account-modal-hint" v-if="selectedPreset === 'Gmail'">Gmail 需要应用专用密码：<a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--primary-color);">点击获取</a>（需先开启两步验证）</span>
             <span class="account-modal-hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码</span>
           </div>
           <div class="account-modal-field">

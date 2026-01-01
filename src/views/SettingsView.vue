@@ -610,7 +610,7 @@ onMounted(async () => {
               <select v-model="selectedPreset" class="form-input" @change="applyPreset">
                 <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
               </select>
-              <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码，请在 Google 账户设置中生成</p>
+              <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要应用专用密码：<a href="https://myaccount.google.com/apppasswords" target="_blank">点击获取</a>（需先开启两步验证）</p>
               <p class="hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码，请在 QQ 邮箱设置中开启 IMAP 并获取</p>
               <p class="hint" v-else-if="selectedPreset === 'Outlook' || selectedPreset === 'Hotmail'">Outlook/Hotmail 需要使用应用密码</p>
             </div>
