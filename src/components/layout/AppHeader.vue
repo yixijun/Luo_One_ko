@@ -248,12 +248,14 @@ async function openAccountModal() {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('[OAuth Config] Response data:', data);
-      googleOAuthConfigured.value = data?.data?.google_enabled ?? false;
-      console.log('[OAuth Config] googleOAuthConfigured:', googleOAuthConfigured.value);
+      console.log('[OAuth Config] Response data:', JSON.stringify(data));
+      // 兼容两种响应格式
+      const googleEnabled = data?.data?.google_enabled ?? data?.google_enabled ?? false;
+      googleOAuthConfigured.value = googleEnabled;
+      console.log('[OAuth Config] googleOAuthConfigured set to:', googleOAuthConfigured.value);
     } else {
       const errorText = await response.text();
-      console.error('[OAuth Config] Error response:', errorText);
+      console.error('[OAuth Config] Error response:', response.status, errorText);
       googleOAuthConfigured.value = false;
     }
   } catch (err) {
