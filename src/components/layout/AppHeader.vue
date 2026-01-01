@@ -698,7 +698,7 @@ onUnmounted(() => {
   border: 1px solid var(--border-color, #2d2d44);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  z-index: 200;
+  z-index: 1000;
   animation: dropdownFadeIn 0.15s ease-out;
 }
 
@@ -1004,7 +1004,6 @@ onUnmounted(() => {
   .app-header {
     padding: 0 12px;
     flex-wrap: nowrap;
-    overflow: hidden;
   }
   
   .header-left {
@@ -1015,6 +1014,7 @@ onUnmounted(() => {
     margin: 0 8px;
     min-width: 0;
     flex: 1;
+    overflow: hidden;
   }
   
   .search-bar {
