@@ -202,7 +202,10 @@ export const useEmailStore = defineStore('email', () => {
         return -1;
       }
       const payload = { account_id: data.accountId };
-      const response = await apiClient.post<{ synced_count: number }>('/emails/sync', payload);
+      // 同步可能需要很长时间，使用 5 分钟超时
+      const response = await apiClient.post<{ synced_count: number }>('/emails/sync', payload, {
+        timeout: 300000, // 5 分钟
+      });
       return response.data?.synced_count ?? 0;
     } catch (err) {
       error.value = (err as Error).message || '同步邮件失败';

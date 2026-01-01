@@ -13,11 +13,16 @@ const API_KEY_KEY = 'luo_one_api_key';
 // 创建 axios 实例
 const apiClient: AxiosInstance = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: 30000, // 默认 30 秒
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// 同步邮件专用的长超时配置
+export const syncConfig = {
+  timeout: 300000, // 5 分钟
+};
 
 // Token 管理
 export const tokenManager = {
