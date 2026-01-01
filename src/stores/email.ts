@@ -160,6 +160,32 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 全部已读
+  async function markAllAsRead(accountId?: number): Promise<number> {
+    loading.value = true;
+    error.value = null;
+    try {
+      const payload: Record<string, unknown> = {};
+      if (accountId) {
+        payload.account_id = accountId;
+      }
+      const response = await apiClient.put<{ updated_count: number }>('/emails/read-all', payload);
+      const count = response.data?.updated_count ?? 0;
+      // 更新本地状态
+      emails.value.forEach(email => {
+        if (!accountId || email.accountId === accountId) {
+          email.isRead = true;
+        }
+      });
+      return count;
+    } catch (err) {
+      error.value = (err as Error).message || '标记全部已读失败';
+      return -1;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 发送邮件
   async function sendEmail(data: SendEmailRequest): Promise<boolean> {
     loading.value = true;
@@ -244,6 +270,7 @@ export const useEmailStore = defineStore('email', () => {
     fetchEmail,
     deleteEmail,
     markAsRead,
+    markAllAsRead,
     sendEmail,
     syncEmails,
     clearCurrentEmail,

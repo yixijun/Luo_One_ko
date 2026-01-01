@@ -194,6 +194,24 @@ async function batchDeleteEmails() {
   }
 }
 
+// 全部已读状态
+const isMarkingAllRead = ref(false);
+
+// 全部已读
+async function markAllAsRead() {
+  if (isMarkingAllRead.value) return;
+  
+  isMarkingAllRead.value = true;
+  try {
+    const count = await emailStore.markAllAsRead(currentAccount.value?.id);
+    if (count >= 0) {
+      console.log(`已将 ${count} 封邮件标记为已读`);
+    }
+  } finally {
+    isMarkingAllRead.value = false;
+  }
+}
+
 // 格式化日期
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp * 1000);
@@ -287,6 +305,19 @@ onUnmounted(() => {
             </svg>
             <span v-else class="loading-spinner small"></span>
             <span>删除 ({{ selectedCount }})</span>
+          </button>
+          <button 
+            v-if="!isSelectMode && hasEmails && emailStore.unreadCount > 0"
+            class="mark-all-read-btn"
+            @click="markAllAsRead"
+            :disabled="isMarkingAllRead"
+            title="全部已读"
+          >
+            <svg v-if="!isMarkingAllRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span v-else class="loading-spinner small"></span>
           </button>
           <button 
             class="select-mode-btn"
@@ -600,6 +631,37 @@ onUnmounted(() => {
 .batch-delete-btn svg {
   width: 14px;
   height: 14px;
+}
+
+.mark-all-read-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-color, #2d2d44);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mark-all-read-btn:hover:not(:disabled) {
+  background-color: var(--success-color, #4caf50);
+  border-color: var(--success-color, #4caf50);
+  color: #fff;
+}
+
+.mark-all-read-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mark-all-read-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .content-header {
