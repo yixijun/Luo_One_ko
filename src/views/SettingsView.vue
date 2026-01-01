@@ -388,7 +388,23 @@ async function testModalConnection() {
 
 onMounted(async () => {
   if (user.value) { profileForm.nickname = user.value.nickname || ''; profileForm.avatar = user.value.avatar || ''; }
-  if (userStore.settings) Object.assign(aiForm, userStore.settings);
+  // 获取用户设置
+  await userStore.fetchSettings();
+  if (userStore.settings) {
+    // 映射 snake_case 到 camelCase
+    const s = userStore.settings as any;
+    aiForm.aiEnabled = s.ai_enabled ?? s.aiEnabled ?? false;
+    aiForm.aiProvider = s.ai_provider ?? s.aiProvider ?? '';
+    aiForm.aiApiKey = s.ai_api_key ?? s.aiApiKey ?? '';
+    aiForm.aiModel = s.ai_model ?? s.aiModel ?? '';
+    aiForm.extractCode = s.extract_code ?? s.extractCode ?? true;
+    aiForm.detectAd = s.detect_ad ?? s.detectAd ?? true;
+    aiForm.summarize = s.summarize ?? false;
+    aiForm.judgeImportance = s.judge_importance ?? s.judgeImportance ?? true;
+    aiForm.googleClientId = s.google_client_id ?? s.googleClientId ?? '';
+    aiForm.googleClientSecret = s.google_client_secret ?? s.googleClientSecret ?? '';
+    aiForm.googleRedirectUrl = s.google_redirect_url ?? s.googleRedirectUrl ?? '';
+  }
   await accountStore.fetchAccounts();
   await loadBackendUrl();
   addLog('info', `已加载 ${accounts.value.length} 个邮箱账户`);
