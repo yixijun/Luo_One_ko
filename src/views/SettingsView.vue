@@ -585,6 +585,7 @@ onMounted(async () => {
               <span class="account-email">{{ account.email }}</span>
               <span v-if="account.displayName" class="account-name">{{ account.displayName }}</span>
               <span :class="['account-status', { enabled: account.enabled }]">{{ account.enabled ? '已启用' : '已禁用' }}</span>
+              <span class="account-email-count">已收取: {{ account.emailCount ?? 0 }} 封</span>
               <span class="account-sync-time" v-if="account.lastSyncAt">上次同步: {{ new Date(account.lastSyncAt * 1000).toLocaleString('zh-CN') }}</span>
             </div>
             <div class="account-actions">
@@ -842,6 +843,7 @@ onMounted(async () => {
 .account-name { font-size: 0.8125rem; color: var(--text-secondary); }
 .account-status { font-size: 0.75rem; color: var(--text-tertiary); }
 .account-status.enabled { color: var(--success-color); }
+.account-email-count { font-size: 0.75rem; color: var(--primary-color); font-weight: 500; }
 .account-sync-time { font-size: 0.6875rem; color: var(--text-tertiary); }
 .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }

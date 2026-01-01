@@ -54,6 +54,7 @@ export const useAccountStore = defineStore('account', () => {
       syncDays: (data.sync_days as number) ?? -1,
       lastSyncAt: data.last_sync_at as number,
       createdAt: data.created_at as number,
+      emailCount: (data.email_count as number) ?? 0,
     };
   }
 

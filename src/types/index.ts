@@ -30,6 +30,7 @@ export interface EmailAccount {
   syncDays: number; // 收取天数: -1=全部, 0=增量, >0=指定天数
   lastSyncAt: number;
   createdAt?: number;
+  emailCount?: number; // 已收取的邮件数量
 }
 
 // 处理结果
