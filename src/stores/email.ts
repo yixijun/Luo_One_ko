@@ -217,8 +217,8 @@ export const useEmailStore = defineStore('email', () => {
       if (accountId) {
         payload.account_id = accountId;
       }
-      const response = await apiClient.put<{ updated_count: number }>('/emails/read-all', payload);
-      const count = response.data?.updated_count ?? 0;
+      const response = await apiClient.put<{ success: boolean; data: { updated_count: number } }>('/emails/read-all', payload);
+      const count = response.data?.data?.updated_count ?? 0;
       // 更新本地状态
       emails.value.forEach(email => {
         if (!accountId || email.accountId === accountId) {
