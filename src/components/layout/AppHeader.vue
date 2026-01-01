@@ -629,7 +629,8 @@ onUnmounted(() => {
             调试: selectedPreset={{ selectedPreset }}, checkingOAuthConfig={{ checkingOAuthConfig }}, googleOAuthConfigured={{ googleOAuthConfigured }}, showWarning={{ showGmailOAuthWarning }}
           </div>
           
-          <div v-if="showGmailOAuthWarning" class="account-modal-message warning">
+          <!-- 直接使用条件表达式而不是计算属性 -->
+          <div v-if="selectedPreset === 'Gmail' && checkingOAuthConfig === false && googleOAuthConfigured === false" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
