@@ -43,6 +43,7 @@ const passwordForm = reactive({ oldPassword: '', newPassword: '', confirmPasswor
 const aiForm = reactive<UserSettings>({
   aiEnabled: false, aiProvider: '', aiApiKey: '', aiModel: '',
   extractCode: true, detectAd: true, summarize: true, judgeImportance: true,
+  googleClientId: '', googleClientSecret: '', googleRedirectUrl: '',
 });
 const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
 const testingBackendConnection = ref(false);
@@ -149,6 +150,19 @@ async function saveAISettings() {
     const success = await userStore.updateSettings(aiForm);
     if (success) successMessage.value = 'AI 设置已更新';
     else errorMessage.value = userStore.error || '更新失败';
+  } finally { isSubmitting.value = false; }
+}
+
+async function saveGoogleOAuthSettings() {
+  clearMessages(); isSubmitting.value = true;
+  try {
+    const success = await userStore.updateSettings({
+      googleClientId: aiForm.googleClientId,
+      googleClientSecret: aiForm.googleClientSecret,
+      googleRedirectUrl: aiForm.googleRedirectUrl,
+    });
+    if (success) successMessage.value = 'Google OAuth 配置已保存';
+    else errorMessage.value = userStore.error || '保存失败';
   } finally { isSubmitting.value = false; }
 }
 
@@ -594,6 +608,38 @@ onMounted(async () => {
             <button type="submit" class="btn primary">保存密钥</button>
           </form>
         </div>
+        
+        <div class="form-section">
+          <h3>Google OAuth 配置</h3>
+          <p class="section-desc">配置 Google OAuth 以支持 Gmail 账户登录。需要在 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> 创建 OAuth 凭据。</p>
+          <form @submit.prevent="saveGoogleOAuthSettings">
+            <div class="form-group">
+              <label class="form-label">Client ID</label>
+              <input v-model="aiForm.googleClientId" type="text" class="form-input" placeholder="xxx.apps.googleusercontent.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Client Secret</label>
+              <input v-model="aiForm.googleClientSecret" type="password" class="form-input" placeholder="Google Client Secret" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">重定向 URL</label>
+              <input v-model="aiForm.googleRedirectUrl" type="text" class="form-input" placeholder="http://localhost:8080/api/oauth/google/callback" />
+              <p class="hint">必须与 Google Cloud Console 中配置的授权重定向 URI 一致</p>
+            </div>
+            <button type="submit" class="btn primary" :disabled="isSubmitting">{{ isSubmitting ? '保存中...' : '保存 OAuth 配置' }}</button>
+          </form>
+          <div class="oauth-help">
+            <h4>配置步骤：</h4>
+            <ol>
+              <li>访问 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+              <li>创建项目 → 启用 Gmail API</li>
+              <li>配置 OAuth 同意屏幕（选择 External）</li>
+              <li>创建 OAuth 2.0 客户端 ID（Web 应用）</li>
+              <li>添加授权重定向 URI（与上方填写的一致）</li>
+              <li>复制 Client ID 和 Client Secret 填入上方</li>
+            </ol>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -761,6 +807,14 @@ onMounted(async () => {
 .form-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
 .form-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .form-section h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+.section-desc { margin: 0 0 20px; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
+.section-desc a { color: var(--primary-color); text-decoration: none; }
+.section-desc a:hover { text-decoration: underline; }
+.oauth-help { margin-top: 24px; padding: 18px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); }
+.oauth-help h4 { margin: 0 0 12px; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+.oauth-help ol { margin: 0; padding-left: 20px; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.8; }
+.oauth-help a { color: var(--primary-color); text-decoration: none; }
+.oauth-help a:hover { text-decoration: underline; }
 .button-group { display: flex; gap: 12px; margin-top: 16px; }
 .logs-panel { margin-top: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--card-bg); }
 .logs-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border-color); }

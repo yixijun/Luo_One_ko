@@ -79,6 +79,10 @@ export interface UserSettings {
   summarize: boolean;
   judgeImportance: boolean;
   emailListLimit?: number; // 邮件列表数量限制: -1=不限制, 20/50/100/500
+  // Google OAuth 配置
+  googleClientId?: string;
+  googleClientSecret?: string;
+  googleRedirectUrl?: string;
 }
 
 
