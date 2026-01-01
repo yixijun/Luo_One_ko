@@ -1075,16 +1075,42 @@ onUnmounted(() => {
 
 .html-content {
   word-break: break-word;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: var(--radius-md, 10px);
+  color: #1a1a2e;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.html-content :deep(*) {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.html-content :deep(body),
+.html-content :deep(div),
+.html-content :deep(span),
+.html-content :deep(p),
+.html-content :deep(td),
+.html-content :deep(th),
+.html-content :deep(li) {
+  color: #1a1a2e !important;
+  font-family: inherit !important;
 }
 
 .html-content :deep(img) {
   max-width: 100%;
   height: auto;
   border-radius: var(--radius-md, 10px);
+  display: block;
+  margin: 8px 0;
 }
 
 .html-content :deep(a) {
-  color: var(--primary-color);
+  color: #4f46e5 !important;
+  text-decoration: underline;
 }
 
 .text-content {

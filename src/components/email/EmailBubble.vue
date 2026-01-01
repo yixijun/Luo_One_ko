@@ -251,9 +251,13 @@ function handleClick() {
 
 .html-content {
   word-break: break-word;
-  background-color: #f5f5f5;
-  padding: 16px;
-  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: var(--radius-md, 10px);
+  color: #1a1a2e;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 /* 重置HTML邮件的默认样式 - 使用更强的选择器 */
@@ -263,22 +267,38 @@ function handleClick() {
   border-left: none !important;
   border-left-width: 0 !important;
   border-left-style: none !important;
-  color: #333 !important;
+}
+
+.html-content :deep(body),
+.html-content :deep(div),
+.html-content :deep(span),
+.html-content :deep(p),
+.html-content :deep(td),
+.html-content :deep(th),
+.html-content :deep(li) {
+  color: #1a1a2e !important;
+  font-family: inherit !important;
 }
 
 .html-content :deep(a) {
-  color: var(--primary-color, #646cff) !important;
+  color: #4f46e5 !important;
+  text-decoration: underline;
+}
+
+.html-content :deep(a:hover) {
+  color: #4338ca !important;
 }
 
 .html-content :deep(blockquote) {
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-left: 3px solid var(--border-color, #2d2d44) !important;
-  background-color: rgba(255, 255, 255, 0.02);
+  margin: 12px 0;
+  padding: 12px 16px;
+  border-left: 4px solid #e5e7eb !important;
+  background-color: #f9fafb;
+  color: #4b5563 !important;
 }
 
 .html-content :deep(p) {
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 .html-content :deep(img) {
@@ -286,28 +306,71 @@ function handleClick() {
   height: auto;
   border-radius: 8px;
   border: none !important;
-}
-
-.html-content :deep(a) {
-  color: var(--primary-color, #646cff);
+  display: block;
+  margin: 8px 0;
 }
 
 .html-content :deep(table) {
   border-collapse: collapse;
   width: 100%;
   border-left: none !important;
+  margin: 12px 0;
 }
 
 .html-content :deep(td),
 .html-content :deep(th) {
-  border: 1px solid var(--border-color, #2d2d44) !important;
-  padding: 8px;
+  border: 1px solid #e5e7eb !important;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.html-content :deep(th) {
+  background-color: #f3f4f6;
+  font-weight: 600;
 }
 
 .html-content :deep(hr) {
   border: none !important;
-  border-top: 1px solid var(--border-color, #2d2d44) !important;
-  margin: 16px 0;
+  border-top: 1px solid #e5e7eb !important;
+  margin: 20px 0;
+}
+
+.html-content :deep(h1),
+.html-content :deep(h2),
+.html-content :deep(h3),
+.html-content :deep(h4),
+.html-content :deep(h5),
+.html-content :deep(h6) {
+  color: #111827 !important;
+  margin: 16px 0 8px;
+  font-weight: 600;
+}
+
+.html-content :deep(ul),
+.html-content :deep(ol) {
+  margin: 10px 0;
+  padding-left: 24px;
+}
+
+.html-content :deep(li) {
+  margin: 4px 0;
+}
+
+.html-content :deep(pre),
+.html-content :deep(code) {
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 13px;
+}
+
+.html-content :deep(pre) {
+  padding: 12px 16px;
+  overflow-x: auto;
+}
+
+.html-content :deep(code) {
+  padding: 2px 6px;
 }
 
 /* 强制移除所有左边框 */
