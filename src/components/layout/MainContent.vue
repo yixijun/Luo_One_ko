@@ -4,10 +4,14 @@
  * Requirements: 8.2, 8.3, 8.4
  * 实现邮件列表和邮件内容展示
  */
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
 import type { Email, EmailFolder } from '@/types';
+
+const emit = defineEmits<{
+  (e: 'email-select', email: Email): void;
+}>();
 
 const accountStore = useAccountStore();
 const emailStore = useEmailStore();
@@ -20,6 +24,13 @@ const currentFolder = ref<EmailFolder>('inbox');
 
 // 当前选中的邮件
 const selectedEmail = ref<Email | null>(null);
+
+// 移动端检测
+const isMobileView = ref(false);
+
+function checkMobileView() {
+  isMobileView.value = window.innerWidth < 768;
+}
 
 // 批量选择模式
 const isSelectMode = ref(false);
@@ -93,6 +104,10 @@ async function selectEmail(email: Email) {
   selectedEmail.value = email;
   if (!email.isRead) {
     await emailStore.markAsRead(email.id);
+  }
+  // 移动端通过事件通知父组件显示详情
+  if (isMobileView.value) {
+    emit('email-select', email);
   }
 }
 
@@ -231,14 +246,21 @@ function getImportanceLabel(importance: string): string {
 
 // 初始化
 onMounted(() => {
+  checkMobileView();
+  window.addEventListener('resize', checkMobileView);
+  
   if (!emailStore.hasEmails) {
     emailStore.fetchEmails({ folder: currentFolder.value, sort: sortBy.value });
   }
 });
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobileView);
+});
 </script>
 
 <template>
-  <main class="main-content">
+  <main class="main-content" :class="{ 'mobile': isMobileView }">
     <!-- 邮件列表 -->
     <div class="emails-panel">
       <div class="panel-header">
@@ -349,8 +371,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 右栏：邮件内容（聊天气泡形式） -->
-    <div class="content-panel">
+    <!-- 右栏：邮件内容（聊天气泡形式）- 移动端隐藏 -->
+    <div class="content-panel" v-if="!isMobileView">
       <template v-if="selectedEmail">
         <div class="panel-header content-header">
           <h3>{{ selectedEmail.subject || '(无主题)' }}</h3>
@@ -1003,15 +1025,22 @@ onMounted(() => {
     flex-direction: column;
   }
   
+  /* 移动端邮件列表占满全屏 */
+  .main-content.mobile .emails-panel {
+    width: 100%;
+    height: 100%;
+    border-right: none;
+    border-bottom: none;
+  }
+  
   .emails-panel {
     width: 100%;
-    height: 40%;
+    height: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--border-color, #2d2d44);
   }
   
   .content-panel {
-    height: 60%;
+    display: none;
   }
 }
 </style>
