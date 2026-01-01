@@ -7,7 +7,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
-import type { Email, EmailFolder } from '@/types';
+import type { Email, EmailFolder, Attachment } from '@/types';
 
 const emit = defineEmits<{
   (e: 'email-select', email: Email): void;
@@ -27,6 +27,13 @@ const selectedEmail = ref<Email | null>(null);
 
 // 移动端检测
 const isMobileView = ref(false);
+
+// 附件相关状态
+const attachments = ref<Attachment[]>([]);
+const loadingAttachments = ref(false);
+const downloadingFile = ref<string | null>(null);
+const attachmentRetryCount = ref(0);
+const maxRetries = 2;
 
 function checkMobileView() {
   isMobileView.value = window.innerWidth < 768;
@@ -308,6 +315,72 @@ function handleScroll(event: Event) {
   }
 }
 
+// 加载附件列表
+async function loadAttachments() {
+  if (!selectedEmail.value?.hasAttachments || !selectedEmail.value?.id) return;
+  
+  loadingAttachments.value = true;
+  try {
+    const result = await emailStore.fetchAttachments(selectedEmail.value.id);
+    attachments.value = result;
+    
+    // 如果附件列表为空且还有重试次数，延迟后重试
+    if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
+      attachmentRetryCount.value++;
+      setTimeout(() => {
+        loadAttachments();
+      }, 1500);
+    }
+  } catch (err) {
+    console.error('加载附件失败:', err);
+  } finally {
+    loadingAttachments.value = false;
+  }
+}
+
+// 下载附件
+async function handleDownloadAttachment(filename: string) {
+  if (!selectedEmail.value?.id) return;
+  
+  downloadingFile.value = filename;
+  try {
+    await emailStore.downloadAttachment(selectedEmail.value.id, filename);
+  } catch (err) {
+    console.error('下载附件失败:', err);
+    alert('下载附件失败');
+  } finally {
+    downloadingFile.value = null;
+  }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// 获取文件图标类型
+function getFileIcon(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return 'image';
+  if (['pdf'].includes(ext)) return 'pdf';
+  if (['doc', 'docx'].includes(ext)) return 'word';
+  if (['xls', 'xlsx'].includes(ext)) return 'excel';
+  if (['ppt', 'pptx'].includes(ext)) return 'ppt';
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+  return 'file';
+}
+
+// 监听选中邮件变化，加载附件
+watch(selectedEmail, (newEmail) => {
+  attachmentRetryCount.value = 0;
+  attachments.value = [];
+  if (newEmail?.hasAttachments) {
+    loadAttachments();
+  }
+});
+
 // 初始化
 onMounted(() => {
   checkMobileView();
@@ -554,10 +627,54 @@ onUnmounted(() => {
               <div v-else class="text-content">{{ selectedEmail.body }}</div>
             </div>
             <div class="bubble-footer" v-if="selectedEmail.hasAttachments">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-              <span>包含附件</span>
+              <div class="attachments-section">
+                <div class="attachments-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span>附件 ({{ attachments.length }})</span>
+                </div>
+                
+                <!-- 加载中 -->
+                <div v-if="loadingAttachments" class="attachments-loading">
+                  <div class="loading-spinner small"></div>
+                  <span>加载附件...</span>
+                </div>
+                
+                <!-- 附件列表 -->
+                <div v-else-if="attachments.length > 0" class="attachments-list">
+                  <div 
+                    v-for="attachment in attachments" 
+                    :key="attachment.filename"
+                    class="attachment-item"
+                    @click="handleDownloadAttachment(attachment.filename)"
+                  >
+                    <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                    </div>
+                    <div class="attachment-info">
+                      <span class="attachment-name">{{ attachment.filename }}</span>
+                      <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+                    </div>
+                    <div class="attachment-action">
+                      <div v-if="downloadingFile === attachment.filename" class="loading-spinner small"></div>
+                      <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 无附件 -->
+                <div v-else class="attachments-empty">
+                  <span>附件正在解析中...</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1070,8 +1187,7 @@ onUnmounted(() => {
 
 .bubble-footer {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
   padding: 12px 18px;
   border-top: 1px solid var(--border-color);
   font-size: 0.8125rem;
@@ -1082,6 +1198,122 @@ onUnmounted(() => {
 .bubble-footer svg {
   width: 16px;
   height: 16px;
+}
+
+/* 附件区域样式 */
+.attachments-section {
+  width: 100%;
+}
+
+.attachments-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.attachments-loading,
+.attachments-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--hover-bg);
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--hover-bg);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.attachment-item:hover {
+  background: var(--active-bg);
+}
+
+.attachment-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  flex-shrink: 0;
+}
+
+.attachment-icon.image {
+  background: #4caf50;
+}
+
+.attachment-icon.pdf {
+  background: #f44336;
+}
+
+.attachment-icon.archive {
+  background: #ff9800;
+}
+
+.attachment-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachment-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.attachment-action {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.attachment-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+.attachment-item:hover .attachment-action {
+  color: var(--primary-color);
 }
 
 /* 空状态和加载状态 */
