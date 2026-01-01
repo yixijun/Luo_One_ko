@@ -284,7 +284,11 @@ async function saveAccount() {
 // 使用 Google 账号登录
 async function loginWithGoogle() {
   try {
-    const response = await apiClient.get('/oauth/google/auth');
+    // 传递昵称参数
+    const displayName = accountForm.displayName || '';
+    const response = await apiClient.get('/oauth/google/auth', {
+      params: { display_name: displayName }
+    });
     console.log('[AppHeader] loginWithGoogle response:', response.data);
     
     // 获取 auth_url - 兼容不同的响应结构
