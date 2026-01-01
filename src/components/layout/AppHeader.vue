@@ -35,28 +35,6 @@ const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
 const checkingOAuthConfig = ref(false);
 
-// 计算属性：是否显示 Gmail OAuth 未配置警告
-const showGmailOAuthWarning = computed(() => {
-  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
-  console.log('[AppHeader] showGmailOAuthWarning computed:', {
-    selectedPreset: selectedPreset.value,
-    checkingOAuthConfig: checkingOAuthConfig.value,
-    googleOAuthConfigured: googleOAuthConfigured.value,
-    result: show
-  });
-  return show;
-});
-
-// 监控状态变化
-watch([selectedPreset, checkingOAuthConfig, googleOAuthConfigured], ([preset, checking, configured]) => {
-  console.log('[AppHeader] State changed:', {
-    selectedPreset: preset,
-    checkingOAuthConfig: checking,
-    googleOAuthConfigured: configured,
-    showWarning: showGmailOAuthWarning.value
-  });
-}, { immediate: true });
-
 // 用户信息
 const user = computed(() => userStore.user);
 const userInitial = computed(() => {
@@ -99,6 +77,28 @@ const emailPresets = [
   { name: 'Outlook', domain: 'outlook.com', imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp.office365.com', smtpPort: 587 },
 ];
 const selectedPreset = ref('手动配置');
+
+// 计算属性：是否显示 Gmail OAuth 未配置警告
+const showGmailOAuthWarning = computed(() => {
+  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
+  console.log('[AppHeader] showGmailOAuthWarning computed:', {
+    selectedPreset: selectedPreset.value,
+    checkingOAuthConfig: checkingOAuthConfig.value,
+    googleOAuthConfigured: googleOAuthConfigured.value,
+    result: show
+  });
+  return show;
+});
+
+// 监控状态变化
+watch([selectedPreset, checkingOAuthConfig, googleOAuthConfigured], ([preset, checking, configured]) => {
+  console.log('[AppHeader] State changed:', {
+    selectedPreset: preset,
+    checkingOAuthConfig: checking,
+    googleOAuthConfigured: configured,
+    showWarning: showGmailOAuthWarning.value
+  });
+}, { immediate: true });
 
 function applyPreset() {
   const preset = emailPresets.find(p => p.name === selectedPreset.value);
