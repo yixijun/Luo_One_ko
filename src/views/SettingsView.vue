@@ -156,14 +156,35 @@ async function saveAISettings() {
 
 async function saveGoogleOAuthSettings() {
   clearMessages(); isSubmitting.value = true;
+  console.log('[Settings] saveGoogleOAuthSettings called');
+  console.log('[Settings] aiForm.googleClientId:', aiForm.googleClientId?.substring(0, 10) + '...');
+  console.log('[Settings] aiForm.googleClientSecret length:', aiForm.googleClientSecret?.length);
+  console.log('[Settings] aiForm.googleRedirectUrl:', aiForm.googleRedirectUrl);
+  
   try {
-    const success = await userStore.updateSettings({
+    const payload = {
       google_client_id: aiForm.googleClientId,
       google_client_secret: aiForm.googleClientSecret,
       google_redirect_url: aiForm.googleRedirectUrl,
-    } as any);
-    if (success) successMessage.value = 'Google OAuth 配置已保存';
-    else errorMessage.value = userStore.error || '保存失败';
+    };
+    console.log('[Settings] Sending payload:', JSON.stringify(payload).substring(0, 100) + '...');
+    
+    const success = await userStore.updateSettings(payload as any);
+    console.log('[Settings] updateSettings result:', success);
+    
+    if (success) {
+      successMessage.value = 'Google OAuth 配置已保存';
+      console.log('[Settings] Settings saved successfully');
+      // 重新获取设置以验证
+      await userStore.fetchSettings();
+      console.log('[Settings] Fetched settings after save:', userStore.settings);
+    } else {
+      errorMessage.value = userStore.error || '保存失败';
+      console.error('[Settings] Save failed:', userStore.error);
+    }
+  } catch (err) {
+    console.error('[Settings] Exception:', err);
+    errorMessage.value = (err as Error).message || '保存失败';
   } finally { isSubmitting.value = false; }
 }
 

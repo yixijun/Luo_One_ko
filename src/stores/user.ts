@@ -96,14 +96,17 @@ export const useUserStore = defineStore('user', () => {
   // 获取用户设置
   async function fetchSettings(): Promise<void> {
     loading.value = true;
+    console.log('[UserStore] fetchSettings called');
     try {
       const response = await apiClient.get<UserSettings>('/settings');
+      console.log('[UserStore] fetchSettings response:', JSON.stringify(response.data).substring(0, 300));
       settings.value = response.data;
       
       // 同步主题设置
       const themeStore = useThemeStore();
       await themeStore.loadFromBackend();
     } catch (err) {
+      console.error('[UserStore] fetchSettings error:', err);
       error.value = (err as Error).message || '获取设置失败';
     } finally {
       loading.value = false;
@@ -114,11 +117,14 @@ export const useUserStore = defineStore('user', () => {
   async function updateSettings(data: Partial<UserSettings>): Promise<boolean> {
     loading.value = true;
     error.value = null;
+    console.log('[UserStore] updateSettings called with:', JSON.stringify(data).substring(0, 200));
     try {
       const response = await apiClient.put<UserSettings>('/settings', data);
+      console.log('[UserStore] updateSettings response:', JSON.stringify(response.data).substring(0, 200));
       settings.value = response.data;
       return true;
     } catch (err) {
+      console.error('[UserStore] updateSettings error:', err);
       error.value = (err as Error).message || '更新设置失败';
       return false;
     } finally {

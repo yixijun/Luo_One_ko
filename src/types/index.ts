@@ -122,9 +122,10 @@ export interface ChangePasswordRequest {
 
 // 附件信息
 export interface Attachment {
-  filename: string;      // 解码后的显示名称
-  raw_filename: string;  // 原始文件名（用于下载）
+  filename: string;      // 文件名
   size: number;
+  path?: string;         // 兼容旧版 API
+  raw_filename?: string; // 原始文件名（用于下载）
 }
 
 // 邮件列表响应

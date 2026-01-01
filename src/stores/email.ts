@@ -330,23 +330,97 @@ export const useEmailStore = defineStore('email', () => {
     error.value = null;
   }
 
+  // 解码 MIME 编码的文件名 (如 =?utf-8?B?...?= 或 =_utf-8_B_...=)
+  function decodeMimeFilename(filename: string): string {
+    if (!filename) return filename;
+    
+    // 处理下划线格式: =_utf-8_B_base64content_=
+    const underscoreMatch = filename.match(/^=_([^_]+)_([BQ])_(.+)_=$/i);
+    if (underscoreMatch) {
+      const charset = underscoreMatch[1];
+      const encoding = underscoreMatch[2];
+      const content = underscoreMatch[3];
+      if (charset && encoding && content) {
+        try {
+          if (encoding.toUpperCase() === 'B') {
+            // Base64 解码
+            const decoded = atob(content);
+            // 转换为 UTF-8 字符串
+            const bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; i++) {
+              bytes[i] = decoded.charCodeAt(i);
+            }
+            return new TextDecoder(charset || 'utf-8').decode(bytes);
+          } else if (encoding.toUpperCase() === 'Q') {
+            // Quoted-Printable 解码
+            return content.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (_, hex) => 
+              String.fromCharCode(parseInt(hex, 16))
+            );
+          }
+        } catch (e) {
+          console.warn('MIME filename decode failed:', e);
+        }
+      }
+    }
+    
+    // 处理标准格式: =?utf-8?B?base64content?=
+    const standardMatch = filename.match(/^=\?([^?]+)\?([BQ])\?(.+)\?=$/i);
+    if (standardMatch) {
+      const charset = standardMatch[1];
+      const encoding = standardMatch[2];
+      const content = standardMatch[3];
+      if (charset && encoding && content) {
+        try {
+          if (encoding.toUpperCase() === 'B') {
+            const decoded = atob(content);
+            const bytes = new Uint8Array(decoded.length);
+            for (let i = 0; i < decoded.length; i++) {
+              bytes[i] = decoded.charCodeAt(i);
+            }
+            return new TextDecoder(charset || 'utf-8').decode(bytes);
+          } else if (encoding.toUpperCase() === 'Q') {
+            return content.replace(/_/g, ' ').replace(/=([0-9A-F]{2})/gi, (_, hex) => 
+              String.fromCharCode(parseInt(hex, 16))
+            );
+          }
+        } catch (e) {
+          console.warn('MIME filename decode failed:', e);
+        }
+      }
+    }
+    
+    return filename;
+  }
+
   // 获取邮件附件列表
   async function fetchAttachments(emailId: number): Promise<Attachment[]> {
     try {
       const response = await apiClient.get<{ success: boolean; data: Attachment[] } | Attachment[]>(`/emails/${emailId}/attachments`);
-      console.log('Attachments API response:', response.data);
+      console.log('Attachments API raw response:', response);
+      console.log('Attachments API response.data:', response.data);
       
       // 兼容两种返回格式：
       // 1. { success: true, data: [...] }
       // 2. 直接返回数组 [...]
-      let attachments: Attachment[];
+      let rawAttachments: Attachment[];
       if (Array.isArray(response.data)) {
-        attachments = response.data;
+        rawAttachments = response.data;
+      } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        rawAttachments = response.data.data || [];
       } else {
-        attachments = response.data?.data || [];
+        rawAttachments = [];
       }
       
-      console.log('Parsed attachments:', attachments);
+      console.log('Raw attachments before decode:', rawAttachments);
+      
+      // 解码 MIME 编码的文件名
+      const attachments: Attachment[] = rawAttachments.map(att => ({
+        ...att,
+        raw_filename: att.filename, // 保存原始文件名用于下载
+        filename: decodeMimeFilename(att.filename), // 解码后的文件名用于显示
+      }));
+      
+      console.log('Parsed attachments after decode:', attachments);
       return attachments;
     } catch (err) {
       console.error('获取附件列表失败:', err);
@@ -355,9 +429,9 @@ export const useEmailStore = defineStore('email', () => {
   }
 
   // 下载附件
-  async function downloadAttachment(emailId: number, filename: string): Promise<void> {
+  async function downloadAttachment(emailId: number, rawFilename: string, displayFilename?: string): Promise<void> {
     try {
-      const response = await apiClient.get(`/emails/${emailId}/attachments/${encodeURIComponent(filename)}`, {
+      const response = await apiClient.get(`/emails/${emailId}/attachments/${encodeURIComponent(rawFilename)}`, {
         responseType: 'blob',
       });
       
@@ -366,7 +440,8 @@ export const useEmailStore = defineStore('email', () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename;
+      // 使用解码后的文件名作为下载文件名，如果没有则使用原始文件名
+      link.download = displayFilename || decodeMimeFilename(rawFilename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

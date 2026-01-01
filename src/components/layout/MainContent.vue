@@ -339,12 +339,13 @@ async function loadAttachments() {
 }
 
 // 下载附件
-async function handleDownloadAttachment(filename: string) {
+async function handleDownloadAttachment(attachment: Attachment) {
   if (!selectedEmail.value?.id) return;
   
-  downloadingFile.value = filename;
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  downloadingFile.value = rawFilename;
   try {
-    await emailStore.downloadAttachment(selectedEmail.value.id, filename);
+    await emailStore.downloadAttachment(selectedEmail.value.id, rawFilename, attachment.filename);
   } catch (err) {
     console.error('下载附件失败:', err);
     alert('下载附件失败');
@@ -652,7 +653,7 @@ onUnmounted(() => {
                     v-for="attachment in attachments" 
                     :key="attachment.raw_filename || attachment.filename"
                     class="attachment-item"
-                    @click="handleDownloadAttachment(attachment.raw_filename || attachment.filename)"
+                    @click="handleDownloadAttachment(attachment)"
                   >
                     <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

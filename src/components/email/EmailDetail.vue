@@ -59,10 +59,11 @@ async function loadAttachments() {
 }
 
 // 下载附件
-async function handleDownload(filename: string) {
-  downloadingFile.value = filename;
+async function handleDownload(attachment: Attachment) {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  downloadingFile.value = rawFilename;
   try {
-    await emailStore.downloadAttachment(props.email.id, filename);
+    await emailStore.downloadAttachment(props.email.id, rawFilename, attachment.filename);
   } catch (err) {
     console.error('下载附件失败:', err);
     alert('下载附件失败');
@@ -251,9 +252,9 @@ function handleForward() {
         <div v-else-if="attachments.length > 0" class="attachments-list">
           <div 
             v-for="attachment in attachments" 
-            :key="attachment.filename"
+            :key="attachment.raw_filename || attachment.filename"
             class="attachment-item"
-            @click="handleDownload(attachment.filename)"
+            @click="handleDownload(attachment)"
           >
             <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
               <!-- 图片图标 -->
@@ -285,7 +286,7 @@ function handleForward() {
               <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
             </div>
             <div class="attachment-action">
-              <div v-if="downloadingFile === attachment.filename" class="spinner small"></div>
+              <div v-if="downloadingFile === (attachment.raw_filename || attachment.filename)" class="spinner small"></div>
               <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
