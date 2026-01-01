@@ -9,10 +9,16 @@ import type { ApiResponse, ApiError } from '@/types';
 // Token 存储键名
 const TOKEN_KEY = 'luo_one_token';
 const API_KEY_KEY = 'luo_one_api_key';
+const BACKEND_URL_KEY = 'luo_one_backend_url';
+
+// 获取后端地址
+function getBackendUrl(): string {
+  return localStorage.getItem(BACKEND_URL_KEY) || '/api';
+}
 
 // 创建 axios 实例
 const apiClient: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: getBackendUrl(),
   timeout: 30000, // 默认 30 秒
   headers: {
     'Content-Type': 'application/json',
@@ -57,6 +63,34 @@ export const apiKeyManager = {
     localStorage.removeItem(API_KEY_KEY);
   },
 };
+
+// 后端地址管理
+export const backendUrlManager = {
+  getBackendUrl(): string {
+    return localStorage.getItem(BACKEND_URL_KEY) || '';
+  },
+
+  setBackendUrl(url: string): void {
+    localStorage.setItem(BACKEND_URL_KEY, url);
+    // 更新 axios 实例的 baseURL
+    if (url) {
+      apiClient.defaults.baseURL = url.endsWith('/api') ? url : `${url}/api`;
+    } else {
+      apiClient.defaults.baseURL = '/api';
+    }
+  },
+
+  removeBackendUrl(): void {
+    localStorage.removeItem(BACKEND_URL_KEY);
+    apiClient.defaults.baseURL = '/api';
+  },
+};
+
+// 初始化时设置 baseURL
+const savedUrl = backendUrlManager.getBackendUrl();
+if (savedUrl) {
+  apiClient.defaults.baseURL = savedUrl.endsWith('/api') ? savedUrl : `${savedUrl}/api`;
+}
 
 
 // 请求拦截器 - 添加认证信息

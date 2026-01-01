@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore, getEmailListLimit, setEmailListLimit } from '@/stores/email';
-import { apiKeyManager } from '@/api/client';
-import axios from 'axios';
+import { apiKeyManager, backendUrlManager } from '@/api/client';
+import apiClient from '@/api/client';
 import type { EmailAccount, UserSettings } from '@/types';
 
 // 邮件列表数量选项
@@ -49,7 +49,7 @@ const aiForm = reactive<UserSettings>({
   aiEnabled: false, aiProvider: '', aiApiKey: '', aiModel: '',
   extractCode: true, detectAd: true, summarize: true, judgeImportance: true,
 });
-const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: '' });
+const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
 const testingBackendConnection = ref(false);
 const backendTestResult = ref<{ success: boolean; message: string } | null>(null);
 const accountForm = reactive<Partial<EmailAccount>>({
@@ -111,45 +111,40 @@ function saveBackendSettings() {
 }
 
 async function loadBackendUrl() {
-  try {
-    const response = await axios.get('/config/backend');
-    if (response.data?.data?.backendUrl) {
-      backendForm.backendUrl = response.data.data.backendUrl;
-    }
-  } catch (e) {
-    console.error('Failed to load backend URL:', e);
-  }
+  // 从 localStorage 读取，已在 backendForm 初始化时完成
 }
 
 async function saveBackendUrl() {
   clearMessages();
   if (!backendForm.backendUrl.trim()) {
-    errorMessage.value = '请输入后端地址';
+    backendUrlManager.removeBackendUrl();
+    successMessage.value = '后端地址已清除，将使用默认代理';
+    addLog('info', '后端地址已清除');
     return;
   }
-  try {
-    await axios.post('/config/backend', { backendUrl: backendForm.backendUrl.trim() });
-    successMessage.value = '后端地址已保存';
-    addLog('success', `后端地址已更新为: ${backendForm.backendUrl}`);
-  } catch (e) {
-    errorMessage.value = '保存后端地址失败';
-    addLog('error', '保存后端地址失败');
-  }
+  backendUrlManager.setBackendUrl(backendForm.backendUrl.trim());
+  successMessage.value = '后端地址已保存';
+  addLog('success', `后端地址已更新为: ${backendForm.backendUrl}`);
 }
 
 async function testBackendConnection() {
   clearMessages();
   testingBackendConnection.value = true;
   backendTestResult.value = null;
-  addLog('info', `测试后端连接: ${backendForm.backendUrl}`);
+  
+  const testUrl = backendForm.backendUrl.trim();
+  addLog('info', `测试后端连接: ${testUrl || '默认代理'}`);
   
   try {
     // 先保存后端地址
-    await axios.post('/config/backend', { backendUrl: backendForm.backendUrl.trim() });
+    if (testUrl) {
+      backendUrlManager.setBackendUrl(testUrl);
+    }
     
     // 然后测试连接
-    const response = await axios.get('/api/health', { timeout: 5000 });
-    if (response.data?.status === 'ok') {
+    const response = await apiClient.get('/health', { timeout: 5000 });
+    // 后端返回 { status: 'ok' }，不是包装在 data 里
+    if (response.data?.status === 'ok' || response.status === 200) {
       backendTestResult.value = { success: true, message: '连接成功' };
       addLog('success', '后端连接测试成功');
     } else {
