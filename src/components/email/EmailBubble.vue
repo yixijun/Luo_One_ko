@@ -251,6 +251,9 @@ function handleClick() {
 
 .html-content {
   word-break: break-word;
+  background-color: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
 }
 
 /* 重置HTML邮件的默认样式 - 使用更强的选择器 */
@@ -260,6 +263,11 @@ function handleClick() {
   border-left: none !important;
   border-left-width: 0 !important;
   border-left-style: none !important;
+  color: #333 !important;
+}
+
+.html-content :deep(a) {
+  color: var(--primary-color, #646cff) !important;
 }
 
 .html-content :deep(blockquote) {
