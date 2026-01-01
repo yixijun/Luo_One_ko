@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -46,6 +46,16 @@ const showGmailOAuthWarning = computed(() => {
   });
   return show;
 });
+
+// 监控状态变化
+watch([selectedPreset, checkingOAuthConfig, googleOAuthConfigured], ([preset, checking, configured]) => {
+  console.log('[AppHeader] State changed:', {
+    selectedPreset: preset,
+    checkingOAuthConfig: checking,
+    googleOAuthConfigured: configured,
+    showWarning: showGmailOAuthWarning.value
+  });
+}, { immediate: true });
 
 // 用户信息
 const user = computed(() => userStore.user);
@@ -251,6 +261,8 @@ async function openAccountModal() {
   checkingOAuthConfig.value = true;
   googleOAuthConfigured.value = false; // 先重置为 false
   
+  console.log('[AppHeader] Before OAuth check - selectedPreset:', selectedPreset.value, 'googleOAuthConfigured:', googleOAuthConfigured.value);
+  
   // 检查 Google OAuth 配置状态
   try {
     const token = localStorage.getItem('luo_one_token');
@@ -269,6 +281,10 @@ async function openAccountModal() {
       const googleEnabled = data?.data?.google_enabled ?? data?.google_enabled ?? false;
       googleOAuthConfigured.value = googleEnabled;
       console.log('[AppHeader] googleOAuthConfigured set to:', googleOAuthConfigured.value);
+      
+      // 强制触发响应式更新
+      await nextTick();
+      console.log('[AppHeader] After nextTick - googleOAuthConfigured:', googleOAuthConfigured.value);
     } else {
       console.log('[AppHeader] OAuth config request failed');
       googleOAuthConfigured.value = false;
@@ -279,6 +295,10 @@ async function openAccountModal() {
   } finally {
     checkingOAuthConfig.value = false;
     console.log('[AppHeader] Final state - googleOAuthConfigured:', googleOAuthConfigured.value, 'checkingOAuthConfig:', checkingOAuthConfig.value);
+    
+    // 再次强制触发响应式更新
+    await nextTick();
+    console.log('[AppHeader] After final nextTick - showGmailOAuthWarning should be:', showGmailOAuthWarning.value);
   }
 }
 
@@ -603,6 +623,12 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
+          
+          <!-- 调试信息 -->
+          <div class="account-modal-message info" style="font-size: 12px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
+            调试: selectedPreset={{ selectedPreset }}, checkingOAuthConfig={{ checkingOAuthConfig }}, googleOAuthConfigured={{ googleOAuthConfigured }}, showWarning={{ showGmailOAuthWarning }}
+          </div>
+          
           <div v-if="showGmailOAuthWarning" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
