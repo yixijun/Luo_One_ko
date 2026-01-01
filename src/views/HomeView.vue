@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
+import apiClient from '@/api/client';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import MainContent from '@/components/layout/MainContent.vue';
@@ -24,11 +25,11 @@ const emailStore = useEmailStore();
 const showEmailDetail = ref(false);
 const selectedEmail = ref<Email | null>(null);
 const isMobileView = ref(false);
-const lastRefreshTime = ref<string>('');
+const lastEmailCount = ref<number>(0);
 
 // 自动刷新定时器
 let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
-const AUTO_REFRESH_INTERVAL = 15000; // 15秒自动刷新一次
+const AUTO_REFRESH_INTERVAL = 10000; // 10秒检查一次
 
 // 计算属性
 const isLoading = computed(() => userStore.loading || accountStore.loading || emailStore.loading);
@@ -38,28 +39,38 @@ function checkMobileView() {
   isMobileView.value = window.innerWidth < 768;
 }
 
-// 自动刷新邮件列表
-async function autoRefreshEmails() {
-  // 如果正在加载或没有账户，跳过
-  if (emailStore.loading || !accountStore.hasAccounts) return;
+// 检查是否有新邮件
+async function checkForNewEmails() {
+  if (!accountStore.hasAccounts) return;
   
-  console.log('[AutoRefresh] 刷新邮件列表...');
-  lastRefreshTime.value = new Date().toLocaleTimeString();
-  
-  // 静默刷新邮件列表
   try {
-    await emailStore.fetchEmails({ accountId: accountStore.currentAccountId || undefined });
-    console.log('[AutoRefresh] 刷新完成，邮件数:', emailStore.emails.length);
+    const params: Record<string, unknown> = { folder: 'inbox' };
+    if (accountStore.currentAccountId) {
+      params.account_id = accountStore.currentAccountId;
+    }
+    
+    const response = await apiClient.get<{ total: number }>('/emails/count', { params });
+    const newCount = response.data.total;
+    
+    // 如果数量变化了，刷新邮件列表
+    if (lastEmailCount.value !== 0 && newCount !== lastEmailCount.value) {
+      console.log('[AutoRefresh] 检测到新邮件，刷新列表', lastEmailCount.value, '->', newCount);
+      await emailStore.fetchEmails({ accountId: accountStore.currentAccountId || undefined });
+    }
+    
+    lastEmailCount.value = newCount;
   } catch (e) {
-    console.error('[AutoRefresh] 刷新失败:', e);
+    // 静默失败
   }
 }
 
 // 启动自动刷新
 function startAutoRefresh() {
   if (autoRefreshTimer) return;
-  console.log('[AutoRefresh] 启动自动刷新，间隔:', AUTO_REFRESH_INTERVAL, 'ms');
-  autoRefreshTimer = setInterval(autoRefreshEmails, AUTO_REFRESH_INTERVAL);
+  console.log('[AutoRefresh] 启动自动检查，间隔:', AUTO_REFRESH_INTERVAL, 'ms');
+  // 初始化当前数量
+  checkForNewEmails();
+  autoRefreshTimer = setInterval(checkForNewEmails, AUTO_REFRESH_INTERVAL);
 }
 
 // 停止自动刷新
@@ -67,7 +78,6 @@ function stopAutoRefresh() {
   if (autoRefreshTimer) {
     clearInterval(autoRefreshTimer);
     autoRefreshTimer = null;
-    console.log('[AutoRefresh] 停止自动刷新');
   }
 }
 
