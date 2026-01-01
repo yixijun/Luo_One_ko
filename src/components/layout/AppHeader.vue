@@ -64,6 +64,40 @@ const accountForm = reactive<Partial<EmailAccount>>({
   enabled: true,
 });
 
+// 邮箱预设配置
+const emailPresets = [
+  { name: '手动配置', domain: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465 },
+  { name: 'Gmail', domain: 'gmail.com', imapHost: 'imap.gmail.com', imapPort: 993, smtpHost: 'smtp.gmail.com', smtpPort: 587 },
+  { name: 'QQ 邮箱', domain: 'qq.com', imapHost: 'imap.qq.com', imapPort: 993, smtpHost: 'smtp.qq.com', smtpPort: 465 },
+  { name: '163 邮箱', domain: '163.com', imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465 },
+  { name: '126 邮箱', domain: '126.com', imapHost: 'imap.126.com', imapPort: 993, smtpHost: 'smtp.126.com', smtpPort: 465 },
+  { name: 'Outlook', domain: 'outlook.com', imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp.office365.com', smtpPort: 587 },
+];
+const selectedPreset = ref('手动配置');
+
+function applyPreset() {
+  const preset = emailPresets.find(p => p.name === selectedPreset.value);
+  if (preset && preset.imapHost) {
+    accountForm.imapHost = preset.imapHost;
+    accountForm.imapPort = preset.imapPort;
+    accountForm.smtpHost = preset.smtpHost;
+    accountForm.smtpPort = preset.smtpPort;
+  }
+}
+
+function autoSelectPreset() {
+  const email = accountForm.email || '';
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (domain) {
+    const preset = emailPresets.find(p => p.domain === domain);
+    if (preset) {
+      selectedPreset.value = preset.name;
+      applyPreset();
+      if (!accountForm.username) accountForm.username = email;
+    }
+  }
+}
+
 // 搜索邮件
 async function handleSearch() {
   if (!searchQuery.value.trim()) return;
@@ -218,6 +252,7 @@ function resetAccountForm() {
     useSSL: true,
     enabled: true,
   });
+  selectedPreset.value = '手动配置';
 }
 
 // 保存邮箱账户
@@ -502,6 +537,14 @@ onUnmounted(() => {
           <div v-if="errorMessage" class="message error">{{ errorMessage }}</div>
           
           <div class="form-group">
+            <label>邮箱服务商</label>
+            <select v-model="selectedPreset" class="input" @change="applyPreset">
+              <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
+            </select>
+            <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码</p>
+            <p class="hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码</p>
+          </div>
+          <div class="form-group">
             <label>邮箱地址 *</label>
             <input 
               type="email" 
@@ -509,6 +552,7 @@ onUnmounted(() => {
               placeholder="example@mail.com"
               class="input"
               required
+              @blur="autoSelectPreset"
             />
           </div>
           <div class="form-group">
@@ -594,13 +638,13 @@ onUnmounted(() => {
               启用此账户
             </label>
           </div>
-          <div class="modal-actions">
-            <button type="button" class="btn" @click="closeAccountModal">取消</button>
-            <button type="submit" class="btn primary" :disabled="isSubmitting">
-              {{ isSubmitting ? '添加中...' : '添加账户' }}
-            </button>
-          </div>
         </form>
+        <div class="modal-actions">
+          <button type="button" class="btn" @click="closeAccountModal">取消</button>
+          <button type="submit" class="btn primary" :disabled="isSubmitting" @click="saveAccount">
+            {{ isSubmitting ? '添加中...' : '添加账户' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1041,6 +1085,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal {
@@ -1049,8 +1094,9 @@ onUnmounted(() => {
   border-radius: var(--radius-xl, 20px);
   width: 90%;
   max-width: 420px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
   animation: scaleIn 0.2s ease-out;
   box-shadow: var(--shadow-lg);
 }
@@ -1074,8 +1120,9 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -1106,10 +1153,12 @@ onUnmounted(() => {
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .message {
@@ -1201,15 +1250,18 @@ onUnmounted(() => {
 }
 
 .hint {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--text-tertiary);
+  margin-top: 4px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .btn {
