@@ -1,7 +1,8 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import fs from 'fs'
+import type { IncomingMessage, ServerResponse } from 'http'
 
 // 配置文件路径
 const CONFIG_FILE = resolve(__dirname, 'server/backend-config.json');
@@ -28,42 +29,19 @@ function saveBackendUrl(url: string): void {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(CONFIG_FILE, JSON.stringify({ backendUrl: url }, null, 2));
+    console.log('[Config] Saved backend URL:', url);
   } catch (e) {
     console.error('Failed to save backend config:', e);
   }
 }
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-    },
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: getBackendUrl(),
-        changeOrigin: true,
-        configure: (proxy) => {
-          // 动态更新代理目标
-          proxy.on('proxyReq', () => {
-            const newTarget = getBackendUrl();
-            if (proxy.options.target !== newTarget) {
-              proxy.options.target = newTarget;
-            }
-          });
-        },
-      },
-      '/health': {
-        target: getBackendUrl(),
-        changeOrigin: true,
-      },
-      '/config/backend': {
-        bypass: (req, res) => {
+// 配置 API 插件
+function configApiPlugin(): Plugin {
+  return {
+    name: 'config-api',
+    configureServer(server) {
+      server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (req.url === '/config/backend') {
           if (req.method === 'GET') {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: true, data: { backendUrl: getBackendUrl() } }));
@@ -82,12 +60,47 @@ export default defineConfig({
                 res.end(JSON.stringify({ success: true, data: { backendUrl } }));
               } catch (e) {
                 res.statusCode = 400;
+                res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify({ success: false, error: 'Invalid JSON' }));
               }
             });
             return;
           }
+        }
+        next();
+      });
+    },
+  };
+}
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    configApiPlugin(),
+  ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: getBackendUrl(),
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            const newTarget = getBackendUrl();
+            console.log(`[Proxy] ${req.method} ${req.url} -> ${newTarget}`);
+          });
         },
+      },
+      '/health': {
+        target: getBackendUrl(),
+        changeOrigin: true,
       },
     },
   },
