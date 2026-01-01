@@ -368,16 +368,47 @@ async function syncAccount(id: number) {
   }
 }
 
+// 全量同步进度
+const fullSyncProgress = ref<{ total: number; processed: number; saved: number; batch: number; totalBatches: number } | null>(null);
+
 async function syncAllAccount(id: number) {
   clearMessages();
   fullSyncingAccountId.value = id;
+  fullSyncProgress.value = null;
   const account = accounts.value.find(a => a.id === id);
   addLog('info', `开始全量同步邮件: ${account?.email || id}`);
   addLog('info', `全量同步会分批处理所有邮件，可能需要较长时间...`);
   
+  // 启动进度轮询
+  let progressInterval: ReturnType<typeof setInterval> | null = null;
+  const startProgressPolling = () => {
+    progressInterval = setInterval(async () => {
+      const progress = await emailStore.getSyncProgress(id);
+      if (progress && progress.status === 'running') {
+        fullSyncProgress.value = {
+          total: progress.totalMessages,
+          processed: progress.processed,
+          saved: progress.saved,
+          batch: progress.currentBatch,
+          totalBatches: progress.totalBatches,
+        };
+        const percent = progress.totalMessages > 0 ? Math.round((progress.processed / progress.totalMessages) * 100) : 0;
+        addLog('info', `同步进度: ${percent}% (${progress.processed}/${progress.totalMessages}) 批次 ${progress.currentBatch}/${progress.totalBatches} 已保存 ${progress.saved} 封`);
+      }
+    }, 2000);
+  };
+  
   try {
     addLog('info', `正在调用全量同步 API: POST /api/emails/sync { account_id: ${id}, full_sync: true }`);
+    
+    // 延迟启动进度轮询，给后端一点时间初始化
+    setTimeout(startProgressPolling, 1000);
+    
     const syncedCount = await emailStore.syncEmails({ accountId: id, fullSync: true });
+    
+    // 停止进度轮询
+    if (progressInterval) clearInterval(progressInterval);
+    fullSyncProgress.value = null;
     
     if (syncedCount >= 0) {
       addLog('success', `全量同步完成`);
@@ -400,7 +431,9 @@ async function syncAllAccount(id: number) {
     addLog('error', `全量同步异常: ${errMsg}`);
     errorMessage.value = errMsg;
   } finally {
+    if (progressInterval) clearInterval(progressInterval);
     fullSyncingAccountId.value = null;
+    fullSyncProgress.value = null;
   }
 }
 
@@ -595,6 +628,17 @@ onMounted(async () => {
               <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
               <button class="btn small" @click="openEditAccountModal(account)">编辑</button>
               <button class="btn small danger" @click="deleteAccount(account.id)">删除</button>
+            </div>
+            <!-- 全量同步进度条 -->
+            <div v-if="fullSyncingAccountId === account.id && fullSyncProgress" class="sync-progress">
+              <div class="progress-info">
+                <span>同步进度: {{ fullSyncProgress.processed }}/{{ fullSyncProgress.total }} 邮件</span>
+                <span>批次: {{ fullSyncProgress.batch }}/{{ fullSyncProgress.totalBatches }}</span>
+                <span>已保存: {{ fullSyncProgress.saved }} 封</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: (fullSyncProgress.total > 0 ? (fullSyncProgress.processed / fullSyncProgress.total * 100) : 0) + '%' }"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -846,6 +890,10 @@ onMounted(async () => {
 .account-email-count { font-size: 0.75rem; color: var(--primary-color); font-weight: 500; }
 .account-sync-time { font-size: 0.6875rem; color: var(--text-tertiary); }
 .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sync-progress { width: 100%; margin-top: 12px; padding: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); }
+.sync-progress .progress-info { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; flex-wrap: wrap; }
+.sync-progress .progress-bar { height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; }
+.sync-progress .progress-fill { height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s ease; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
 .modal { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-xl, 20px); width: 90%; max-width: 520px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); overflow: hidden; }
 .modal > form { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }

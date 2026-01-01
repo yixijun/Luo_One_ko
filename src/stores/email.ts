@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/api/client';
-import type { Email, EmailListParams, SendEmailRequest, SyncRequest, ProcessedResult } from '@/types';
+import type { Email, EmailListParams, SendEmailRequest, SyncRequest, ProcessedResult, SyncProgress } from '@/types';
 
 // 邮件列表数量限制 - 从 localStorage 读取，默认 20
 const EMAIL_LIST_LIMIT_KEY = 'luo_one_email_list_limit';
@@ -293,6 +293,16 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 获取全量同步进度
+  async function getSyncProgress(accountId: number): Promise<SyncProgress | null> {
+    try {
+      const response = await apiClient.get<SyncProgress>(`/emails/sync/progress?account_id=${accountId}`);
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   // 清除当前邮件
   function clearCurrentEmail(): void {
     currentEmail.value = null;
@@ -328,6 +338,7 @@ export const useEmailStore = defineStore('email', () => {
     markAllAsRead,
     sendEmail,
     syncEmails,
+    getSyncProgress,
     clearCurrentEmail,
     reset,
   };

@@ -157,3 +157,16 @@ export interface SyncRequest {
   accountId?: number;
   fullSync?: boolean; // 是否全量同步
 }
+
+// 全量同步进度
+export interface SyncProgress {
+  accountId: number;
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  totalMessages: number;
+  processed: number;
+  saved: number;
+  skipped: number;
+  currentBatch: number;
+  totalBatches: number;
+  error?: string;
+}
