@@ -98,13 +98,18 @@ async function syncEmails() {
   try {
     const currentAccountId = accountStore.currentAccountId;
     if (currentAccountId) {
+      // 只同步当前选中的账户
       await emailStore.syncEmails({ accountId: currentAccountId });
       await emailStore.fetchEmails({ accountId: currentAccountId });
     } else {
-      // 同步所有启用的账户
-      for (const account of accountStore.enabledAccounts) {
-        await emailStore.syncEmails({ accountId: account.id });
-      }
+      // 并行同步所有启用的账户
+      const syncPromises = accountStore.enabledAccounts.map(account => 
+        emailStore.syncEmails({ accountId: account.id }).catch(err => {
+          console.error(`同步账户 ${account.email} 失败:`, err);
+          return -1;
+        })
+      );
+      await Promise.all(syncPromises);
       await emailStore.fetchEmails();
     }
   } finally {
