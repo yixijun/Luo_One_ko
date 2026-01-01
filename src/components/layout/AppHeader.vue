@@ -8,12 +8,14 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
 import { useAccountStore } from '@/stores/account';
+import { useThemeStore, themes, type ThemeName } from '@/stores/theme';
 import type { EmailAccount } from '@/types';
 
 const router = useRouter();
 const userStore = useUserStore();
 const emailStore = useEmailStore();
 const accountStore = useAccountStore();
+const themeStore = useThemeStore();
 
 // 搜索相关
 const searchQuery = ref('');
@@ -23,6 +25,7 @@ const isSearching = ref(false);
 const showUserMenu = ref(false);
 const showProfileModal = ref(false);
 const showAccountModal = ref(false);
+const showThemeMenu = ref(false);
 
 // 状态
 const isSubmitting = ref(false);
@@ -106,7 +109,25 @@ async function syncEmails() {
 // 切换用户菜单
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value;
+  showThemeMenu.value = false;
 }
+
+// 切换主题菜单
+function toggleThemeMenu() {
+  showThemeMenu.value = !showThemeMenu.value;
+  showUserMenu.value = false;
+}
+
+// 选择主题
+function selectTheme(themeName: ThemeName) {
+  themeStore.setTheme(themeName);
+  showThemeMenu.value = false;
+}
+
+// 获取当前主题信息
+const currentThemeInfo = computed(() => {
+  return themes.find(t => t.name === themeStore.currentTheme) || themes[0];
+});
 
 // 打开个人信息弹窗
 function openProfileModal() {
@@ -211,6 +232,9 @@ function handleClickOutside(event: MouseEvent) {
   if (!target.closest('.user-menu-container')) {
     showUserMenu.value = false;
   }
+  if (!target.closest('.theme-menu-container')) {
+    showThemeMenu.value = false;
+  }
 }
 
 onMounted(() => {
@@ -280,6 +304,46 @@ onUnmounted(() => {
           <path d="M12 5v14M5 12h14"/>
         </svg>
       </button>
+
+      <!-- 主题切换按钮 -->
+      <div class="theme-menu-container">
+        <button 
+          class="icon-btn theme-btn" 
+          @click.stop="toggleThemeMenu" 
+          :title="`当前主题: ${currentThemeInfo.label}`"
+        >
+          <span class="theme-indicator" :style="{ backgroundColor: currentThemeInfo.primaryColor }"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="m4.93 4.93 1.41 1.41"/>
+            <path d="m17.66 17.66 1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="m6.34 17.66-1.41 1.41"/>
+            <path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+        </button>
+        
+        <!-- 主题下拉菜单 -->
+        <div v-if="showThemeMenu" class="theme-dropdown">
+          <div class="dropdown-title">选择主题</div>
+          <button
+            v-for="theme in themes"
+            :key="theme.name"
+            class="theme-option"
+            :class="{ active: themeStore.currentTheme === theme.name }"
+            @click="selectTheme(theme.name)"
+          >
+            <span class="theme-color" :style="{ backgroundColor: theme.primaryColor }"></span>
+            <span class="theme-name">{{ theme.label }}</span>
+            <svg v-if="themeStore.currentTheme === theme.name" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
       <!-- 用户头像和菜单 -->
       <div class="user-menu-container">
@@ -507,10 +571,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
-  background-color: var(--header-bg, #1a1a2e);
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  height: 60px;
+  padding: 0 20px;
+  background-color: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -529,9 +595,10 @@ onUnmounted(() => {
 }
 
 .logo-text {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--primary-color, #646cff);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: -0.02em;
 }
 
 .header-center {
@@ -543,20 +610,22 @@ onUnmounted(() => {
 .search-bar {
   display: flex;
   align-items: center;
-  background-color: var(--input-bg, #2d2d44);
-  border-radius: 8px;
-  padding: 0 12px;
-  transition: box-shadow 0.2s;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  padding: 0 14px;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .search-bar:focus-within {
-  box-shadow: 0 0 0 2px var(--primary-color, #646cff);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .search-icon {
   width: 18px;
   height: 18px;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
@@ -564,14 +633,14 @@ onUnmounted(() => {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 10px 12px;
+  padding: 11px 12px;
   font-size: 0.875rem;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   outline: none;
 }
 
 .search-input::placeholder {
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
 }
 
 .clear-btn {
@@ -583,15 +652,15 @@ onUnmounted(() => {
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   cursor: pointer;
-  border-radius: 4px;
-  transition: color 0.2s, background-color 0.2s;
+  border-radius: var(--radius-sm, 6px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .clear-btn:hover {
-  color: var(--text-primary, #fff);
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
 }
 
 .clear-btn svg {
@@ -600,20 +669,21 @@ onUnmounted(() => {
 }
 
 .search-btn {
-  padding: 6px 16px;
+  padding: 7px 16px;
   margin-left: 8px;
   border: none;
-  border-radius: 6px;
-  background-color: var(--primary-color, #646cff);
+  border-radius: var(--radius-md, 10px);
+  background-color: var(--primary-color);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .search-btn:hover:not(:disabled) {
-  background-color: var(--primary-hover, #535bf2);
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .search-btn:disabled {
@@ -631,20 +701,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.2s, background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .icon-btn:hover {
-  color: var(--text-primary, #fff);
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
 }
 
 .icon-btn svg {
@@ -652,28 +722,112 @@ onUnmounted(() => {
   height: 20px;
 }
 
+/* 主题切换按钮 */
+.theme-menu-container {
+  position: relative;
+}
+
+.theme-btn {
+  position: relative;
+}
+
+.theme-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--header-bg);
+}
+
+.theme-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 180px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.4));
+  z-index: 1000;
+  animation: slideDown 0.15s ease-out;
+  overflow: hidden;
+}
+
+.dropdown-title {
+  padding: 12px 16px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color var(--transition-fast, 0.15s ease);
+  text-align: left;
+}
+
+.theme-option:hover {
+  background: var(--hover-bg);
+}
+
+.theme-option.active {
+  background: var(--active-bg);
+}
+
+.theme-option .theme-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--border-color);
+}
+
+.theme-option .theme-name {
+  flex: 1;
+}
+
+.theme-option .check-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-color);
+}
+
 /* 用户菜单容器 */
 .user-menu-container {
   position: relative;
-  margin-left: 8px;
+  margin-left: 4px;
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: var(--primary-color, #646cff);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .user-avatar:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 0 2px var(--primary-color, #646cff);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .user-avatar img {
@@ -693,16 +847,17 @@ onUnmounted(() => {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 240px;
-  background: var(--panel-bg, #1a1a2e);
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  width: 260px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-lg, 0 20px 40px rgba(0, 0, 0, 0.4));
   z-index: 1000;
-  animation: dropdownFadeIn 0.15s ease-out;
+  animation: slideDown 0.15s ease-out;
+  overflow: hidden;
 }
 
-@keyframes dropdownFadeIn {
+@keyframes slideDown {
   from {
     opacity: 0;
     transform: translateY(-8px);
@@ -718,14 +873,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 16px;
+  background: var(--card-bg);
 }
 
 .dropdown-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: var(--primary-color, #646cff);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -745,7 +901,7 @@ onUnmounted(() => {
 
 .dropdown-name {
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -753,12 +909,12 @@ onUnmounted(() => {
 
 .dropdown-username {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .dropdown-divider {
   height: 1px;
-  background: var(--border-color, #2d2d44);
+  background: var(--border-color);
   margin: 4px 0;
 }
 
@@ -770,29 +926,29 @@ onUnmounted(() => {
   padding: 12px 16px;
   border: none;
   background: transparent;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast, 0.15s ease);
   text-align: left;
 }
 
 .dropdown-item:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  background: var(--hover-bg);
 }
 
 .dropdown-item svg {
   width: 18px;
   height: 18px;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .dropdown-item.danger {
-  color: var(--error-color, #f44336);
+  color: var(--error-color);
 }
 
 .dropdown-item.danger svg {
-  color: var(--error-color, #f44336);
+  color: var(--error-color);
 }
 
 /* 弹窗样式 */
@@ -802,7 +958,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -810,20 +967,22 @@ onUnmounted(() => {
 }
 
 .modal {
-  background: var(--panel-bg, #1a1a2e);
-  border-radius: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 20px);
   width: 90%;
-  max-width: 400px;
+  max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
-  animation: modalFadeIn 0.2s ease-out;
+  animation: scaleIn 0.2s ease-out;
+  box-shadow: var(--shadow-lg);
 }
 
 .modal.modal-large {
-  max-width: 500px;
+  max-width: 520px;
 }
 
-@keyframes modalFadeIn {
+@keyframes scaleIn {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -839,13 +998,14 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.125rem;
-  color: var(--text-primary, #fff);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .close-btn {
@@ -855,53 +1015,54 @@ onUnmounted(() => {
   background: transparent;
   font-size: 24px;
   cursor: pointer;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 6px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .close-btn:hover {
-  color: var(--text-primary, #fff);
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+  background: var(--hover-bg);
 }
 
 .modal-body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .message {
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   font-size: 0.875rem;
 }
 
 .message.success {
-  background: rgba(76, 175, 80, 0.15);
-  color: var(--success-color, #4caf50);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success-color);
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .message.error {
-  background: rgba(244, 67, 54, 0.15);
-  color: var(--error-color, #f44336);
-  border: 1px solid rgba(244, 67, 54, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error-color);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .form-group label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
 }
 
 .form-group.checkbox {
@@ -912,14 +1073,15 @@ onUnmounted(() => {
 .form-group.checkbox label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
 }
 
 .form-group.checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary-color, #646cff);
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
 }
 
 .form-row {
@@ -936,32 +1098,34 @@ onUnmounted(() => {
 }
 
 .input {
-  padding: 10px 12px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
   font-size: 0.875rem;
-  background: var(--input-bg, #2d2d44);
-  color: var(--text-primary, #fff);
-  transition: border-color 0.2s;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--primary-color, #646cff);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .input::placeholder {
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
 }
 
 .input.disabled {
-  background: var(--bg-primary, #0f0f1a);
-  color: var(--text-tertiary, #666);
+  background: var(--bg-primary);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
 }
 
 .hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
 }
 
 .modal-actions {
@@ -972,37 +1136,41 @@ onUnmounted(() => {
 }
 
 .btn {
-  padding: 10px 20px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 8px;
+  padding: 11px 22px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
   background: transparent;
   cursor: pointer;
   font-size: 0.875rem;
-  color: var(--text-primary, #fff);
-  transition: all 0.2s;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .btn:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  background: var(--hover-bg);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .btn.primary {
-  background: var(--primary-color, #646cff);
-  border-color: var(--primary-color, #646cff);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: var(--primary-hover, #535bf2);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
   .app-header {
     padding: 0 12px;
+    height: 56px;
     flex-wrap: nowrap;
   }
   
@@ -1018,7 +1186,7 @@ onUnmounted(() => {
   }
   
   .search-bar {
-    padding: 0 8px;
+    padding: 0 10px;
   }
   
   .search-input {
@@ -1036,8 +1204,8 @@ onUnmounted(() => {
   }
   
   .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
   }
   
   .icon-btn svg {
@@ -1046,8 +1214,15 @@ onUnmounted(() => {
   }
   
   .user-avatar {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+  }
+  
+  .theme-indicator {
+    width: 6px;
+    height: 6px;
+    top: 5px;
+    right: 5px;
   }
   
   .form-row {
@@ -1056,6 +1231,30 @@ onUnmounted(() => {
   
   .form-row .form-group.small {
     flex: 1;
+  }
+  
+  .theme-dropdown,
+  .user-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: var(--radius-xl, 20px) var(--radius-xl, 20px) 0 0;
+    max-height: 70vh;
+    animation: slideUp 0.2s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 </style>

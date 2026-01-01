@@ -315,17 +315,18 @@ async function testConnection() {
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16162a 100%);
+  background: var(--bg-gradient);
   position: relative;
 }
 
 .login-container {
   width: 100%;
-  max-width: 400px;
-  padding: 40px;
-  background-color: var(--panel-bg, #1a1a2e);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 420px;
+  padding: 44px;
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-header {
@@ -346,22 +347,23 @@ async function testConnection() {
 }
 
 .logo-text {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--primary-color, #646cff);
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  letter-spacing: -0.02em;
 }
 
 .login-title {
   margin: 0 0 8px 0;
   font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #fff);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .login-subtitle {
   margin: 0;
   font-size: 0.9375rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .login-form {
@@ -375,10 +377,10 @@ async function testConnection() {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background-color: rgba(244, 67, 54, 0.1);
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  border-radius: 8px;
-  color: #f44336;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md, 10px);
+  color: var(--error-color);
   font-size: 0.875rem;
 }
 
@@ -397,7 +399,7 @@ async function testConnection() {
 .form-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
 }
 
 .input-wrapper {
@@ -408,37 +410,37 @@ async function testConnection() {
 
 .input-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   width: 18px;
   height: 18px;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   pointer-events: none;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px 12px 12px 42px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 8px;
-  background-color: var(--input-bg, #2d2d44);
-  color: var(--text-primary, #fff);
+  padding: 13px 14px 13px 44px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
   font-size: 0.9375rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--primary-color, #646cff);
-  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .form-input::placeholder {
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
 }
 
 .toggle-password-btn {
   position: absolute;
-  right: 12px;
+  right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -447,13 +449,13 @@ async function testConnection() {
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
 .toggle-password-btn:hover {
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
 }
 
 .toggle-password-btn svg {
@@ -470,17 +472,19 @@ async function testConnection() {
   padding: 14px 24px;
   margin-top: 8px;
   border: none;
-  border-radius: 8px;
-  background-color: var(--primary-color, #646cff);
+  border-radius: var(--radius-md, 10px);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all var(--transition-fast, 0.15s ease);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .login-btn:hover:not(:disabled) {
-  background-color: var(--primary-hover, #535bf2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .login-btn:active:not(:disabled) {
@@ -508,14 +512,14 @@ async function testConnection() {
 .login-footer {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid var(--border-color, #2d2d44);
+  border-top: 1px solid var(--border-color);
   text-align: center;
 }
 
 .footer-text {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -527,21 +531,22 @@ async function testConnection() {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--panel-bg, #1a1a2e);
-  border: 1px solid var(--border-color, #2d2d44);
-  color: var(--text-secondary, #888);
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  transition: all 0.2s;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .settings-fab:hover {
-  background: var(--primary-color, #646cff);
+  background: var(--primary-color);
   color: #fff;
-  border-color: var(--primary-color, #646cff);
+  border-color: var(--primary-color);
+  transform: scale(1.05);
 }
 
 .settings-fab svg {
@@ -556,7 +561,8 @@ async function testConnection() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -564,11 +570,12 @@ async function testConnection() {
 }
 
 .modal {
-  background: var(--panel-bg, #1a1a2e);
-  border-radius: 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 20px);
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-header {
@@ -576,13 +583,14 @@ async function testConnection() {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.125rem;
-  color: var(--text-primary, #fff);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .close-btn {
@@ -592,16 +600,17 @@ async function testConnection() {
   background: transparent;
   font-size: 24px;
   cursor: pointer;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 6px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .close-btn:hover {
-  color: var(--text-primary, #fff);
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+  background: var(--hover-bg);
 }
 
 .modal-body {
@@ -610,8 +619,8 @@ async function testConnection() {
 
 .hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary, #666);
-  margin-top: 4px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
 }
 
 .modal-actions {
@@ -619,31 +628,34 @@ async function testConnection() {
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid var(--border-color, #2d2d44);
+  border-top: 1px solid var(--border-color);
 }
 
 .btn {
-  padding: 10px 20px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 8px;
+  padding: 11px 22px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
-  color: var(--text-primary, #fff);
-  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .btn:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  background: var(--hover-bg);
 }
 
 .btn.primary {
-  background: var(--primary-color, #646cff);
-  border-color: var(--primary-color, #646cff);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
 }
 
 .btn.primary:hover {
-  background: var(--primary-hover, #535bf2);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 /* 测试连接 */
@@ -651,7 +663,7 @@ async function testConnection() {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .test-btn {
@@ -661,18 +673,18 @@ async function testConnection() {
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 10px);
   background: transparent;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .test-btn:hover:not(:disabled) {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  border-color: var(--primary-color, #646cff);
+  background: var(--hover-bg);
+  border-color: var(--primary-color);
 }
 
 .test-btn:disabled {
@@ -696,20 +708,20 @@ async function testConnection() {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   font-size: 0.875rem;
 }
 
 .connection-status.success {
-  background: rgba(76, 175, 80, 0.15);
-  color: var(--success-color, #4caf50);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--success-color);
+  border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
 .connection-status.error {
-  background: rgba(244, 67, 54, 0.15);
-  color: var(--error-color, #f44336);
-  border: 1px solid rgba(244, 67, 54, 0.3);
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error-color);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .connection-status svg {

@@ -587,15 +587,18 @@ onUnmounted(() => {
 
 /* 邮件列表 */
 .panel-header {
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -619,29 +622,29 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: var(--primary-color, #646cff);
+  accent-color: var(--primary-color);
   flex-shrink: 0;
 }
 
 .select-mode-btn {
-  padding: 4px 10px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 4px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
   background-color: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .select-mode-btn:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #fff);
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .select-mode-btn.active {
-  background-color: var(--primary-color, #646cff);
-  border-color: var(--primary-color, #646cff);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
   color: #fff;
 }
 
@@ -650,29 +653,31 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 6px);
   color: #fff;
   font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .batch-read-btn {
-  background-color: var(--success-color, #4caf50);
+  background-color: var(--success-color);
 }
 
 .batch-read-btn:hover:not(:disabled) {
-  background-color: #388e3c;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .batch-delete-btn {
-  background-color: var(--error-color, #f44336);
+  background-color: var(--error-color);
 }
 
 .batch-delete-btn:hover:not(:disabled) {
-  background-color: #d32f2f;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .batch-read-btn:disabled,
@@ -691,20 +696,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
   background-color: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .mark-all-read-btn:hover:not(:disabled) {
-  background-color: var(--success-color, #4caf50);
-  border-color: var(--success-color, #4caf50);
+  background-color: var(--success-color);
+  border-color: var(--success-color);
   color: #fff;
 }
 
@@ -733,21 +738,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.2s, background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
   flex-shrink: 0;
 }
 
 .delete-btn:hover:not(:disabled) {
-  color: var(--error-color, #f44336);
-  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--error-color);
+  background-color: rgba(239, 68, 68, 0.12);
 }
 
 .delete-btn:disabled {
@@ -767,11 +772,11 @@ onUnmounted(() => {
 }
 
 .emails-panel {
-  width: 320px;
+  width: 340px;
   display: flex;
   flex-direction: column;
-  background-color: var(--panel-bg, #1a1a2e);
-  border-right: 1px solid var(--border-color, #2d2d44);
+  background-color: var(--panel-bg);
+  border-right: 1px solid var(--border-color);
 }
 
 .sort-controls {
@@ -781,13 +786,20 @@ onUnmounted(() => {
 
 .folder-select,
 .sort-select {
-  padding: 4px 8px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 4px;
-  background-color: var(--input-bg, #2d2d44);
-  color: var(--text-primary, #fff);
+  padding: 5px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
   font-size: 0.75rem;
   cursor: pointer;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.folder-select:focus,
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 .emails-list {
@@ -800,29 +812,29 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border: none;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  border-bottom: 1px solid var(--border-color);
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .email-item:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.03));
+  background-color: var(--hover-bg);
 }
 
 .email-item.active {
-  background-color: var(--active-bg, rgba(100, 108, 255, 0.1));
+  background-color: var(--active-bg);
 }
 
 .email-item.unread {
-  background-color: var(--unread-bg, rgba(100, 108, 255, 0.05));
+  background-color: var(--unread-bg);
 }
 
 .email-item.selected {
-  background-color: var(--selected-bg, rgba(100, 108, 255, 0.15));
+  background-color: var(--selected-bg);
 }
 
 .email-item.unread .sender-name,
@@ -838,7 +850,7 @@ onUnmounted(() => {
 
 .sender-name {
   font-size: 0.875rem;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -846,14 +858,14 @@ onUnmounted(() => {
 
 .email-date {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   flex-shrink: 0;
   margin-left: 8px;
 }
 
 .email-subject {
   font-size: 0.8125rem;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -861,7 +873,7 @@ onUnmounted(() => {
 
 .email-preview {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -874,19 +886,20 @@ onUnmounted(() => {
 }
 
 .tag {
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 6px);
   font-size: 0.625rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #fff;
+  letter-spacing: 0.3px;
 }
 
 .code-tag {
-  background-color: #4caf50;
+  background-color: var(--success-color);
 }
 
 .ad-tag {
-  background-color: #ff9800;
+  background-color: var(--warning-color);
 }
 
 .importance-tag {
@@ -898,27 +911,27 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--content-bg, #0f0f1a);
+  background-color: var(--content-bg);
   overflow: hidden;
 }
 
 .email-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
 }
 
 .email-meta {
-  padding: 12px 16px;
-  background-color: var(--meta-bg, rgba(255, 255, 255, 0.03));
-  border-radius: 8px;
-  margin-bottom: 16px;
+  padding: 14px 18px;
+  background-color: var(--meta-bg);
+  border-radius: var(--radius-lg, 14px);
+  margin-bottom: 18px;
 }
 
 .meta-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: 0.8125rem;
 }
 
@@ -927,36 +940,37 @@ onUnmounted(() => {
 }
 
 .meta-label {
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 
 .meta-value {
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   word-break: break-all;
 }
 
 .processed-info {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .info-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
-  border-radius: 8px;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
   min-width: 200px;
 }
 
 .info-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md, 10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -970,15 +984,15 @@ onUnmounted(() => {
 }
 
 .info-icon.code {
-  background-color: #4caf50;
+  background-color: var(--success-color);
 }
 
 .info-icon.ad {
-  background-color: #ff9800;
+  background-color: var(--warning-color);
 }
 
 .info-icon.summary {
-  background-color: #2196f3;
+  background-color: #3b82f6;
 }
 
 .info-content {
@@ -989,47 +1003,49 @@ onUnmounted(() => {
 
 .info-label {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .info-value {
   font-size: 0.875rem;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
 }
 
 .code-value {
-  font-family: monospace;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #4caf50;
-  letter-spacing: 2px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--success-color);
+  letter-spacing: 3px;
 }
 
 /* 邮件气泡 */
 .email-bubble {
-  background-color: var(--bubble-bg, rgba(255, 255, 255, 0.05));
-  border-radius: 12px;
+  background-color: var(--bubble-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl, 20px);
   overflow: hidden;
 }
 
 .bubble-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
 }
 
 .sender-avatar {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background-color: var(--primary-color, #646cff);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
 }
@@ -1042,19 +1058,19 @@ onUnmounted(() => {
 
 .sender-info .sender-name {
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .send-time {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .bubble-content {
-  padding: 16px;
+  padding: 18px;
   font-size: 0.9375rem;
-  line-height: 1.6;
-  color: var(--text-primary, #fff);
+  line-height: 1.7;
+  color: var(--text-primary);
 }
 
 .html-content {
@@ -1064,10 +1080,11 @@ onUnmounted(() => {
 .html-content :deep(img) {
   max-width: 100%;
   height: auto;
+  border-radius: var(--radius-md, 10px);
 }
 
 .html-content :deep(a) {
-  color: var(--primary-color, #646cff);
+  color: var(--primary-color);
 }
 
 .text-content {
@@ -1079,10 +1096,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-color, #2d2d44);
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-color);
   font-size: 0.8125rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
+  background: var(--card-bg);
 }
 
 .bubble-footer svg {
@@ -1099,15 +1117,15 @@ onUnmounted(() => {
   justify-content: center;
   height: 100%;
   padding: 24px;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .empty-state svg,
 .loading-state svg {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 18px;
+  opacity: 0.4;
 }
 
 .empty-state p {
@@ -1116,13 +1134,19 @@ onUnmounted(() => {
 }
 
 .loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border-color, #2d2d44);
-  border-top-color: var(--primary-color, #646cff);
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
 }
 
 @keyframes spin {
@@ -1132,7 +1156,7 @@ onUnmounted(() => {
 /* 响应式布局 */
 @media (max-width: 1024px) {
   .emails-panel {
-    width: 280px;
+    width: 300px;
   }
 }
 

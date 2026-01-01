@@ -189,13 +189,13 @@ onMounted(() => {
   flex-direction: column;
   width: 260px;
   height: 100%;
-  background-color: var(--sidebar-bg, #16162a);
-  border-right: 1px solid var(--border-color, #2d2d44);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
 }
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .compose-btn {
@@ -206,17 +206,19 @@ onMounted(() => {
   width: 100%;
   padding: 12px 16px;
   border: none;
-  border-radius: 8px;
-  background-color: var(--primary-color, #646cff);
+  border-radius: var(--radius-md, 10px);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: #fff;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .compose-btn:hover {
-  background-color: var(--primary-hover, #535bf2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .compose-btn svg {
@@ -235,12 +237,12 @@ onMounted(() => {
 }
 
 .nav-section-title {
-  padding: 8px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary, #888);
+  padding: 10px 12px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .nav-item {
@@ -251,22 +253,22 @@ onMounted(() => {
   padding: 10px 12px;
   margin-bottom: 2px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   background: transparent;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   font-size: 0.875rem;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .nav-item:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  background-color: var(--hover-bg);
 }
 
 .nav-item.active {
-  background-color: var(--active-bg, rgba(100, 108, 255, 0.15));
-  color: var(--primary-color, #646cff);
+  background-color: var(--active-bg);
+  color: var(--primary-color);
 }
 
 .nav-item.disabled {
@@ -304,7 +306,7 @@ onMounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 2px solid var(--sidebar-bg, #16162a);
+  border: 2px solid var(--sidebar-bg);
 }
 
 .account-info {
@@ -324,7 +326,7 @@ onMounted(() => {
 
 .account-email {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,7 +334,7 @@ onMounted(() => {
 
 .account-sync {
   font-size: 0.6875rem;
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
 }
 
 .account-wrapper {
@@ -355,12 +357,12 @@ onMounted(() => {
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 6px);
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
   flex-shrink: 0;
 }
 
@@ -369,8 +371,8 @@ onMounted(() => {
 }
 
 .delete-account-btn:hover:not(:disabled) {
-  color: var(--error-color, #f44336);
-  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--error-color);
+  background-color: rgba(239, 68, 68, 0.12);
 }
 
 .delete-account-btn:disabled {
@@ -396,15 +398,15 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--border-color, #2d2d44);
-  border-top-color: var(--primary-color, #646cff);
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 8px;
@@ -417,23 +419,23 @@ onMounted(() => {
 .add-account-btn {
   margin-top: 12px;
   padding: 8px 16px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
   background: transparent;
-  color: var(--primary-color, #646cff);
+  color: var(--primary-color);
   font-size: 0.8125rem;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .add-account-btn:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  border-color: var(--primary-color, #646cff);
+  background-color: var(--hover-bg);
+  border-color: var(--primary-color);
 }
 
 .sidebar-footer {
   padding: 12px;
-  border-top: 1px solid var(--border-color, #2d2d44);
+  border-top: 1px solid var(--border-color);
 }
 
 .footer-btn {
@@ -443,17 +445,17 @@ onMounted(() => {
   width: 100%;
   padding: 10px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 10px);
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .footer-btn:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #fff);
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .footer-btn svg {
