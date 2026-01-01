@@ -524,61 +524,62 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 添加邮箱弹窗 -->
-    <div v-if="showAccountModal" class="modal-overlay" @click.self="closeAccountModal">
-      <div class="modal modal-large">
-        <div class="modal-header">
+  </header>
+
+  <!-- 添加邮箱弹窗 - 使用 Teleport 移到 body -->
+  <Teleport to="body">
+    <div v-if="showAccountModal" class="account-modal-overlay" @click.self="closeAccountModal">
+      <div class="account-modal">
+        <div class="account-modal-header">
           <h3>添加邮箱账户</h3>
-          <button class="close-btn" @click="closeAccountModal">×</button>
+          <button class="account-modal-close" @click="closeAccountModal">×</button>
         </div>
-        <div class="modal-body">
-          <!-- 消息提示 -->
-          <div v-if="successMessage" class="message success">{{ successMessage }}</div>
-          <div v-if="errorMessage" class="message error">{{ errorMessage }}</div>
+        <div class="account-modal-body">
+          <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
+          <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
           
-          <div class="form-group">
+          <div class="account-modal-field">
             <label>邮箱服务商</label>
-            <select v-model="selectedPreset" class="input" @change="applyPreset">
+            <select v-model="selectedPreset" @change="applyPreset">
               <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
             </select>
-            <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码</p>
-            <p class="hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码</p>
+            <span class="account-modal-hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码</span>
+            <span class="account-modal-hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码</span>
           </div>
-          <div class="form-group">
+          <div class="account-modal-field">
             <label>邮箱地址 *</label>
-            <input type="email" v-model="accountForm.email" placeholder="example@mail.com" class="input" required @blur="autoSelectPreset" />
+            <input type="email" v-model="accountForm.email" placeholder="example@mail.com" @blur="autoSelectPreset" />
           </div>
-          <div class="form-group">
+          <div class="account-modal-field">
             <label>显示名称</label>
-            <input type="text" v-model="accountForm.displayName" placeholder="用于显示的名称" class="input" />
+            <input type="text" v-model="accountForm.displayName" placeholder="用于显示的名称" />
           </div>
-          <div class="form-row">
-            <div class="form-group"><label>IMAP 服务器 *</label><input type="text" v-model="accountForm.imapHost" placeholder="imap.example.com" class="input" required /></div>
-            <div class="form-group small"><label>端口</label><input type="number" v-model="accountForm.imapPort" class="input" required /></div>
+          <div class="account-modal-row">
+            <div class="account-modal-field"><label>IMAP 服务器 *</label><input type="text" v-model="accountForm.imapHost" placeholder="imap.example.com" /></div>
+            <div class="account-modal-field small"><label>端口</label><input type="number" v-model="accountForm.imapPort" /></div>
           </div>
-          <div class="form-row">
-            <div class="form-group"><label>SMTP 服务器 *</label><input type="text" v-model="accountForm.smtpHost" placeholder="smtp.example.com" class="input" required /></div>
-            <div class="form-group small"><label>端口</label><input type="number" v-model="accountForm.smtpPort" class="input" required /></div>
+          <div class="account-modal-row">
+            <div class="account-modal-field"><label>SMTP 服务器 *</label><input type="text" v-model="accountForm.smtpHost" placeholder="smtp.example.com" /></div>
+            <div class="account-modal-field small"><label>端口</label><input type="number" v-model="accountForm.smtpPort" /></div>
           </div>
-          <div class="form-group">
+          <div class="account-modal-field">
             <label>用户名 *</label>
-            <input type="text" v-model="accountForm.username" placeholder="登录用户名" class="input" required />
+            <input type="text" v-model="accountForm.username" placeholder="登录用户名" />
           </div>
-          <div class="form-group">
+          <div class="account-modal-field">
             <label>密码 *</label>
-            <input type="password" v-model="accountForm.password" placeholder="登录密码" class="input" required />
+            <input type="password" v-model="accountForm.password" placeholder="登录密码" />
           </div>
-          <div class="form-group checkbox"><label><input type="checkbox" v-model="accountForm.useSSL" /> 使用 SSL/TLS</label></div>
-          <div class="form-group checkbox"><label><input type="checkbox" v-model="accountForm.enabled" /> 启用此账户</label></div>
+          <div class="account-modal-checkbox"><label><input type="checkbox" v-model="accountForm.useSSL" /> 使用 SSL/TLS</label></div>
+          <div class="account-modal-checkbox"><label><input type="checkbox" v-model="accountForm.enabled" /> 启用此账户</label></div>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="btn" @click="closeAccountModal">取消</button>
-          <button type="button" class="btn primary" :disabled="isSubmitting" @click="saveAccount">{{ isSubmitting ? '添加中...' : '添加账户' }}</button>
+        <div class="account-modal-footer">
+          <button type="button" class="account-modal-btn" @click="closeAccountModal">取消</button>
+          <button type="button" class="account-modal-btn primary" :disabled="isSubmitting" @click="saveAccount">{{ isSubmitting ? '添加中...' : '添加账户' }}</button>
         </div>
       </div>
     </div>
-
-  </header>
+  </Teleport>
 </template>
 
 
