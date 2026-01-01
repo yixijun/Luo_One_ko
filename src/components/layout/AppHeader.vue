@@ -234,10 +234,21 @@ async function openAccountModal() {
   errorMessage.value = '';
   showAccountModal.value = true;
   
-  // 检查 Google OAuth 配置状态
+  // 检查 Google OAuth 配置状态（使用原生 fetch 避免 401 跳转）
   try {
-    const response = await apiClient.get<{ success: boolean; data: { google_enabled: boolean } }>('/oauth/config');
-    googleOAuthConfigured.value = response.data?.data?.google_enabled ?? false;
+    const token = localStorage.getItem('luo_one_token');
+    const apiKey = localStorage.getItem('luo_one_api_key');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (apiKey) headers['X-API-Key'] = apiKey;
+    
+    const response = await fetch('/api/oauth/config', { headers });
+    if (response.ok) {
+      const data = await response.json();
+      googleOAuthConfigured.value = data?.data?.google_enabled ?? false;
+    } else {
+      googleOAuthConfigured.value = false;
+    }
   } catch {
     googleOAuthConfigured.value = false;
   }
