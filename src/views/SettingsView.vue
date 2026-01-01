@@ -51,8 +51,18 @@ const aiForm = reactive<UserSettings>({
 const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '' });
 const accountForm = reactive<Partial<EmailAccount>>({
   email: '', displayName: '', imapHost: '', imapPort: 993,
-  smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true,
+  smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1,
 });
+
+// 收取天数选项
+const syncDaysOptions = [
+  { value: -1, label: '全部邮件' },
+  { value: 0, label: '仅新邮件（增量）' },
+  { value: 7, label: '最近 7 天' },
+  { value: 30, label: '最近 30 天' },
+  { value: 90, label: '最近 90 天' },
+  { value: 365, label: '最近 1 年' },
+];
 
 const emailListLimit = ref(getEmailListLimit());
 
@@ -106,10 +116,10 @@ function saveEmailListLimit() {
 function openAddAccountModal() { editingAccountId.value = null; resetAccountForm(); showAccountModal.value = true; }
 function openEditAccountModal(account: EmailAccount) {
   editingAccountId.value = account.id;
-  Object.assign(accountForm, { email: account.email, displayName: account.displayName, imapHost: account.imapHost, imapPort: account.imapPort, smtpHost: account.smtpHost, smtpPort: account.smtpPort, username: account.username, password: '', useSSL: account.useSSL, enabled: account.enabled });
+  Object.assign(accountForm, { email: account.email, displayName: account.displayName, imapHost: account.imapHost, imapPort: account.imapPort, smtpHost: account.smtpHost, smtpPort: account.smtpPort, username: account.username, password: '', useSSL: account.useSSL, enabled: account.enabled, syncDays: account.syncDays ?? -1 });
   showAccountModal.value = true;
 }
-function resetAccountForm() { Object.assign(accountForm, { email: '', displayName: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true }); }
+function resetAccountForm() { Object.assign(accountForm, { email: '', displayName: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1 }); }
 function closeAccountModal() { showAccountModal.value = false; editingAccountId.value = null; modalTestResult.value = null; resetAccountForm(); }
 
 async function saveAccount() {
@@ -374,6 +384,7 @@ onMounted(async () => {
             </div>
             <div class="form-group"><label class="form-label">用户名</label><input v-model="accountForm.username" type="text" class="form-input" placeholder="登录用户名" required /></div>
             <div class="form-group"><label class="form-label">密码</label><input v-model="accountForm.password" type="password" class="form-input" :placeholder="editingAccountId ? '留空保持不变' : '邮箱密码或授权码'" :required="!editingAccountId" /></div>
+            <div class="form-group"><label class="form-label">收取天数</label><select v-model="accountForm.syncDays" class="form-input"><option v-for="opt in syncDaysOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select><p class="hint">设置同步邮件的时间范围</p></div>
             <div class="form-group checkbox"><label><input v-model="accountForm.useSSL" type="checkbox" /> 使用 SSL/TLS</label></div>
             <div class="form-group checkbox"><label><input v-model="accountForm.enabled" type="checkbox" /> 启用此账户</label></div>
             <div v-if="modalTestResult" :class="['test-result', modalTestResult.success ? 'success' : 'error']">
