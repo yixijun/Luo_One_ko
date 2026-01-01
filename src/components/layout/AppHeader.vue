@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
 import { useAccountStore } from '@/stores/account';
-import { useThemeStore, themes, type ThemeName } from '@/stores/theme';
+import { useThemeStore, themes, fonts, type ThemeName, type FontName } from '@/stores/theme';
 import type { EmailAccount } from '@/types';
 
 const router = useRouter();
@@ -124,9 +124,19 @@ function selectTheme(themeName: ThemeName) {
   showThemeMenu.value = false;
 }
 
+// 选择字体
+function selectFont(fontName: FontName) {
+  themeStore.setFont(fontName);
+}
+
 // 获取当前主题信息
 const currentThemeInfo = computed(() => {
   return themes.find(t => t.name === themeStore.currentTheme) || themes[0];
+});
+
+// 获取当前字体信息
+const currentFontInfo = computed(() => {
+  return fonts.find(f => f.name === themeStore.currentFont) || fonts[0];
 });
 
 // 打开个人信息弹窗
@@ -339,6 +349,21 @@ onUnmounted(() => {
             <span class="theme-color" :style="{ backgroundColor: theme.primaryColor }"></span>
             <span class="theme-name">{{ theme.label }}</span>
             <svg v-if="themeStore.currentTheme === theme.name" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </button>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-title">选择字体</div>
+          <button
+            v-for="font in fonts"
+            :key="font.name"
+            class="theme-option font-option"
+            :class="{ active: themeStore.currentFont === font.name }"
+            @click="selectFont(font.name)"
+          >
+            <span class="font-preview-text" :style="{ fontFamily: font.fontFamily }">Aa</span>
+            <span class="theme-name">{{ font.label }}</span>
+            <svg v-if="themeStore.currentFont === font.name" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </button>
@@ -803,6 +828,26 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   color: var(--primary-color);
+}
+
+/* 字体选项样式 */
+.font-option .font-preview-text {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--hover-bg);
+  border-radius: var(--radius-sm, 6px);
+  flex-shrink: 0;
+}
+
+.font-option.active .font-preview-text {
+  color: var(--primary-color);
+  background: var(--primary-light);
 }
 
 /* 用户菜单容器 */
