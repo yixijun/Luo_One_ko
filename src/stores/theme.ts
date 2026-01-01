@@ -1,9 +1,11 @@
 /**
  * 洛一 (Luo One) 邮箱管理系统 - 主题状态管理
+ * 主题和字体配置保存到用户设置（后端数据库）
  */
 
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
+import apiClient from '@/api/client';
 
 export type ThemeName = 'dark' | 'luo' | 'light';
 export type FontName = 'system' | 'misans' | 'noto';
@@ -49,28 +51,48 @@ export const fonts: FontOption[] = [
   },
 ];
 
-const THEME_STORAGE_KEY = 'luo-one-theme';
-const FONT_STORAGE_KEY = 'luo-one-font';
+// localStorage 作为临时缓存（登录前使用）
+const THEME_CACHE_KEY = 'luo-one-theme-cache';
+const FONT_CACHE_KEY = 'luo-one-font-cache';
 
 export const useThemeStore = defineStore('theme', () => {
+  // 默认值从缓存读取，登录后会从后端同步
   const currentTheme = ref<ThemeName>(
-    (localStorage.getItem(THEME_STORAGE_KEY) as ThemeName) || 'dark'
+    (localStorage.getItem(THEME_CACHE_KEY) as ThemeName) || 'dark'
   );
   
   const currentFont = ref<FontName>(
-    (localStorage.getItem(FONT_STORAGE_KEY) as FontName) || 'system'
+    (localStorage.getItem(FONT_CACHE_KEY) as FontName) || 'system'
   );
 
-  function setTheme(theme: ThemeName) {
+  const loading = ref(false);
+
+  // 设置主题（同时保存到后端和本地缓存）
+  async function setTheme(theme: ThemeName) {
     currentTheme.value = theme;
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    localStorage.setItem(THEME_CACHE_KEY, theme);
     applyTheme(theme);
+    
+    // 保存到后端
+    try {
+      await apiClient.put('/settings', { theme });
+    } catch (err) {
+      console.error('[Theme] Failed to save theme to backend:', err);
+    }
   }
 
-  function setFont(font: FontName) {
+  // 设置字体（同时保存到后端和本地缓存）
+  async function setFont(font: FontName) {
     currentFont.value = font;
-    localStorage.setItem(FONT_STORAGE_KEY, font);
+    localStorage.setItem(FONT_CACHE_KEY, font);
     applyFont(font);
+    
+    // 保存到后端
+    try {
+      await apiClient.put('/settings', { font });
+    } catch (err) {
+      console.error('[Theme] Failed to save font to backend:', err);
+    }
   }
 
   function applyTheme(theme: ThemeName) {
@@ -85,7 +107,41 @@ export const useThemeStore = defineStore('theme', () => {
     }
   }
 
-  // 初始化时应用主题和字体
+  // 从后端加载主题设置
+  async function loadFromBackend() {
+    loading.value = true;
+    try {
+      const response = await apiClient.get<{ theme?: string; font?: string }>('/settings');
+      const data = response.data as any;
+      
+      // 处理 snake_case 到 camelCase 的转换
+      const theme = (data?.theme || data?.Theme || 'dark') as ThemeName;
+      const font = (data?.font || data?.Font || 'system') as FontName;
+      
+      // 验证主题值是否有效
+      if (themes.some(t => t.name === theme)) {
+        currentTheme.value = theme;
+        localStorage.setItem(THEME_CACHE_KEY, theme);
+        applyTheme(theme);
+      }
+      
+      // 验证字体值是否有效
+      if (fonts.some(f => f.name === font)) {
+        currentFont.value = font;
+        localStorage.setItem(FONT_CACHE_KEY, font);
+        applyFont(font);
+      }
+    } catch (err) {
+      console.error('[Theme] Failed to load settings from backend:', err);
+      // 使用本地缓存
+      applyTheme(currentTheme.value);
+      applyFont(currentFont.value);
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 初始化时应用主题和字体（使用本地缓存）
   function initTheme() {
     applyTheme(currentTheme.value);
     applyFont(currentFont.value);
@@ -104,8 +160,10 @@ export const useThemeStore = defineStore('theme', () => {
   return {
     currentTheme,
     currentFont,
+    loading,
     setTheme,
     setFont,
     initTheme,
+    loadFromBackend,
   };
 });

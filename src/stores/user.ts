@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient, { tokenManager } from '@/api/client';
+import { useThemeStore } from '@/stores/theme';
 import type { User, UserSettings, LoginRequest, LoginResponse, ChangePasswordRequest } from '@/types';
 
 export const useUserStore = defineStore('user', () => {
@@ -29,6 +30,8 @@ export const useUserStore = defineStore('user', () => {
       // 响应拦截器已自动解包 { success: true, data: ... } 格式
       tokenManager.setToken(response.data.token);
       await fetchProfile();
+      // 登录成功后加载用户设置（包括主题）
+      await fetchSettings();
       return true;
     } catch (err) {
       error.value = (err as Error).message || '登录失败';
@@ -96,6 +99,10 @@ export const useUserStore = defineStore('user', () => {
     try {
       const response = await apiClient.get<UserSettings>('/settings');
       settings.value = response.data;
+      
+      // 同步主题设置
+      const themeStore = useThemeStore();
+      await themeStore.loadFromBackend();
     } catch (err) {
       error.value = (err as Error).message || '获取设置失败';
     } finally {

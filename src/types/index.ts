@@ -84,6 +84,9 @@ export interface UserSettings {
   googleClientId?: string;
   googleClientSecret?: string;
   googleRedirectUrl?: string;
+  // 主题和字体配置
+  theme?: string;
+  font?: string;
 }
 
 
