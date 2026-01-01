@@ -154,4 +154,5 @@ export interface TestConnectionResponse {
 // 同步请求
 export interface SyncRequest {
   accountId?: number;
+  fullSync?: boolean; // 是否全量同步
 }

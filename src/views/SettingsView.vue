@@ -27,6 +27,7 @@ const testingConnection = ref(false);
 const modalTestingConnection = ref(false);
 const modalTestResult = ref<{ success: boolean; message: string } | null>(null);
 const syncingAccountId = ref<number | null>(null);
+const fullSyncingAccountId = ref<number | null>(null);
 
 const operationLogs = ref<Array<{ time: string; type: 'info' | 'success' | 'error'; message: string }>>([]);
 
@@ -367,6 +368,42 @@ async function syncAccount(id: number) {
   }
 }
 
+async function syncAllAccount(id: number) {
+  clearMessages();
+  fullSyncingAccountId.value = id;
+  const account = accounts.value.find(a => a.id === id);
+  addLog('info', `开始全量同步邮件: ${account?.email || id}`);
+  addLog('info', `全量同步会分批处理所有邮件，可能需要较长时间...`);
+  
+  try {
+    addLog('info', `正在调用全量同步 API: POST /api/emails/sync { account_id: ${id}, full_sync: true }`);
+    const syncedCount = await emailStore.syncEmails({ accountId: id, fullSync: true });
+    
+    if (syncedCount >= 0) {
+      addLog('success', `全量同步完成`);
+      addLog('info', `正在获取邮件列表: GET /api/emails?account_id=${id}`);
+      await emailStore.fetchEmails({ accountId: id });
+      
+      addLog('success', `全量同步完成，共同步 ${syncedCount} 封新邮件`);
+      addLog('info', `${account?.email || id} 数据库中共有 ${emailStore.total} 封邮件`);
+      successMessage.value = `全量同步完成，共同步 ${syncedCount} 封新邮件`;
+      
+      await accountStore.fetchAccounts();
+      addLog('info', '已刷新账户列表');
+    } else {
+      const errMsg = emailStore.error || '全量同步失败';
+      addLog('error', `全量同步失败: ${errMsg}`);
+      errorMessage.value = errMsg;
+    }
+  } catch (err) {
+    const errMsg = (err as Error).message || '未知错误';
+    addLog('error', `全量同步异常: ${errMsg}`);
+    errorMessage.value = errMsg;
+  } finally {
+    fullSyncingAccountId.value = null;
+  }
+}
+
 async function testModalConnection() {
   modalTestResult.value = null; modalTestingConnection.value = true;
   addLog('info', `测试连接配置: IMAP=${accountForm.imapHost}:${accountForm.imapPort}, SMTP=${accountForm.smtpHost}:${accountForm.smtpPort}, SSL=${accountForm.useSSL}`);
@@ -552,6 +589,7 @@ onMounted(async () => {
             </div>
             <div class="account-actions">
               <button class="btn small sync-btn" @click="syncAccount(account.id)" :disabled="syncingAccountId === account.id">{{ syncingAccountId === account.id ? '同步中...' : '同步' }}</button>
+              <button class="btn small sync-btn" @click="syncAllAccount(account.id)" :disabled="fullSyncingAccountId === account.id" title="同步所有邮件（可能需要较长时间）">{{ fullSyncingAccountId === account.id ? '全量同步中...' : '同步全部' }}</button>
               <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
               <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
               <button class="btn small" @click="openEditAccountModal(account)">编辑</button>

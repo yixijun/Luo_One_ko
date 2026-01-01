@@ -275,10 +275,14 @@ export const useEmailStore = defineStore('email', () => {
         error.value = '请选择要同步的邮箱账户';
         return -1;
       }
-      const payload = { account_id: data.accountId };
-      // 同步可能需要很长时间，使用 5 分钟超时
+      const payload: Record<string, unknown> = { account_id: data.accountId };
+      if (data.fullSync) {
+        payload.full_sync = true;
+      }
+      // 同步可能需要很长时间，使用 10 分钟超时（全量同步需要更长时间）
+      const timeout = data.fullSync ? 600000 : 300000;
       const response = await apiClient.post<{ synced_count: number }>('/emails/sync', payload, {
-        timeout: 300000, // 5 分钟
+        timeout,
       });
       return response.data?.synced_count ?? 0;
     } catch (err) {
