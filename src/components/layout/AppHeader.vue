@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -77,28 +77,6 @@ const emailPresets = [
   { name: 'Outlook', domain: 'outlook.com', imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp.office365.com', smtpPort: 587 },
 ];
 const selectedPreset = ref('手动配置');
-
-// 计算属性：是否显示 Gmail OAuth 未配置警告
-const showGmailOAuthWarning = computed(() => {
-  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
-  console.log('[AppHeader] showGmailOAuthWarning computed:', {
-    selectedPreset: selectedPreset.value,
-    checkingOAuthConfig: checkingOAuthConfig.value,
-    googleOAuthConfigured: googleOAuthConfigured.value,
-    result: show
-  });
-  return show;
-});
-
-// 监控状态变化
-watch([selectedPreset, checkingOAuthConfig, googleOAuthConfigured], ([preset, checking, configured]) => {
-  console.log('[AppHeader] State changed:', {
-    selectedPreset: preset,
-    checkingOAuthConfig: checking,
-    googleOAuthConfigured: configured,
-    showWarning: showGmailOAuthWarning.value
-  });
-}, { immediate: true });
 
 function applyPreset() {
   const preset = emailPresets.find(p => p.name === selectedPreset.value);
@@ -615,7 +593,7 @@ onUnmounted(() => {
   <!-- 添加邮箱弹窗 - 使用 Teleport 移到 body -->
   <Teleport to="body">
     <div v-if="showAccountModal" class="account-modal-overlay" @click.self="closeAccountModal">
-      <div class="account-modal">
+      <div class="account-modal" :key="'modal-' + googleOAuthConfigured">
         <div class="account-modal-header">
           <h3>添加邮箱账户</h3>
           <button class="account-modal-close" @click="closeAccountModal">×</button>
@@ -624,13 +602,8 @@ onUnmounted(() => {
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
           
-          <!-- 调试信息 -->
-          <div class="account-modal-message info" style="font-size: 12px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">
-            调试: selectedPreset={{ selectedPreset }}, checkingOAuthConfig={{ checkingOAuthConfig }}, googleOAuthConfigured={{ googleOAuthConfigured }}, showWarning={{ showGmailOAuthWarning }}
-          </div>
-          
-          <!-- 直接使用条件表达式而不是计算属性 -->
-          <div v-if="selectedPreset === 'Gmail' && checkingOAuthConfig === false && googleOAuthConfigured === false" class="account-modal-message warning">
+          <!-- 警告：只在 Gmail 且未配置 OAuth 时显示 -->
+          <div v-show="selectedPreset === 'Gmail' && !googleOAuthConfigured && !checkingOAuthConfig" class="account-modal-message warning">
             Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
           </div>
           
