@@ -168,6 +168,31 @@ onMounted(async () => {
   checkMobileView();
   window.addEventListener('resize', checkMobileView);
   
+  // 处理 OAuth 回调
+  const urlParams = new URLSearchParams(window.location.search);
+  const oauthSuccess = urlParams.get('oauth_success');
+  const oauthError = urlParams.get('oauth_error');
+  const oauthEmail = urlParams.get('email');
+  
+  if (oauthSuccess) {
+    // 清除 URL 参数
+    window.history.replaceState({}, '', window.location.pathname);
+    // 刷新账户列表
+    await accountStore.fetchAccounts();
+    alert(`Gmail 账户 ${oauthEmail || ''} 已成功添加！`);
+  } else if (oauthError) {
+    window.history.replaceState({}, '', window.location.pathname);
+    const errorMessages: Record<string, string> = {
+      'access_denied': '您取消了授权',
+      'invalid_state': '授权状态无效，请重试',
+      'state_expired': '授权已过期，请重试',
+      'token_exchange_failed': '获取令牌失败',
+      'get_email_failed': '获取邮箱信息失败',
+      'save_account_failed': '保存账户失败',
+    };
+    alert(`Google 登录失败: ${errorMessages[oauthError] || oauthError}`);
+  }
+  
   // 串行初始化数据，避免同时发起太多请求
   try {
     if (!userStore.user) {
