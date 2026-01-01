@@ -198,8 +198,8 @@ watch(() => accountStore.currentAccountId, (newId) => {
 
 <template>
   <div class="home-view" :class="{ 'mobile': isMobileView }">
-    <!-- 应用头部 -->
-    <AppHeader>
+    <!-- 应用头部 - 移动端详情模式下隐藏 -->
+    <AppHeader v-show="!isMobileView || mobileViewMode !== 'detail'">
       <template #mobile-menu v-if="isMobileView">
         <button class="mobile-menu-btn" @click="toggleMobileSidebar">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
