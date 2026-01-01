@@ -178,21 +178,21 @@ export const useEmailStore = defineStore('email', () => {
   }
 
   // 同步邮件
-  async function syncEmails(data: SyncRequest = {}): Promise<boolean> {
+  async function syncEmails(data: SyncRequest = {}): Promise<number> {
     loading.value = true;
     error.value = null;
     try {
       // 后端要求 account_id 是必填的
       if (!data.accountId) {
         error.value = '请选择要同步的邮箱账户';
-        return false;
+        return -1;
       }
       const payload = { account_id: data.accountId };
-      await apiClient.post('/emails/sync', payload);
-      return true;
+      const response = await apiClient.post<{ synced_count: number }>('/emails/sync', payload);
+      return response.data?.synced_count ?? 0;
     } catch (err) {
       error.value = (err as Error).message || '同步邮件失败';
-      return false;
+      return -1;
     } finally {
       loading.value = false;
     }

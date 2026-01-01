@@ -155,16 +155,15 @@ async function syncAccount(id: number) {
   
   try {
     addLog('info', `正在调用同步 API: POST /api/emails/sync { account_id: ${id} }`);
-    const syncResult = await emailStore.syncEmails({ accountId: id });
+    const syncedCount = await emailStore.syncEmails({ accountId: id });
     
-    if (syncResult) {
+    if (syncedCount >= 0) {
       addLog('success', `同步 API 调用成功`);
       addLog('info', `正在获取邮件列表: GET /api/emails?account_id=${id}`);
       await emailStore.fetchEmails({ accountId: id });
       
-      const emailCount = emailStore.emails.length;
-      addLog('success', `获取到 ${emailCount} 封邮件`);
-      successMessage.value = `同步完成，共 ${emailCount} 封邮件`;
+      addLog('success', `新增同步 ${syncedCount} 封邮件`);
+      successMessage.value = `同步完成，新增 ${syncedCount} 封邮件`;
       
       await accountStore.fetchAccounts();
       addLog('info', '已刷新账户列表');
