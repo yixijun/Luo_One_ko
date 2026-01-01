@@ -390,7 +390,21 @@ function handleForward() {
 /* 响应式布局 */
 @media (max-width: 768px) {
   .detail-header {
-    padding: 8px 12px;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  .back-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  }
+  
+  .back-btn svg {
+    width: 24px;
+    height: 24px;
   }
   
   .detail-title {
@@ -408,6 +422,15 @@ function handleForward() {
   
   .read-status {
     align-self: flex-start;
+  }
+  
+  .header-actions {
+    gap: 2px;
+  }
+  
+  .action-btn {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>
