@@ -309,124 +309,39 @@ onUnmounted(() => {
     <!-- 邮件列表 -->
     <div class="emails-panel">
       <div class="panel-header">
-        <div class="header-toolbar">
-          <!-- 左侧：全选 + 标题 -->
-          <div class="toolbar-left">
-            <label v-if="isSelectMode && hasEmails" class="checkbox-wrapper">
-              <input 
-                type="checkbox" 
-                :checked="isAllSelected"
-                @change="toggleSelectAll"
-                class="select-checkbox"
-              />
-              <span class="checkbox-label">全选</span>
+        <div class="header-actions">
+          <!-- 批量选择模式 -->
+          <template v-if="isSelectMode">
+            <label class="checkbox-wrapper">
+              <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" class="select-checkbox" />
             </label>
-            <div v-if="!isSelectMode" class="folder-indicator">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
-              <span class="folder-name">{{ currentFolderLabel }}</span>
-              <span class="email-count-badge" v-if="emails.length > 0">{{ emails.length }}</span>
-            </div>
-            <span v-if="isSelectMode && hasSelectedEmails" class="selected-count">
-              已选 {{ selectedCount }} 封
-            </span>
-          </div>
-          
-          <!-- 右侧：操作按钮 -->
-          <div class="toolbar-right">
-            <!-- 批量操作按钮 -->
-            <template v-if="isSelectMode && hasSelectedEmails">
-              <button 
-                class="toolbar-btn success"
-                @click="batchMarkAsRead"
-                :disabled="isBatchMarkingRead"
-                title="标记已读"
-              >
-                <svg v-if="!isBatchMarkingRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <span v-else class="loading-spinner small"></span>
-              </button>
-              <button 
-                class="toolbar-btn danger"
-                @click="batchDeleteEmails"
-                :disabled="isDeleting"
-                title="删除"
-              >
-                <svg v-if="!isDeleting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-                <span v-else class="loading-spinner small"></span>
-              </button>
-            </template>
-            
-            <!-- 常规操作按钮 -->
-            <template v-if="!isSelectMode">
-              <button 
-                v-if="hasEmails && emailStore.unreadCount > 0"
-                class="toolbar-btn"
-                @click="markAllAsRead"
-                :disabled="isMarkingAllRead"
-                title="全部已读"
-              >
-                <svg v-if="!isMarkingAllRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <span v-else class="loading-spinner small"></span>
-              </button>
-            </template>
-            
-            <!-- 选择模式切换 -->
-            <button 
-              v-if="hasEmails"
-              class="toolbar-btn"
-              :class="{ active: isSelectMode }"
-              @click="toggleSelectMode"
-              :title="isSelectMode ? '取消选择' : '批量选择'"
-            >
-              <svg v-if="!isSelectMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6 6 18M6 6l12 12"/>
-              </svg>
+            <span class="selected-info">已选 {{ selectedCount }} 封</span>
+            <button v-if="hasSelectedEmails" class="action-btn success" @click="batchMarkAsRead" :disabled="isBatchMarkingRead" title="标记已读">
+              <svg v-if="!isBatchMarkingRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span v-else class="loading-spinner small"></span>
             </button>
-            
-            <!-- 分隔线 -->
-            <div class="toolbar-divider" v-if="!isSelectMode"></div>
-            
-            <!-- 文件夹选择 -->
-            <div class="select-wrapper" v-if="!isSelectMode">
-              <svg class="select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-              </svg>
-              <select v-model="currentFolder" class="toolbar-select">
-                <option v-for="folder in folderOptions" :key="folder.value" :value="folder.value">
-                  {{ folder.label }}
-                </option>
-              </select>
-            </div>
-            
-            <!-- 排序选择 -->
-            <div class="select-wrapper" v-if="!isSelectMode">
-              <svg class="select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 5h10M11 9h7M11 13h4"/>
-                <path d="m3 17 3 3 3-3M6 18V4"/>
-              </svg>
-              <select v-model="sortBy" class="toolbar-select">
-                <option value="date">时间</option>
-                <option value="from">发件人</option>
-              </select>
-            </div>
-          </div>
+            <button v-if="hasSelectedEmails" class="action-btn danger" @click="batchDeleteEmails" :disabled="isDeleting" title="删除">
+              <svg v-if="!isDeleting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span v-else class="loading-spinner small"></span>
+            </button>
+            <button class="action-btn cancel" @click="toggleSelectMode">取消</button>
+          </template>
+          
+          <!-- 常规模式 -->
+          <template v-else>
+            <button v-if="hasEmails && emailStore.unreadCount > 0" class="action-btn" @click="markAllAsRead" :disabled="isMarkingAllRead" title="全部已读">
+              <svg v-if="!isMarkingAllRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span v-else class="loading-spinner small"></span>
+            </button>
+            <button v-if="hasEmails" class="action-btn" @click="toggleSelectMode" title="批量选择">选择</button>
+            <select v-model="currentFolder" class="header-select">
+              <option v-for="folder in folderOptions" :key="folder.value" :value="folder.value">{{ folder.label }}</option>
+            </select>
+            <select v-model="sortBy" class="header-select">
+              <option value="date">按时间</option>
+              <option value="from">按发件人</option>
+            </select>
+          </template>
         </div>
       </div>
       
@@ -638,192 +553,23 @@ onUnmounted(() => {
 
 /* 邮件列表 */
 .panel-header {
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border-color);
   background: var(--panel-bg);
 }
 
-.header-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* 文件夹指示器 */
-.folder-indicator {
+.header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.folder-indicator svg {
-  width: 18px;
-  height: 18px;
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.folder-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.email-count-badge {
-  padding: 2px 8px;
-  background: var(--primary-light);
-  color: var(--primary-color);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  border-radius: 10px;
-}
-
-/* 复选框包装 */
+/* 复选框 */
 .checkbox-wrapper {
   display: flex;
   align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.checkbox-label {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-}
-
-.selected-count {
-  font-size: 0.8125rem;
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-/* 工具栏按钮 */
-.toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 10px);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.15s ease);
-}
-
-.toolbar-btn:hover:not(:disabled) {
-  background: var(--hover-bg);
-  color: var(--text-primary);
-  border-color: var(--text-tertiary);
-}
-
-.toolbar-btn.active {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: #fff;
-}
-
-.toolbar-btn.success:hover:not(:disabled) {
-  background: var(--success-color);
-  border-color: var(--success-color);
-  color: #fff;
-}
-
-.toolbar-btn.danger:hover:not(:disabled) {
-  background: var(--error-color);
-  border-color: var(--error-color);
-  color: #fff;
-}
-
-.toolbar-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.toolbar-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* 工具栏分隔线 */
-.toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border-color);
-  margin: 0 4px;
-}
-
-/* 下拉选择包装 */
-.select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.select-icon {
-  position: absolute;
-  left: 8px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-tertiary);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.toolbar-select {
-  padding: 6px 10px 6px 28px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 10px);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all var(--transition-fast, 0.15s ease);
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 26px;
-  min-width: 80px;
-}
-
-.toolbar-select:hover {
-  border-color: var(--text-tertiary);
-}
-
-.toolbar-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px var(--primary-light);
-}
-
-.panel-header h3 {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .select-checkbox {
@@ -831,7 +577,91 @@ onUnmounted(() => {
   height: 16px;
   cursor: pointer;
   accent-color: var(--primary-color);
+}
+
+.selected-info {
+  font-size: 0.8125rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 操作按钮 */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
   flex-shrink: 0;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.action-btn.success:hover:not(:disabled) {
+  background: var(--success-color);
+  border-color: var(--success-color);
+  color: #fff;
+}
+
+.action-btn.danger:hover:not(:disabled) {
+  background: var(--error-color);
+  border-color: var(--error-color);
+  color: #fff;
+}
+
+.action-btn.cancel {
+  color: var(--text-tertiary);
+}
+
+/* 下拉选择 */
+.header-select {
+  height: 30px;
+  padding: 0 24px 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  flex-shrink: 0;
+}
+
+.header-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .content-header {
