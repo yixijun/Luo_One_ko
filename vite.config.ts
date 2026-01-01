@@ -89,18 +89,26 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: getBackendUrl(),
+        target: 'http://localhost:8080', // 默认值，会被 router 覆盖
         changeOrigin: true,
         configure: (proxy) => {
-          proxy.on('proxyReq', (_proxyReq, req) => {
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // 动态读取最新的后端地址
             const newTarget = getBackendUrl();
+            const url = new URL(newTarget);
+            proxyReq.setHeader('host', url.host);
             console.log(`[Proxy] ${req.method} ${req.url} -> ${newTarget}`);
           });
         },
+        router: () => {
+          // 动态返回目标地址
+          return getBackendUrl();
+        },
       },
       '/health': {
-        target: getBackendUrl(),
+        target: 'http://localhost:8080',
         changeOrigin: true,
+        router: () => getBackendUrl(),
       },
     },
   },
