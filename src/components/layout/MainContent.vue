@@ -353,6 +353,11 @@ async function handleDownloadAttachment(filename: string) {
   }
 }
 
+// 获取附件的显示文件名
+function getAttachmentDisplayName(attachment: Attachment): string {
+  return attachment.filename || attachment.raw_filename || 'attachment';
+}
+
 // 格式化文件大小
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
@@ -645,9 +650,9 @@ onUnmounted(() => {
                 <div v-else-if="attachments.length > 0" class="attachments-list">
                   <div 
                     v-for="attachment in attachments" 
-                    :key="attachment.filename"
+                    :key="attachment.raw_filename || attachment.filename"
                     class="attachment-item"
-                    @click="handleDownloadAttachment(attachment.filename)"
+                    @click="handleDownloadAttachment(attachment.raw_filename || attachment.filename)"
                   >
                     <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -656,11 +661,11 @@ onUnmounted(() => {
                       </svg>
                     </div>
                     <div class="attachment-info">
-                      <span class="attachment-name">{{ attachment.filename }}</span>
+                      <span class="attachment-name">{{ getAttachmentDisplayName(attachment) }}</span>
                       <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
                     </div>
                     <div class="attachment-action">
-                      <div v-if="downloadingFile === attachment.filename" class="loading-spinner small"></div>
+                      <div v-if="downloadingFile === (attachment.raw_filename || attachment.filename)" class="loading-spinner small"></div>
                       <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
