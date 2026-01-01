@@ -24,10 +24,11 @@ const emailStore = useEmailStore();
 const showEmailDetail = ref(false);
 const selectedEmail = ref<Email | null>(null);
 const isMobileView = ref(false);
+const lastRefreshTime = ref<string>('');
 
 // 自动刷新定时器
 let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
-const AUTO_REFRESH_INTERVAL = 60000; // 60秒自动刷新一次
+const AUTO_REFRESH_INTERVAL = 15000; // 15秒自动刷新一次
 
 // 计算属性
 const isLoading = computed(() => userStore.loading || accountStore.loading || emailStore.loading);
@@ -42,17 +43,22 @@ async function autoRefreshEmails() {
   // 如果正在加载或没有账户，跳过
   if (emailStore.loading || !accountStore.hasAccounts) return;
   
-  // 静默刷新邮件列表（不显示loading）
+  console.log('[AutoRefresh] 刷新邮件列表...');
+  lastRefreshTime.value = new Date().toLocaleTimeString();
+  
+  // 静默刷新邮件列表
   try {
     await emailStore.fetchEmails({ accountId: accountStore.currentAccountId || undefined });
+    console.log('[AutoRefresh] 刷新完成，邮件数:', emailStore.emails.length);
   } catch (e) {
-    // 静默失败，不显示错误
+    console.error('[AutoRefresh] 刷新失败:', e);
   }
 }
 
 // 启动自动刷新
 function startAutoRefresh() {
   if (autoRefreshTimer) return;
+  console.log('[AutoRefresh] 启动自动刷新，间隔:', AUTO_REFRESH_INTERVAL, 'ms');
   autoRefreshTimer = setInterval(autoRefreshEmails, AUTO_REFRESH_INTERVAL);
 }
 
@@ -61,6 +67,7 @@ function stopAutoRefresh() {
   if (autoRefreshTimer) {
     clearInterval(autoRefreshTimer);
     autoRefreshTimer = null;
+    console.log('[AutoRefresh] 停止自动刷新');
   }
 }
 
