@@ -229,12 +229,14 @@ async function saveProfile() {
 
 // 打开添加邮箱弹窗
 async function openAccountModal() {
+  console.log('[AppHeader] openAccountModal called');
   showUserMenu.value = false;
   resetAccountForm();
   successMessage.value = '';
   errorMessage.value = '';
   showAccountModal.value = true;
   checkingOAuthConfig.value = true;
+  googleOAuthConfigured.value = false; // 先重置为 false
   
   // 检查 Google OAuth 配置状态
   try {
@@ -244,19 +246,26 @@ async function openAccountModal() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (apiKey) headers['X-API-Key'] = apiKey;
     
+    console.log('[AppHeader] Fetching /api/oauth/config');
     const response = await fetch('/api/oauth/config', { headers });
+    console.log('[AppHeader] OAuth config response status:', response.status);
     
     if (response.ok) {
       const data = await response.json();
+      console.log('[AppHeader] OAuth config data:', JSON.stringify(data));
       const googleEnabled = data?.data?.google_enabled ?? data?.google_enabled ?? false;
       googleOAuthConfigured.value = googleEnabled;
+      console.log('[AppHeader] googleOAuthConfigured set to:', googleOAuthConfigured.value);
     } else {
+      console.log('[AppHeader] OAuth config request failed');
       googleOAuthConfigured.value = false;
     }
-  } catch {
+  } catch (err) {
+    console.error('[AppHeader] OAuth config error:', err);
     googleOAuthConfigured.value = false;
   } finally {
     checkingOAuthConfig.value = false;
+    console.log('[AppHeader] Final state - googleOAuthConfigured:', googleOAuthConfigured.value, 'checkingOAuthConfig:', checkingOAuthConfig.value);
   }
 }
 
@@ -581,7 +590,9 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
-          <!-- OAuth 配置警告已移除，因为配置检查正常工作 -->
+          <div v-if="selectedPreset === 'Gmail' && !checkingOAuthConfig && !googleOAuthConfigured" class="account-modal-message warning">
+            Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
+          </div>
           
           <div class="account-modal-field">
             <label>邮箱服务商</label>
