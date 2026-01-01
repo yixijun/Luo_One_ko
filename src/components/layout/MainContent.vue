@@ -196,6 +196,7 @@ async function batchDeleteEmails() {
 
 // 全部已读状态
 const isMarkingAllRead = ref(false);
+const isBatchMarkingRead = ref(false);
 
 // 全部已读
 async function markAllAsRead() {
@@ -209,6 +210,32 @@ async function markAllAsRead() {
     }
   } finally {
     isMarkingAllRead.value = false;
+  }
+}
+
+// 批量标记已读
+async function batchMarkAsRead() {
+  if (!hasSelectedEmails.value || isBatchMarkingRead.value) return;
+  
+  isBatchMarkingRead.value = true;
+  try {
+    const idsToMark = Array.from(selectedEmailIds.value);
+    let successCount = 0;
+    
+    for (const id of idsToMark) {
+      const success = await emailStore.markAsRead(id);
+      if (success) {
+        successCount++;
+      }
+    }
+    
+    // 退出选择模式
+    if (successCount > 0) {
+      isSelectMode.value = false;
+      selectedEmailIds.value.clear();
+    }
+  } finally {
+    isBatchMarkingRead.value = false;
   }
 }
 
@@ -295,6 +322,19 @@ onUnmounted(() => {
         <div class="header-actions">
           <button 
             v-if="isSelectMode && hasSelectedEmails" 
+            class="batch-read-btn"
+            @click="batchMarkAsRead"
+            :disabled="isBatchMarkingRead"
+          >
+            <svg v-if="!isBatchMarkingRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span v-else class="loading-spinner small"></span>
+            <span>已读</span>
+          </button>
+          <button 
+            v-if="isSelectMode && hasSelectedEmails" 
             class="batch-delete-btn"
             @click="batchDeleteEmails"
             :disabled="isDeleting"
@@ -304,7 +344,7 @@ onUnmounted(() => {
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             </svg>
             <span v-else class="loading-spinner small"></span>
-            <span>删除 ({{ selectedCount }})</span>
+            <span>删除</span>
           </button>
           <button 
             v-if="!isSelectMode && hasEmails && emailStore.unreadCount > 0"
@@ -605,6 +645,7 @@ onUnmounted(() => {
   color: #fff;
 }
 
+.batch-read-btn,
 .batch-delete-btn {
   display: flex;
   align-items: center;
@@ -612,22 +653,35 @@ onUnmounted(() => {
   padding: 4px 10px;
   border: none;
   border-radius: 4px;
-  background-color: var(--error-color, #f44336);
   color: #fff;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+.batch-read-btn {
+  background-color: var(--success-color, #4caf50);
+}
+
+.batch-read-btn:hover:not(:disabled) {
+  background-color: #388e3c;
+}
+
+.batch-delete-btn {
+  background-color: var(--error-color, #f44336);
+}
+
 .batch-delete-btn:hover:not(:disabled) {
   background-color: #d32f2f;
 }
 
+.batch-read-btn:disabled,
 .batch-delete-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
+.batch-read-btn svg,
 .batch-delete-btn svg {
   width: 14px;
   height: 14px;
