@@ -225,16 +225,19 @@ function handleClick() {
   word-break: break-word;
 }
 
-/* 重置HTML邮件的默认样式 */
+/* 重置HTML邮件的默认样式 - 使用更强的选择器 */
 .html-content :deep(*) {
   max-width: 100%;
   box-sizing: border-box;
+  border-left: none !important;
+  border-left-width: 0 !important;
+  border-left-style: none !important;
 }
 
 .html-content :deep(blockquote) {
   margin: 8px 0;
   padding: 8px 12px;
-  border-left: 3px solid var(--border-color, #2d2d44);
+  border-left: 3px solid var(--border-color, #2d2d44) !important;
   background-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -242,16 +245,11 @@ function handleClick() {
   margin: 8px 0;
 }
 
-.html-content :deep(div) {
-  border: none !important;
-  border-left: none !important;
-  border-right: none !important;
-}
-
 .html-content :deep(img) {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
+  border: none !important;
 }
 
 .html-content :deep(a) {
@@ -261,26 +259,33 @@ function handleClick() {
 .html-content :deep(table) {
   border-collapse: collapse;
   width: 100%;
+  border-left: none !important;
 }
 
 .html-content :deep(td),
 .html-content :deep(th) {
-  border: 1px solid var(--border-color, #2d2d44);
+  border: 1px solid var(--border-color, #2d2d44) !important;
   padding: 8px;
 }
 
-/* 移除邮件中常见的蓝色边框样式 */
-.html-content :deep([style*="border-left"]),
-.html-content :deep([style*="border: "]),
-.html-content :deep([style*="border:"]) {
+.html-content :deep(hr) {
   border: none !important;
-  border-left: none !important;
+  border-top: 1px solid var(--border-color, #2d2d44) !important;
+  margin: 16px 0;
 }
 
-.html-content :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--border-color, #2d2d44);
-  margin: 16px 0;
+/* 强制移除所有左边框 */
+.html-content :deep(div),
+.html-content :deep(span),
+.html-content :deep(section),
+.html-content :deep(article),
+.html-content :deep(aside),
+.html-content :deep(header),
+.html-content :deep(footer),
+.html-content :deep(main),
+.html-content :deep(nav) {
+  border-left: none !important;
+  border-left-width: 0 !important;
 }
 
 .text-content {
