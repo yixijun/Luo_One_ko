@@ -72,25 +72,16 @@ export const backendUrlManager = {
 
   setBackendUrl(url: string): void {
     localStorage.setItem(BACKEND_URL_KEY, url);
-    // 更新 axios 实例的 baseURL
-    if (url) {
-      apiClient.defaults.baseURL = url.endsWith('/api') ? url : `${url}/api`;
-    } else {
-      apiClient.defaults.baseURL = '/api';
-    }
+    // 不修改 baseURL，始终使用 /api 代理
+    // 后端地址由服务器端代理处理
   },
 
   removeBackendUrl(): void {
     localStorage.removeItem(BACKEND_URL_KEY);
-    apiClient.defaults.baseURL = '/api';
   },
 };
 
-// 初始化时设置 baseURL
-const savedUrl = backendUrlManager.getBackendUrl();
-if (savedUrl) {
-  apiClient.defaults.baseURL = savedUrl.endsWith('/api') ? savedUrl : `${savedUrl}/api`;
-}
+// baseURL 始终使用 /api，通过服务器代理访问后端
 
 
 // 请求拦截器 - 添加认证信息

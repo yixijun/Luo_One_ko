@@ -111,20 +111,56 @@ function saveBackendSettings() {
 }
 
 async function loadBackendUrl() {
-  // 从 localStorage 读取，已在 backendForm 初始化时完成
+  // 从服务器获取当前后端地址配置
+  try {
+    const response = await fetch('/config/backend');
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.data?.backendUrl) {
+        backendForm.backendUrl = data.data.backendUrl;
+      }
+    }
+  } catch (e) {
+    // 如果服务器不支持，从 localStorage 读取
+    backendForm.backendUrl = backendUrlManager.getBackendUrl();
+  }
 }
 
 async function saveBackendUrl() {
   clearMessages();
-  if (!backendForm.backendUrl.trim()) {
-    backendUrlManager.removeBackendUrl();
-    successMessage.value = '后端地址已清除，将使用默认代理';
-    addLog('info', '后端地址已清除');
-    return;
+  const url = backendForm.backendUrl.trim();
+  
+  try {
+    // 保存到服务器（用于代理）
+    const response = await fetch('/config/backend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backendUrl: url }),
+    });
+    
+    if (response.ok) {
+      // 同时保存到 localStorage（备份）
+      if (url) {
+        backendUrlManager.setBackendUrl(url);
+      } else {
+        backendUrlManager.removeBackendUrl();
+      }
+      successMessage.value = url ? '后端地址已保存' : '后端地址已清除';
+      addLog('success', url ? `后端地址已更新为: ${url}` : '后端地址已清除');
+    } else {
+      errorMessage.value = '保存失败，服务器可能不支持动态配置';
+      addLog('error', '保存后端地址失败');
+    }
+  } catch (e) {
+    // 如果服务器不支持，只保存到 localStorage
+    if (url) {
+      backendUrlManager.setBackendUrl(url);
+    } else {
+      backendUrlManager.removeBackendUrl();
+    }
+    successMessage.value = '后端地址已保存（本地）';
+    addLog('info', '后端地址已保存到本地存储');
   }
-  backendUrlManager.setBackendUrl(backendForm.backendUrl.trim());
-  successMessage.value = '后端地址已保存';
-  addLog('success', `后端地址已更新为: ${backendForm.backendUrl}`);
 }
 
 async function testBackendConnection() {
@@ -133,17 +169,20 @@ async function testBackendConnection() {
   backendTestResult.value = null;
   
   const testUrl = backendForm.backendUrl.trim();
-  addLog('info', `测试后端连接: ${testUrl || '默认代理'}`);
+  addLog('info', `测试后端连接: ${testUrl || '默认'}`);
   
   try {
-    // 先保存后端地址
+    // 先保存后端地址到服务器
     if (testUrl) {
-      backendUrlManager.setBackendUrl(testUrl);
+      await fetch('/config/backend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backendUrl: testUrl }),
+      });
     }
     
-    // 测试连接 - health 端点不在 /api 下
-    const healthUrl = testUrl ? `${testUrl}/health` : '/api/../health';
-    const response = await fetch(healthUrl, { 
+    // 通过代理测试连接（访问 /health）
+    const response = await fetch('/health', { 
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -154,7 +193,7 @@ async function testBackendConnection() {
         backendTestResult.value = { success: true, message: '连接成功' };
         addLog('success', '后端连接测试成功');
       } else {
-        backendTestResult.value = { success: true, message: '连接成功（响应正常）' };
+        backendTestResult.value = { success: true, message: '连接成功' };
         addLog('success', '后端连接测试成功');
       }
     } else {

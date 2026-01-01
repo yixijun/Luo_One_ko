@@ -31,6 +31,20 @@ app.use(express.json());
 app.use('/config', createConfigRoutes());
 
 /**
+ * Health check 代理 - 转发到后端的 /health
+ */
+app.get('/health', async (req, res) => {
+  const backendUrl = getBackendUrl();
+  try {
+    const response = await fetch(`${backendUrl}/health`);
+    const data = await response.json();
+    res.json(data);
+  } catch (e) {
+    res.status(502).json({ status: 'error', message: 'Backend unavailable' });
+  }
+});
+
+/**
  * 配置 API 反向代理
  * 将 /api/* 请求转发到后端服务 (Requirement 11.1)
  */
