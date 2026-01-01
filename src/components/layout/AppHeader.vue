@@ -1287,7 +1287,8 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .app-header {
     padding: 0 12px;
-    height: 56px;
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(56px + env(safe-area-inset-top, 0px));
     flex-wrap: nowrap;
   }
   

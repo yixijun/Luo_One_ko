@@ -93,6 +93,8 @@ const headerClass = computed(() => ({
   height: 100dvh;
   background: #1a1a2e;
   color: #e0e0e0;
+  /* 确保内容不被状态栏遮挡 */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .mobile-header {
@@ -100,7 +102,6 @@ const headerClass = computed(() => ({
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  padding-top: calc(12px + env(safe-area-inset-top, 0px));
   background: #16213e;
   border-bottom: 1px solid #2a2a4a;
   min-height: 56px;
