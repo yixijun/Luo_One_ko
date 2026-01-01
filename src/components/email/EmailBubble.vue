@@ -4,10 +4,11 @@
  * Requirements: 8.4
  * 以聊天气泡形式展示邮件
  */
+import { computed } from 'vue';
 import type { Email } from '@/types';
 
 // Props
-defineProps<{
+const props = defineProps<{
   email: Email;
   showFullContent?: boolean;
 }>();
@@ -16,6 +17,24 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'click'): void;
 }>();
+
+// 清理HTML内容，移除边框样式
+function sanitizeHtml(html: string): string {
+  if (!html) return '';
+  
+  // 移除所有 border-left 相关的内联样式
+  let cleaned = html
+    .replace(/border-left\s*:\s*[^;]+;?/gi, '')
+    .replace(/border\s*:\s*[^;]*solid[^;]*;?/gi, '')
+    .replace(/border-left-width\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-left-style\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-left-color\s*:\s*[^;]+;?/gi, '');
+  
+  return cleaned;
+}
+
+// 计算清理后的HTML内容
+const cleanedHtmlBody = computed(() => sanitizeHtml(props.email.htmlBody));
 
 // 格式化完整日期时间
 function formatFullDate(timestamp: number): string {
@@ -90,7 +109,7 @@ function handleClick() {
     <!-- 气泡内容 -->
     <div class="bubble-content">
       <template v-if="showFullContent">
-        <div v-if="email.htmlBody" v-html="email.htmlBody" class="html-content"></div>
+        <div v-if="email.htmlBody" v-html="cleanedHtmlBody" class="html-content"></div>
         <div v-else class="text-content">{{ email.body }}</div>
       </template>
       <template v-else>
