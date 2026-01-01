@@ -285,16 +285,17 @@ async function saveAccount() {
 async function loginWithGoogle() {
   try {
     const response = await apiClient.get<{ success: boolean; data: { auth_url: string }; error?: { message: string } }>('/oauth/google/auth');
-    if (response.data.success && response.data.data.auth_url) {
-      // 打开 Google 授权页面
-      window.open(response.data.data.auth_url, '_blank', 'width=600,height=700');
-      closeAccountModal();
-      successMessage.value = '请在弹出窗口中完成 Google 授权';
+    console.log('[AppHeader] loginWithGoogle response:', response.data);
+    
+    if (response.data.success && response.data.data?.auth_url) {
+      // 直接跳转到 Google 授权页面
+      window.location.href = response.data.data.auth_url;
     } else {
-      errorMessage.value = response.data.error?.message || 'Google OAuth 未配置';
+      errorMessage.value = response.data.error?.message || '获取授权链接失败';
     }
-  } catch (err) {
-    errorMessage.value = 'Google 登录失败，请检查后端配置';
+  } catch (err: any) {
+    console.error('[AppHeader] loginWithGoogle error:', err);
+    errorMessage.value = err?.response?.data?.error?.message || 'Google 登录失败';
   }
 }
 
