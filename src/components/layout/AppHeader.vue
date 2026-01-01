@@ -276,7 +276,7 @@ async function openAccountModal() {
     
     // 再次强制触发响应式更新
     await nextTick();
-    console.log('[AppHeader] After final nextTick - showGmailOAuthWarning should be:', showGmailOAuthWarning.value);
+    console.log('[AppHeader] After final nextTick - googleOAuthConfigured:', googleOAuthConfigured.value);
   }
 }
 
