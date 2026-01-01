@@ -8,6 +8,18 @@ import { ref, computed } from 'vue';
 import apiClient from '@/api/client';
 import type { Email, EmailListParams, SendEmailRequest, SyncRequest, ProcessedResult } from '@/types';
 
+// 邮件列表数量限制 - 从 localStorage 读取，默认 20
+const EMAIL_LIST_LIMIT_KEY = 'luo_one_email_list_limit';
+
+export function getEmailListLimit(): number {
+  const saved = localStorage.getItem(EMAIL_LIST_LIMIT_KEY);
+  return saved ? parseInt(saved, 10) : 20;
+}
+
+export function setEmailListLimit(limit: number): void {
+  localStorage.setItem(EMAIL_LIST_LIMIT_KEY, String(limit));
+}
+
 export const useEmailStore = defineStore('email', () => {
   // 状态
   const emails = ref<Email[]>([]);
@@ -71,7 +83,9 @@ export const useEmailStore = defineStore('email', () => {
       if (params.accountId) queryParams.account_id = params.accountId;
       if (params.folder) queryParams.folder = params.folder;
       if (params.page) queryParams.page = params.page;
-      if (params.limit) queryParams.limit = params.limit;
+      // 使用传入的 limit 或从设置中读取
+      const emailLimit = params.limit ?? getEmailListLimit();
+      queryParams.limit = emailLimit;
       if (params.sort) queryParams.sort = params.sort;
       if (params.search) queryParams.search = params.search;
       

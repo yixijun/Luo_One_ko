@@ -3,9 +3,18 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
-import { useEmailStore } from '@/stores/email';
+import { useEmailStore, getEmailListLimit, setEmailListLimit } from '@/stores/email';
 import { apiKeyManager } from '@/api/client';
 import type { EmailAccount, UserSettings } from '@/types';
+
+// 邮件列表数量选项
+const emailListLimitOptions = [
+  { value: 20, label: '20 封' },
+  { value: 50, label: '50 封' },
+  { value: 100, label: '100 封' },
+  { value: 500, label: '500 封' },
+  { value: -1, label: '不限制' },
+];
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -44,6 +53,8 @@ const accountForm = reactive<Partial<EmailAccount>>({
   email: '', displayName: '', imapHost: '', imapPort: 993,
   smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true,
 });
+
+const emailListLimit = ref(getEmailListLimit());
 
 const user = computed(() => userStore.user);
 const accounts = computed(() => accountStore.accounts);
@@ -84,6 +95,12 @@ function saveBackendSettings() {
   clearMessages();
   if (backendForm.apiKey.trim()) { apiKeyManager.setApiKey(backendForm.apiKey.trim()); successMessage.value = '后端设置已保存'; }
   else { apiKeyManager.removeApiKey(); successMessage.value = 'API 密钥已清除'; }
+}
+
+function saveEmailListLimit() {
+  clearMessages();
+  setEmailListLimit(emailListLimit.value);
+  successMessage.value = '邮件列表数量设置已保存';
 }
 
 function openAddAccountModal() { editingAccountId.value = null; resetAccountForm(); showAccountModal.value = true; }
@@ -264,6 +281,17 @@ onMounted(async () => {
             <span>添加账户</span>
           </button>
         </div>
+        
+        <div class="email-limit-setting">
+          <label class="form-label">邮件列表显示数量</label>
+          <div class="limit-options">
+            <select v-model="emailListLimit" class="form-input" @change="saveEmailListLimit">
+              <option v-for="opt in emailListLimitOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <span class="hint">设置每次加载的邮件数量，-1 表示不限制</span>
+          </div>
+        </div>
+        
         <div v-if="accounts.length === 0" class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           <p>暂无邮箱账户，点击上方按钮添加</p>
@@ -385,6 +413,11 @@ onMounted(async () => {
 .panel h2 { margin: 0 0 24px; font-size: 1.125rem; font-weight: 600; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .panel-header h2 { margin: 0; }
+.email-limit-setting { margin-bottom: 24px; padding: 16px; border: 1px solid #2d2d44; border-radius: 8px; background: #16162a; }
+.email-limit-setting .form-label { margin-bottom: 12px; }
+.limit-options { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.limit-options select { width: auto; min-width: 120px; }
+.limit-options .hint { font-size: 0.75rem; color: #888; }
 .form-group { margin-bottom: 20px; }
 .form-label { display: block; margin-bottom: 8px; font-size: 0.875rem; font-weight: 500; }
 .form-group.checkbox label { display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer; }
