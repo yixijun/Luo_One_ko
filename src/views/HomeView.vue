@@ -232,19 +232,21 @@ watch(() => accountStore.currentAccountId, (newId) => {
         />
         
         <!-- 邮件详情 -->
-        <div 
-          v-if="showEmailDetail && selectedEmail" 
-          class="email-detail-overlay"
-          :class="{ 'mobile-overlay': isMobileView }"
-        >
-          <EmailDetail
-            :email="selectedEmail"
-            @close="handleCloseDetail"
-            @delete="handleDeleteEmail"
-            @reply="handleReplyEmail"
-            @forward="handleForwardEmail"
-          />
-        </div>
+        <Transition name="slide-detail">
+          <div 
+            v-if="showEmailDetail && selectedEmail" 
+            class="email-detail-overlay"
+            :class="{ 'mobile-overlay': isMobileView }"
+          >
+            <EmailDetail
+              :email="selectedEmail"
+              @close="handleCloseDetail"
+              @delete="handleDeleteEmail"
+              @reply="handleReplyEmail"
+              @forward="handleForwardEmail"
+            />
+          </div>
+        </Transition>
       </div>
     </div>
 
@@ -346,7 +348,6 @@ watch(() => accountStore.currentAccountId, (newId) => {
   background-color: var(--content-bg, #0f0f1a);
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
   z-index: 10;
-  animation: slideIn 0.2s ease-out;
 }
 
 .email-detail-overlay.mobile-overlay {
@@ -356,6 +357,28 @@ watch(() => accountStore.currentAccountId, (newId) => {
   top: 0;
   bottom: 0;
   z-index: 50;
+}
+
+/* 邮件详情滑动动画 */
+.slide-detail-enter-active,
+.slide-detail-leave-active {
+  transition: transform 0.25s ease-out;
+}
+
+.slide-detail-enter-from {
+  transform: translateX(100%);
+}
+
+.slide-detail-enter-to {
+  transform: translateX(0);
+}
+
+.slide-detail-leave-from {
+  transform: translateX(0);
+}
+
+.slide-detail-leave-to {
+  transform: translateX(100%);
 }
 
 @keyframes slideIn {
