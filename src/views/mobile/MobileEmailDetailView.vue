@@ -353,6 +353,11 @@ onMounted(() => {
                 </div>
               </div>
             </div>
+            
+            <!-- 无附件 -->
+            <div v-else class="attachments-empty">
+              <span>附件未能获取，可能需要重新同步邮件</span>
+            </div>
           </div>
           
           <!-- 邮件正文 -->
@@ -697,5 +702,15 @@ onMounted(() => {
 @keyframes fadeInOut {
   0%, 100% { opacity: 0; }
   10%, 80% { opacity: 1; }
+}
+
+.attachments-empty {
+  padding: 16px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  background: #16213e;
+  border-radius: 8px;
+  margin-top: 12px;
 }
 </style>

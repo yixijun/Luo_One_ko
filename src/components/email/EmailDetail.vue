@@ -284,7 +284,7 @@ function handleForward() {
         
         <!-- 无附件 -->
         <div v-else class="attachments-empty">
-          <p>暂无附件信息</p>
+          <p>附件未能获取，可能需要重新同步邮件</p>
         </div>
       </div>
     </div>
