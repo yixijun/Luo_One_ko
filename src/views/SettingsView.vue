@@ -302,6 +302,32 @@ function openEditAccountModal(account: EmailAccount) {
 function resetAccountForm() { Object.assign(accountForm, { email: '', displayName: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1 }); selectedPreset.value = '手动配置'; }
 function closeAccountModal() { showAccountModal.value = false; editingAccountId.value = null; modalTestResult.value = null; resetAccountForm(); }
 
+// 使用 Google 账号登录
+async function loginWithGoogle() {
+  try {
+    // 传递昵称参数
+    const displayName = accountForm.displayName || '';
+    const response = await apiClient.get('/oauth/google/auth', {
+      params: { display_name: displayName }
+    });
+    console.log('[Settings] loginWithGoogle response:', response.data);
+    
+    // 获取 auth_url - 兼容不同的响应结构
+    const authUrl = response.data?.data?.auth_url || response.data?.auth_url;
+    
+    if (authUrl) {
+      // 直接跳转到 Google 授权页面
+      window.location.href = authUrl;
+    } else {
+      console.error('[Settings] No auth_url in response:', response.data);
+      errorMessage.value = response.data?.error?.message || '获取授权链接失败';
+    }
+  } catch (err: any) {
+    console.error('[Settings] loginWithGoogle error:', err);
+    errorMessage.value = err?.response?.data?.error?.message || 'Google 登录失败';
+  }
+}
+
 async function saveAccount() {
   clearMessages(); isSubmitting.value = true;
   try {
@@ -776,35 +802,56 @@ onMounted(async () => {
               <select v-model="selectedPreset" class="form-input" @change="applyPreset">
                 <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
               </select>
-              <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要应用专用密码：<a href="https://myaccount.google.com/apppasswords" target="_blank">点击获取</a>（需先开启两步验证）</p>
-              <p class="hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码，请在 QQ 邮箱设置中开启 IMAP 并获取</p>
+              <p class="hint" v-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码，请在 QQ 邮箱设置中开启 IMAP 并获取</p>
               <p class="hint" v-else-if="selectedPreset === 'Outlook' || selectedPreset === 'Hotmail'">Outlook/Hotmail 需要使用应用密码</p>
             </div>
-            <div class="form-group"><label class="form-label">邮箱地址</label><input v-model="accountForm.email" type="email" class="form-input" placeholder="example@mail.com" required @blur="autoSelectPreset" /></div>
-            <div class="form-group"><label class="form-label">显示名称</label><input v-model="accountForm.displayName" type="text" class="form-input" placeholder="可选" /></div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">IMAP 服务器</label><input v-model="accountForm.imapHost" type="text" class="form-input" placeholder="imap.mail.com" required /></div>
-              <div class="form-group small"><label class="form-label">端口</label><input v-model.number="accountForm.imapPort" type="number" class="form-input" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">SMTP 服务器</label><input v-model="accountForm.smtpHost" type="text" class="form-input" placeholder="smtp.mail.com" required /></div>
-              <div class="form-group small"><label class="form-label">端口</label><input v-model.number="accountForm.smtpPort" type="number" class="form-input" required /></div>
-            </div>
-            <div class="form-group"><label class="form-label">用户名</label><input v-model="accountForm.username" type="text" class="form-input" placeholder="登录用户名" required /></div>
-            <div class="form-group"><label class="form-label">密码</label><input v-model="accountForm.password" type="password" class="form-input" :placeholder="editingAccountId ? '留空保持不变' : (selectedPreset === 'Gmail' ? 'Google 应用专用密码' : selectedPreset === 'QQ 邮箱' ? 'QQ 邮箱授权码' : '邮箱密码或授权码')" :required="!editingAccountId" /></div>
-            <div class="form-group"><label class="form-label">收取天数</label><select v-model="accountForm.syncDays" class="form-input"><option v-for="opt in syncDaysOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select><p class="hint">设置同步邮件的时间范围</p></div>
-            <div class="form-group checkbox"><label><input v-model="accountForm.useSSL" type="checkbox" /> 使用 SSL/TLS</label></div>
-            <div class="form-group checkbox"><label><input v-model="accountForm.enabled" type="checkbox" /> 启用此账户</label></div>
-            <div v-if="modalTestResult" :class="['test-result', modalTestResult.success ? 'success' : 'error']">
-              <svg v-if="modalTestResult.success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-              <span>{{ modalTestResult.success ? '连接成功' : modalTestResult.message }}</span>
-            </div>
+            
+            <!-- Gmail 选择后显示昵称和 OAuth 登录按钮 -->
+            <template v-if="selectedPreset === 'Gmail' && !editingAccountId">
+              <div class="form-group">
+                <label class="form-label">昵称</label>
+                <input v-model="accountForm.displayName" type="text" class="form-input" placeholder="用于显示的名称（可选）" />
+              </div>
+              <div class="gmail-oauth-section">
+                <p class="gmail-oauth-hint">Gmail 需要通过 Google 账号授权登录</p>
+                <button type="button" class="google-login-btn" @click="loginWithGoogle">
+                  <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                  使用 Google 账号登录
+                </button>
+              </div>
+            </template>
+            
+            <!-- 非 Gmail 或编辑模式显示传统配置表单 -->
+            <template v-else>
+              <div class="form-group"><label class="form-label">邮箱地址</label><input v-model="accountForm.email" type="email" class="form-input" placeholder="example@mail.com" required @blur="autoSelectPreset" /></div>
+              <div class="form-group"><label class="form-label">显示名称</label><input v-model="accountForm.displayName" type="text" class="form-input" placeholder="可选" /></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">IMAP 服务器</label><input v-model="accountForm.imapHost" type="text" class="form-input" placeholder="imap.mail.com" required /></div>
+                <div class="form-group small"><label class="form-label">端口</label><input v-model.number="accountForm.imapPort" type="number" class="form-input" required /></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">SMTP 服务器</label><input v-model="accountForm.smtpHost" type="text" class="form-input" placeholder="smtp.mail.com" required /></div>
+                <div class="form-group small"><label class="form-label">端口</label><input v-model.number="accountForm.smtpPort" type="number" class="form-input" required /></div>
+              </div>
+              <div class="form-group"><label class="form-label">用户名</label><input v-model="accountForm.username" type="text" class="form-input" placeholder="登录用户名" required /></div>
+              <div class="form-group"><label class="form-label">密码</label><input v-model="accountForm.password" type="password" class="form-input" :placeholder="editingAccountId ? '留空保持不变' : (selectedPreset === 'QQ 邮箱' ? 'QQ 邮箱授权码' : '邮箱密码或授权码')" :required="!editingAccountId" /></div>
+              <div class="form-group"><label class="form-label">收取天数</label><select v-model="accountForm.syncDays" class="form-input"><option v-for="opt in syncDaysOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select><p class="hint">设置同步邮件的时间范围</p></div>
+              <div class="form-group checkbox"><label><input v-model="accountForm.useSSL" type="checkbox" /> 使用 SSL/TLS</label></div>
+              <div class="form-group checkbox"><label><input v-model="accountForm.enabled" type="checkbox" /> 启用此账户</label></div>
+              <div v-if="modalTestResult" :class="['test-result', modalTestResult.success ? 'success' : 'error']">
+                <svg v-if="modalTestResult.success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span>{{ modalTestResult.success ? '连接成功' : modalTestResult.message }}</span>
+              </div>
+            </template>
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer" v-if="selectedPreset !== 'Gmail' || editingAccountId">
             <button type="button" class="btn" @click="testModalConnection" :disabled="modalTestingConnection">{{ modalTestingConnection ? '测试中...' : '测试连接' }}</button>
             <button type="button" class="btn" @click="closeAccountModal">取消</button>
             <button type="submit" class="btn primary" :disabled="isSubmitting">{{ isSubmitting ? '保存中...' : '保存' }}</button>
+          </div>
+          <div class="modal-footer" v-else>
+            <button type="button" class="btn" @click="closeAccountModal">取消</button>
           </div>
         </form>
       </div>
@@ -930,6 +977,12 @@ onMounted(async () => {
 .test-result svg { width: 18px; height: 18px; flex-shrink: 0; }
 .test-result.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); color: var(--success-color); }
 .test-result.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: var(--error-color); }
+
+/* Gmail OAuth 区域样式 */
+.gmail-oauth-section { display: flex; flex-direction: column; align-items: center; padding: 24px 16px; text-align: center; }
+.gmail-oauth-hint { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 16px; }
+.google-login-btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--card-bg); color: var(--text-primary); font-size: 1rem; font-weight: 500; cursor: pointer; transition: all var(--transition-fast, 0.15s ease); }
+.google-login-btn:hover { background: var(--hover-bg); border-color: var(--primary-color); }
 .form-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
 .form-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .form-section h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
