@@ -120,6 +120,12 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+// 附件信息
+export interface Attachment {
+  filename: string;
+  size: number;
+}
+
 // 邮件列表响应
 export interface EmailListResponse {
   total: number;

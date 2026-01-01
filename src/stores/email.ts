@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import apiClient from '@/api/client';
-import type { Email, EmailListParams, SendEmailRequest, SyncRequest, ProcessedResult, SyncProgress } from '@/types';
+import type { Email, EmailListParams, SendEmailRequest, SyncRequest, ProcessedResult, SyncProgress, Attachment } from '@/types';
 
 // 邮件列表数量限制 - 从 localStorage 读取，默认 20
 const EMAIL_LIST_LIMIT_KEY = 'luo_one_email_list_limit';
@@ -330,6 +330,40 @@ export const useEmailStore = defineStore('email', () => {
     error.value = null;
   }
 
+  // 获取邮件附件列表
+  async function fetchAttachments(emailId: number): Promise<Attachment[]> {
+    try {
+      const response = await apiClient.get<Attachment[]>(`/emails/${emailId}/attachments`);
+      return response.data || [];
+    } catch (err) {
+      console.error('获取附件列表失败:', err);
+      return [];
+    }
+  }
+
+  // 下载附件
+  async function downloadAttachment(emailId: number, filename: string): Promise<void> {
+    try {
+      const response = await apiClient.get(`/emails/${emailId}/attachments/${encodeURIComponent(filename)}`, {
+        responseType: 'blob',
+      });
+      
+      // 创建下载链接
+      const blob = new Blob([response.data as BlobPart]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      error.value = (err as Error).message || '下载附件失败';
+      throw err;
+    }
+  }
+
   return {
     emails,
     currentEmail,
@@ -354,5 +388,7 @@ export const useEmailStore = defineStore('email', () => {
     getSyncProgress,
     clearCurrentEmail,
     reset,
+    fetchAttachments,
+    downloadAttachment,
   };
 });

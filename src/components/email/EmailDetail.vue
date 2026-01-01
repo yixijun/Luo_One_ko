@@ -4,8 +4,9 @@
  * Requirements: 8.6
  * 点击气泡打开详情，展示完整邮件内容
  */
-import { computed } from 'vue';
-import type { Email } from '@/types';
+import { computed, ref, watch } from 'vue';
+import type { Email, Attachment } from '@/types';
+import { useEmailStore } from '@/stores/email';
 import EmailBubble from './EmailBubble.vue';
 import ProcessedInfo from './ProcessedInfo.vue';
 
@@ -22,8 +23,69 @@ const emit = defineEmits<{
   (e: 'forward'): void;
 }>();
 
+const emailStore = useEmailStore();
+
+// 附件相关状态
+const attachments = ref<Attachment[]>([]);
+const loadingAttachments = ref(false);
+const downloadingFile = ref<string | null>(null);
+
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
+
+// 加载附件列表
+async function loadAttachments() {
+  if (!props.email.hasAttachments) return;
+  
+  loadingAttachments.value = true;
+  try {
+    attachments.value = await emailStore.fetchAttachments(props.email.id);
+  } catch (err) {
+    console.error('加载附件失败:', err);
+  } finally {
+    loadingAttachments.value = false;
+  }
+}
+
+// 下载附件
+async function handleDownload(filename: string) {
+  downloadingFile.value = filename;
+  try {
+    await emailStore.downloadAttachment(props.email.id, filename);
+  } catch (err) {
+    console.error('下载附件失败:', err);
+    alert('下载附件失败');
+  } finally {
+    downloadingFile.value = null;
+  }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// 获取文件图标类型
+function getFileIcon(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return 'image';
+  if (['pdf'].includes(ext)) return 'pdf';
+  if (['doc', 'docx'].includes(ext)) return 'word';
+  if (['xls', 'xlsx'].includes(ext)) return 'excel';
+  if (['ppt', 'pptx'].includes(ext)) return 'ppt';
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+  if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) return 'audio';
+  if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) return 'video';
+  if (['txt', 'md', 'json', 'xml', 'csv'].includes(ext)) return 'text';
+  return 'file';
+}
+
+// 监听邮件变化，重新加载附件
+watch(() => props.email.id, () => {
+  loadAttachments();
+}, { immediate: true });
 
 // 格式化完整日期时间
 function formatFullDate(timestamp: number): string {
@@ -163,10 +225,66 @@ function handleForward() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
-          附件
+          附件 ({{ attachments.length }})
         </h3>
-        <div class="attachments-placeholder">
-          <p>附件功能开发中...</p>
+        
+        <!-- 加载中 -->
+        <div v-if="loadingAttachments" class="attachments-loading">
+          <div class="spinner"></div>
+          <span>加载附件列表...</span>
+        </div>
+        
+        <!-- 附件列表 -->
+        <div v-else-if="attachments.length > 0" class="attachments-list">
+          <div 
+            v-for="attachment in attachments" 
+            :key="attachment.filename"
+            class="attachment-item"
+            @click="handleDownload(attachment.filename)"
+          >
+            <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
+              <!-- 图片图标 -->
+              <svg v-if="getFileIcon(attachment.filename) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <!-- PDF图标 -->
+              <svg v-else-if="getFileIcon(attachment.filename) === 'pdf'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M9 15h6"/>
+              </svg>
+              <!-- 压缩包图标 -->
+              <svg v-else-if="getFileIcon(attachment.filename) === 'archive'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                <line x1="12" y1="11" x2="12" y2="17"/>
+                <line x1="9" y1="14" x2="15" y2="14"/>
+              </svg>
+              <!-- 默认文件图标 -->
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="attachment-info">
+              <span class="attachment-name">{{ attachment.filename }}</span>
+              <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+            </div>
+            <div class="attachment-action">
+              <div v-if="downloadingFile === attachment.filename" class="spinner small"></div>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 无附件 -->
+        <div v-else class="attachments-empty">
+          <p>暂无附件信息</p>
         </div>
       </div>
     </div>
@@ -374,17 +492,130 @@ function handleForward() {
   margin-bottom: 16px;
 }
 
-.attachments-placeholder {
+.attachments-loading,
+.attachments-empty {
   padding: 24px;
   background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
   border-radius: 12px;
   text-align: center;
   color: var(--text-secondary, #888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
-.attachments-placeholder p {
-  margin: 0;
+.attachments-loading .spinner,
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color, #2d2d44);
+  border-top-color: var(--primary-color, #646cff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner.small {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.attachment-item:hover {
+  background-color: var(--hover-bg, rgba(255, 255, 255, 0.08));
+}
+
+.attachment-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-bg, rgba(100, 108, 255, 0.1));
+  color: var(--primary-color, #646cff);
+  flex-shrink: 0;
+}
+
+.attachment-icon.image {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.attachment-icon.pdf {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.attachment-icon.archive {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.attachment-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachment-name {
   font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #888);
+}
+
+.attachment-action {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #888);
+  flex-shrink: 0;
+}
+
+.attachment-action svg {
+  width: 18px;
+  height: 18px;
+}
+
+.attachment-item:hover .attachment-action {
+  color: var(--primary-color, #646cff);
 }
 
 /* 响应式布局 */

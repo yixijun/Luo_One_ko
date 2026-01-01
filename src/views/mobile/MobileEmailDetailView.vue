@@ -7,6 +7,7 @@
  * - 显示邮件完整内容
  * - 支持左滑/返回按钮返回邮件列表
  * - 显示处理结果信息
+ * - 附件下载
  */
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -14,6 +15,7 @@ import MobileLayout from '@/components/mobile/MobileLayout.vue';
 import SwipeableView from '@/components/mobile/SwipeableView.vue';
 import { useEmailStore } from '@/stores/email';
 import { useSwipeNavigation } from '@/composables/useSwipeNavigation';
+import type { Attachment } from '@/types';
 
 const route = useRoute();
 const emailStore = useEmailStore();
@@ -22,6 +24,9 @@ const { handleSwipeRight, closeEmailDetail, initFromRoute } = useSwipeNavigation
 // 状态
 const showHtml = ref(false);
 const iframeRef = ref<HTMLIFrameElement | null>(null);
+const attachments = ref<Attachment[]>([]);
+const loadingAttachments = ref(false);
+const downloadingFile = ref<string | null>(null);
 
 // 计算属性
 const email = computed(() => emailStore.currentEmail);
@@ -47,6 +52,42 @@ const recipients = computed(() => {
   if (!email.value) return '';
   return email.value.to.join(', ');
 });
+
+// 加载附件列表
+async function loadAttachments() {
+  if (!email.value?.hasAttachments || !email.value?.id) return;
+  
+  loadingAttachments.value = true;
+  try {
+    attachments.value = await emailStore.fetchAttachments(email.value.id);
+  } catch (err) {
+    console.error('加载附件失败:', err);
+  } finally {
+    loadingAttachments.value = false;
+  }
+}
+
+// 下载附件
+async function handleDownload(filename: string) {
+  if (!email.value?.id) return;
+  
+  downloadingFile.value = filename;
+  try {
+    await emailStore.downloadAttachment(email.value.id, filename);
+  } catch (err) {
+    console.error('下载附件失败:', err);
+    alert('下载附件失败');
+  } finally {
+    downloadingFile.value = null;
+  }
+}
+
+// 格式化文件大小
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
 
 const importanceLabel = computed(() => {
   const importance = email.value?.processedResult?.importance;
@@ -96,6 +137,10 @@ const loadEmail = async () => {
     // 标记为已读
     if (email.value && !email.value.isRead) {
       await emailStore.markAsRead(emailId.value);
+    }
+    // 加载附件
+    if (email.value?.hasAttachments) {
+      loadAttachments();
     }
   }
 };
@@ -271,7 +316,42 @@ onMounted(() => {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
-              <span>包含附件</span>
+              <span>附件 ({{ attachments.length }})</span>
+            </div>
+            
+            <!-- 加载中 -->
+            <div v-if="loadingAttachments" class="attachments-loading">
+              <div class="spinner"></div>
+              <span>加载中...</span>
+            </div>
+            
+            <!-- 附件列表 -->
+            <div v-else-if="attachments.length > 0" class="attachments-list">
+              <div 
+                v-for="attachment in attachments" 
+                :key="attachment.filename"
+                class="attachment-item"
+                @click="handleDownload(attachment.filename)"
+              >
+                <div class="attachment-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <div class="attachment-info">
+                  <span class="attachment-name">{{ attachment.filename }}</span>
+                  <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
+                </div>
+                <div class="attachment-action">
+                  <div v-if="downloadingFile === attachment.filename" class="spinner small"></div>
+                  <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -449,6 +529,99 @@ onMounted(() => {
 .attachments-section {
   padding: 12px 16px;
   border-bottom: 1px solid #2a2a4a;
+}
+
+.attachments-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #888;
+  font-size: 13px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #2a2a4a;
+  border-top-color: #4a90d9;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner.small {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #16213e;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.attachment-item:active {
+  background: #1a2744;
+}
+
+.attachment-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 144, 217, 0.1);
+  color: #4a90d9;
+  flex-shrink: 0;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attachment-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-size {
+  font-size: 12px;
+  color: #888;
+}
+
+.attachment-action {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  flex-shrink: 0;
 }
 
 .section-title {
