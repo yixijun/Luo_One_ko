@@ -9,6 +9,10 @@ import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
 import type { EmailAccount } from '@/types';
 
+const emit = defineEmits<{
+  (e: 'account-change'): void;
+}>();
+
 const router = useRouter();
 const accountStore = useAccountStore();
 const emailStore = useEmailStore();
@@ -25,12 +29,14 @@ const deletingAccountId = ref<number | null>(null);
 function selectAccount(account: EmailAccount) {
   accountStore.setCurrentAccount(account);
   emailStore.fetchEmails({ accountId: account.id });
+  emit('account-change');
 }
 
 // 显示所有邮件
 function showAllEmails() {
   accountStore.setCurrentAccount(null);
   emailStore.fetchEmails();
+  emit('account-change');
 }
 
 // 跳转到写邮件页面

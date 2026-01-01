@@ -225,6 +225,8 @@ onUnmounted(() => {
 <template>
   <header class="app-header">
     <div class="header-left">
+      <!-- 移动端菜单按钮插槽 -->
+      <slot name="mobile-menu"></slot>
       <div class="logo">
         <span class="logo-text">洛一</span>
       </div>

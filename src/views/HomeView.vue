@@ -3,6 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 主页
  * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7
  * 整合布局组件和邮件组件，实现完整的邮件管理界面
+ * 支持桌面端和移动端响应式布局
  */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -16,6 +17,9 @@ import MainContent from '@/components/layout/MainContent.vue';
 import EmailDetail from '@/components/email/EmailDetail.vue';
 import type { Email } from '@/types';
 
+// 移动端视图模式
+type MobileViewMode = 'list' | 'detail';
+
 const router = useRouter();
 const userStore = useUserStore();
 const accountStore = useAccountStore();
@@ -25,6 +29,8 @@ const emailStore = useEmailStore();
 const showEmailDetail = ref(false);
 const selectedEmail = ref<Email | null>(null);
 const isMobileView = ref(false);
+const mobileViewMode = ref<MobileViewMode>('list');
+const showMobileSidebar = ref(false);
 const lastEmailCount = ref<number>(0);
 
 // 自动刷新定时器
@@ -92,6 +98,11 @@ function handleEmailSelect(email: Email) {
   selectedEmail.value = email;
   showEmailDetail.value = true;
   
+  // 移动端切换到详情视图
+  if (isMobileView.value) {
+    mobileViewMode.value = 'detail';
+  }
+  
   // 标记为已读
   if (!email.isRead) {
     emailStore.markAsRead(email.id);
@@ -102,6 +113,16 @@ function handleEmailSelect(email: Email) {
 function handleCloseDetail() {
   showEmailDetail.value = false;
   selectedEmail.value = null;
+  
+  // 移动端返回列表视图
+  if (isMobileView.value) {
+    mobileViewMode.value = 'list';
+  }
+}
+
+// 切换移动端侧边栏
+function toggleMobileSidebar() {
+  showMobileSidebar.value = !showMobileSidebar.value;
 }
 
 // 删除邮件
@@ -176,24 +197,41 @@ watch(() => accountStore.currentAccountId, (newId) => {
 </script>
 
 <template>
-  <div class="home-view">
+  <div class="home-view" :class="{ 'mobile': isMobileView }">
     <!-- 应用头部 -->
-    <AppHeader />
+    <AppHeader>
+      <template #mobile-menu v-if="isMobileView">
+        <button class="mobile-menu-btn" @click="toggleMobileSidebar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </template>
+    </AppHeader>
     
     <!-- 主体内容 -->
     <div class="home-body">
-      <!-- 侧边栏 -->
-      <Sidebar />
+      <!-- 侧边栏 - 桌面端始终显示，移动端通过遮罩层显示 -->
+      <div 
+        v-if="!isMobileView || showMobileSidebar" 
+        class="sidebar-wrapper"
+        :class="{ 'mobile-sidebar': isMobileView }"
+      >
+        <div v-if="isMobileView" class="sidebar-overlay" @click="showMobileSidebar = false"></div>
+        <Sidebar @account-change="showMobileSidebar = false" />
+      </div>
       
       <!-- 主内容区 -->
       <div class="main-wrapper">
-        <!-- 邮件列表和内容区 -->
+        <!-- 邮件列表 - 移动端在详情模式下隐藏 -->
         <MainContent 
-          v-show="!showEmailDetail || !isMobileView"
+          v-show="!isMobileView || mobileViewMode === 'list'"
           @email-select="handleEmailSelect"
         />
         
-        <!-- 邮件详情（覆盖模式，用于移动端或点击查看详情） -->
+        <!-- 邮件详情 -->
         <div 
           v-if="showEmailDetail && selectedEmail" 
           class="email-detail-overlay"
@@ -233,11 +271,69 @@ watch(() => accountStore.currentAccountId, (newId) => {
   overflow: hidden;
 }
 
+.sidebar-wrapper {
+  flex-shrink: 0;
+}
+
 .main-wrapper {
   display: flex;
   flex: 1;
   position: relative;
   overflow: hidden;
+}
+
+/* 移动端菜单按钮 */
+.mobile-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 移动端侧边栏 */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+}
+
+.mobile-sidebar :deep(.sidebar) {
+  position: relative;
+  z-index: 100;
+  animation: slideInLeft 0.2s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 /* 邮件详情覆盖层 */
@@ -256,6 +352,10 @@ watch(() => accountStore.currentAccountId, (newId) => {
 .email-detail-overlay.mobile-overlay {
   width: 100%;
   left: 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 50;
 }
 
 @keyframes slideIn {
@@ -317,9 +417,18 @@ watch(() => accountStore.currentAccountId, (newId) => {
     flex-direction: column;
   }
   
+  /* 移动端隐藏默认侧边栏 */
+  .sidebar-wrapper:not(.mobile-sidebar) {
+    display: none;
+  }
+  
   .email-detail-overlay {
     width: 100%;
     left: 0;
+  }
+  
+  .main-wrapper {
+    flex-direction: column;
   }
 }
 
