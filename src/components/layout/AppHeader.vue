@@ -88,21 +88,27 @@ function goToSettings() {
   router.push('/settings');
 }
 
-// 同步邮件
+// 刷新状态
+const isRefreshing = ref(false);
+
+// 同步邮件（从服务器拉取）
 async function syncEmails() {
-  // 如果有选中的账户，同步该账户；否则同步所有账户
-  const currentAccountId = accountStore.currentAccountId;
-  if (currentAccountId) {
-    await emailStore.syncEmails({ accountId: currentAccountId });
-    // 刷新当前账户的邮件列表
-    await emailStore.fetchEmails({ accountId: currentAccountId });
-  } else {
-    // 同步所有启用的账户
-    for (const account of accountStore.enabledAccounts) {
-      await emailStore.syncEmails({ accountId: account.id });
+  if (isRefreshing.value) return;
+  isRefreshing.value = true;
+  try {
+    const currentAccountId = accountStore.currentAccountId;
+    if (currentAccountId) {
+      await emailStore.syncEmails({ accountId: currentAccountId });
+      await emailStore.fetchEmails({ accountId: currentAccountId });
+    } else {
+      // 同步所有启用的账户
+      for (const account of accountStore.enabledAccounts) {
+        await emailStore.syncEmails({ accountId: account.id });
+      }
+      await emailStore.fetchEmails();
     }
-    // 刷新所有邮件列表
-    await emailStore.fetchEmails();
+  } finally {
+    isRefreshing.value = false;
   }
 }
 
@@ -300,7 +306,13 @@ onUnmounted(() => {
     </div>
 
     <div class="header-right">
-      <button class="icon-btn" @click="syncEmails" title="同步邮件">
+      <button 
+        class="icon-btn" 
+        :class="{ 'is-syncing': isRefreshing }"
+        @click="syncEmails" 
+        :disabled="isRefreshing"
+        :title="isRefreshing ? '同步中...' : '同步邮件'"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
           <path d="M3 3v5h5"/>
@@ -737,14 +749,29 @@ onUnmounted(() => {
   transition: all var(--transition-fast, 0.15s ease);
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   color: var(--text-primary);
   background-color: var(--hover-bg);
+}
+
+.icon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .icon-btn svg {
   width: 20px;
   height: 20px;
+}
+
+/* 同步按钮旋转动画 */
+.icon-btn.is-syncing svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* 主题切换按钮 */
