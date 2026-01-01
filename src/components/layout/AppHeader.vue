@@ -1029,6 +1029,7 @@ onUnmounted(() => {
   flex-direction: column;
   animation: scaleIn 0.2s ease-out;
   box-shadow: var(--shadow-lg);
+  overflow: hidden;
 }
 
 .modal.modal-large {
@@ -1089,6 +1090,7 @@ onUnmounted(() => {
   gap: 14px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .message {
