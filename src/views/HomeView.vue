@@ -41,7 +41,10 @@ function checkMobileView() {
 
 // 检查是否有新邮件
 async function checkForNewEmails() {
-  if (!accountStore.hasAccounts) return;
+  if (!accountStore.hasAccounts) {
+    console.log('[AutoRefresh] 没有账户，跳过检查');
+    return;
+  }
   
   try {
     const params: Record<string, unknown> = { folder: 'inbox' };
@@ -49,18 +52,21 @@ async function checkForNewEmails() {
       params.account_id = accountStore.currentAccountId;
     }
     
-    const response = await apiClient.get<{ total: number }>('/emails/count', { params });
-    const newCount = response.data.total;
+    console.log('[AutoRefresh] 检查邮件数量...', params);
+    const response = await apiClient.get<{ data: { total: number } }>('/emails/count', { params });
+    const newCount = response.data?.data?.total ?? response.data?.total ?? 0;
+    
+    console.log('[AutoRefresh] 当前数量:', newCount, '上次数量:', lastEmailCount.value);
     
     // 如果数量变化了，刷新邮件列表
     if (lastEmailCount.value !== 0 && newCount !== lastEmailCount.value) {
-      console.log('[AutoRefresh] 检测到新邮件，刷新列表', lastEmailCount.value, '->', newCount);
+      console.log('[AutoRefresh] 检测到变化，刷新列表');
       await emailStore.fetchEmails({ accountId: accountStore.currentAccountId || undefined });
     }
     
     lastEmailCount.value = newCount;
   } catch (e) {
-    // 静默失败
+    console.error('[AutoRefresh] 检查失败:', e);
   }
 }
 
