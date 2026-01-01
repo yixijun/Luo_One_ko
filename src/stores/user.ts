@@ -94,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
   async function fetchSettings(): Promise<void> {
     loading.value = true;
     try {
-      const response = await apiClient.get<UserSettings>('/user/settings');
+      const response = await apiClient.get<UserSettings>('/settings');
       settings.value = response.data;
     } catch (err) {
       error.value = (err as Error).message || '获取设置失败';
@@ -108,7 +108,7 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.put<UserSettings>('/user/settings', data);
+      const response = await apiClient.put<UserSettings>('/settings', data);
       settings.value = response.data;
       return true;
     } catch (err) {

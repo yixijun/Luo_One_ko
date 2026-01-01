@@ -157,10 +157,10 @@ async function saveGoogleOAuthSettings() {
   clearMessages(); isSubmitting.value = true;
   try {
     const success = await userStore.updateSettings({
-      googleClientId: aiForm.googleClientId,
-      googleClientSecret: aiForm.googleClientSecret,
-      googleRedirectUrl: aiForm.googleRedirectUrl,
-    });
+      google_client_id: aiForm.googleClientId,
+      google_client_secret: aiForm.googleClientSecret,
+      google_redirect_url: aiForm.googleRedirectUrl,
+    } as any);
     if (success) successMessage.value = 'Google OAuth 配置已保存';
     else errorMessage.value = userStore.error || '保存失败';
   } finally { isSubmitting.value = false; }
