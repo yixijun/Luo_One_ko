@@ -62,6 +62,49 @@ const syncDaysOptions = [
   { value: 365, label: '最近 1 年' },
 ];
 
+// 邮箱预设配置
+const emailPresets = [
+  { name: '手动配置', domain: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465 },
+  { name: 'Gmail', domain: 'gmail.com', imapHost: 'imap.gmail.com', imapPort: 993, smtpHost: 'smtp.gmail.com', smtpPort: 587 },
+  { name: 'QQ 邮箱', domain: 'qq.com', imapHost: 'imap.qq.com', imapPort: 993, smtpHost: 'smtp.qq.com', smtpPort: 465 },
+  { name: '163 邮箱', domain: '163.com', imapHost: 'imap.163.com', imapPort: 993, smtpHost: 'smtp.163.com', smtpPort: 465 },
+  { name: '126 邮箱', domain: '126.com', imapHost: 'imap.126.com', imapPort: 993, smtpHost: 'smtp.126.com', smtpPort: 465 },
+  { name: 'Outlook', domain: 'outlook.com', imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp.office365.com', smtpPort: 587 },
+  { name: 'Hotmail', domain: 'hotmail.com', imapHost: 'outlook.office365.com', imapPort: 993, smtpHost: 'smtp.office365.com', smtpPort: 587 },
+  { name: '新浪邮箱', domain: 'sina.com', imapHost: 'imap.sina.com', imapPort: 993, smtpHost: 'smtp.sina.com', smtpPort: 465 },
+  { name: '188 邮箱', domain: '188.com', imapHost: 'imap.188.com', imapPort: 993, smtpHost: 'smtp.188.com', smtpPort: 465 },
+];
+
+const selectedPreset = ref('');
+
+// 应用邮箱预设
+function applyPreset() {
+  const preset = emailPresets.find(p => p.name === selectedPreset.value);
+  if (preset && preset.imapHost) {
+    accountForm.imapHost = preset.imapHost;
+    accountForm.imapPort = preset.imapPort;
+    accountForm.smtpHost = preset.smtpHost;
+    accountForm.smtpPort = preset.smtpPort;
+  }
+}
+
+// 根据邮箱地址自动选择预设
+function autoSelectPreset() {
+  const email = accountForm.email || '';
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (domain) {
+    const preset = emailPresets.find(p => p.domain === domain);
+    if (preset) {
+      selectedPreset.value = preset.name;
+      applyPreset();
+      // 自动填充用户名
+      if (!accountForm.username) {
+        accountForm.username = email;
+      }
+    }
+  }
+}
+
 const user = computed(() => userStore.user);
 const accounts = computed(() => accountStore.accounts);
 const passwordValid = computed(() => passwordForm.newPassword.length >= 6 && passwordForm.newPassword === passwordForm.confirmPassword);
@@ -220,7 +263,7 @@ function openEditAccountModal(account: EmailAccount) {
   Object.assign(accountForm, { email: account.email, displayName: account.displayName, imapHost: account.imapHost, imapPort: account.imapPort, smtpHost: account.smtpHost, smtpPort: account.smtpPort, username: account.username, password: '', useSSL: account.useSSL, enabled: account.enabled, syncDays: account.syncDays ?? -1 });
   showAccountModal.value = true;
 }
-function resetAccountForm() { Object.assign(accountForm, { email: '', displayName: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1 }); }
+function resetAccountForm() { Object.assign(accountForm, { email: '', displayName: '', imapHost: '', imapPort: 993, smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1 }); selectedPreset.value = '手动配置'; }
 function closeAccountModal() { showAccountModal.value = false; editingAccountId.value = null; modalTestResult.value = null; resetAccountForm(); }
 
 async function saveAccount() {
@@ -562,7 +605,16 @@ onMounted(async () => {
         </div>
         <form @submit.prevent="saveAccount">
           <div class="modal-body">
-            <div class="form-group"><label class="form-label">邮箱地址</label><input v-model="accountForm.email" type="email" class="form-input" placeholder="example@mail.com" required /></div>
+            <div class="form-group">
+              <label class="form-label">邮箱服务商</label>
+              <select v-model="selectedPreset" class="form-input" @change="applyPreset">
+                <option v-for="preset in emailPresets" :key="preset.name" :value="preset.name">{{ preset.name }}</option>
+              </select>
+              <p class="hint" v-if="selectedPreset === 'Gmail'">Gmail 需要使用应用专用密码，请在 Google 账户设置中生成</p>
+              <p class="hint" v-else-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码，请在 QQ 邮箱设置中开启 IMAP 并获取</p>
+              <p class="hint" v-else-if="selectedPreset === 'Outlook' || selectedPreset === 'Hotmail'">Outlook/Hotmail 需要使用应用密码</p>
+            </div>
+            <div class="form-group"><label class="form-label">邮箱地址</label><input v-model="accountForm.email" type="email" class="form-input" placeholder="example@mail.com" required @blur="autoSelectPreset" /></div>
             <div class="form-group"><label class="form-label">显示名称</label><input v-model="accountForm.displayName" type="text" class="form-input" placeholder="可选" /></div>
             <div class="form-row">
               <div class="form-group"><label class="form-label">IMAP 服务器</label><input v-model="accountForm.imapHost" type="text" class="form-input" placeholder="imap.mail.com" required /></div>
@@ -573,7 +625,7 @@ onMounted(async () => {
               <div class="form-group small"><label class="form-label">端口</label><input v-model.number="accountForm.smtpPort" type="number" class="form-input" required /></div>
             </div>
             <div class="form-group"><label class="form-label">用户名</label><input v-model="accountForm.username" type="text" class="form-input" placeholder="登录用户名" required /></div>
-            <div class="form-group"><label class="form-label">密码</label><input v-model="accountForm.password" type="password" class="form-input" :placeholder="editingAccountId ? '留空保持不变' : '邮箱密码或授权码'" :required="!editingAccountId" /></div>
+            <div class="form-group"><label class="form-label">密码</label><input v-model="accountForm.password" type="password" class="form-input" :placeholder="editingAccountId ? '留空保持不变' : (selectedPreset === 'Gmail' ? 'Google 应用专用密码' : selectedPreset === 'QQ 邮箱' ? 'QQ 邮箱授权码' : '邮箱密码或授权码')" :required="!editingAccountId" /></div>
             <div class="form-group"><label class="form-label">收取天数</label><select v-model="accountForm.syncDays" class="form-input"><option v-for="opt in syncDaysOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select><p class="hint">设置同步邮件的时间范围</p></div>
             <div class="form-group checkbox"><label><input v-model="accountForm.useSSL" type="checkbox" /> 使用 SSL/TLS</label></div>
             <div class="form-group checkbox"><label><input v-model="accountForm.enabled" type="checkbox" /> 启用此账户</label></div>
