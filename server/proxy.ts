@@ -5,14 +5,82 @@
  */
 
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
-import type { RequestHandler } from 'express';
+import type { RequestHandler, Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 配置文件路径
+const CONFIG_FILE = path.join(__dirname, 'backend-config.json');
+
+// 默认后端地址
+const DEFAULT_BACKEND_URL = 'http://localhost:8080';
+
+/**
+ * 读取后端配置
+ */
+function readConfig(): { backendUrl: string } {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const data = fs.readFileSync(CONFIG_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('[Config] Failed to read config:', e);
+  }
+  return { backendUrl: process.env.BACKEND_URL || DEFAULT_BACKEND_URL };
+}
+
+/**
+ * 保存后端配置
+ */
+function saveConfig(config: { backendUrl: string }): void {
+  try {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+    console.log('[Config] Saved backend URL:', config.backendUrl);
+  } catch (e) {
+    console.error('[Config] Failed to save config:', e);
+  }
+}
 
 /**
  * 获取后端服务地址
- * 优先从环境变量读取，默认为 localhost:8080
  */
 export function getBackendUrl(): string {
-  return process.env.BACKEND_URL || 'http://localhost:8080';
+  return readConfig().backendUrl;
+}
+
+/**
+ * 设置后端服务地址
+ */
+export function setBackendUrl(url: string): void {
+  saveConfig({ backendUrl: url });
+}
+
+/**
+ * 创建配置 API 路由
+ */
+export function createConfigRoutes(): RequestHandler {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET' && req.path === '/config/backend') {
+      // 获取当前后端地址
+      res.json({ success: true, data: { backendUrl: getBackendUrl() } });
+    } else if (req.method === 'POST' && req.path === '/config/backend') {
+      // 设置后端地址
+      const { backendUrl } = req.body || {};
+      if (!backendUrl) {
+        res.status(400).json({ success: false, error: { message: 'backendUrl is required' } });
+        return;
+      }
+      setBackendUrl(backendUrl);
+      res.json({ success: true, data: { backendUrl } });
+    } else {
+      next();
+    }
+  };
 }
 
 /**
@@ -20,41 +88,40 @@ export function getBackendUrl(): string {
  * 将 /api/* 请求转发到后端服务
  */
 export function createApiProxy(): RequestHandler {
-  const backendUrl = getBackendUrl();
-  
-  const proxyOptions: Options = {
-    target: backendUrl,
-    changeOrigin: true,
-    // 正确传递请求头和认证信息 (Requirement 11.5)
-    xfwd: true,
-    // 错误处理 (Requirement 11.6)
-    on: {
-      error: (err, req, res) => {
-        console.error(`[Proxy Error] ${err.message}`);
-        // 如果后端服务不可用，返回适当的错误响应
-        if ('writeHead' in res && typeof res.writeHead === 'function') {
-          res.writeHead(502, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
-            success: false,
-            error: {
-              code: 'BACKEND_UNAVAILABLE',
-              message: 'Backend service is unavailable. Please try again later.',
-            },
-          }));
-        }
+  // 使用动态代理，每次请求都读取最新的后端地址
+  return (req: Request, res: Response, next: NextFunction) => {
+    const backendUrl = getBackendUrl();
+    
+    const proxyOptions: Options = {
+      target: backendUrl,
+      changeOrigin: true,
+      xfwd: true,
+      on: {
+        error: (err, _req, proxyRes) => {
+          console.error(`[Proxy Error] ${err.message}`);
+          if ('writeHead' in proxyRes && typeof proxyRes.writeHead === 'function') {
+            proxyRes.writeHead(502, { 'Content-Type': 'application/json' });
+            proxyRes.end(JSON.stringify({
+              success: false,
+              error: {
+                code: 'BACKEND_UNAVAILABLE',
+                message: 'Backend service is unavailable. Please try again later.',
+              },
+            }));
+          }
+        },
+        proxyReq: (proxyReq, req) => {
+          console.log(`[Proxy] ${req.method} ${req.url} -> ${backendUrl}${req.url}`);
+        },
+        proxyRes: (proxyRes, req) => {
+          console.log(`[Proxy] ${req.method} ${req.url} <- ${proxyRes.statusCode}`);
+        },
       },
-      proxyReq: (proxyReq, req) => {
-        // 记录代理请求日志
-        console.log(`[Proxy] ${req.method} ${req.url} -> ${backendUrl}${req.url}`);
-      },
-      proxyRes: (proxyRes, req) => {
-        // 记录代理响应日志
-        console.log(`[Proxy] ${req.method} ${req.url} <- ${proxyRes.statusCode}`);
-      },
-    },
-  };
+    };
 
-  return createProxyMiddleware(proxyOptions);
+    const proxy = createProxyMiddleware(proxyOptions);
+    proxy(req, res, next);
+  };
 }
 
 export default createApiProxy;

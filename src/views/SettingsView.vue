@@ -5,6 +5,7 @@ import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore, getEmailListLimit, setEmailListLimit } from '@/stores/email';
 import { apiKeyManager } from '@/api/client';
+import axios from 'axios';
 import type { EmailAccount, UserSettings } from '@/types';
 
 // 邮件列表数量选项
@@ -48,7 +49,9 @@ const aiForm = reactive<UserSettings>({
   aiEnabled: false, aiProvider: '', aiApiKey: '', aiModel: '',
   extractCode: true, detectAd: true, summarize: true, judgeImportance: true,
 });
-const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '' });
+const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: '' });
+const testingBackendConnection = ref(false);
+const backendTestResult = ref<{ success: boolean; message: string } | null>(null);
 const accountForm = reactive<Partial<EmailAccount>>({
   email: '', displayName: '', imapHost: '', imapPort: 993,
   smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1,
@@ -105,6 +108,61 @@ function saveBackendSettings() {
   clearMessages();
   if (backendForm.apiKey.trim()) { apiKeyManager.setApiKey(backendForm.apiKey.trim()); successMessage.value = '后端设置已保存'; }
   else { apiKeyManager.removeApiKey(); successMessage.value = 'API 密钥已清除'; }
+}
+
+async function loadBackendUrl() {
+  try {
+    const response = await axios.get('/config/backend');
+    if (response.data?.data?.backendUrl) {
+      backendForm.backendUrl = response.data.data.backendUrl;
+    }
+  } catch (e) {
+    console.error('Failed to load backend URL:', e);
+  }
+}
+
+async function saveBackendUrl() {
+  clearMessages();
+  if (!backendForm.backendUrl.trim()) {
+    errorMessage.value = '请输入后端地址';
+    return;
+  }
+  try {
+    await axios.post('/config/backend', { backendUrl: backendForm.backendUrl.trim() });
+    successMessage.value = '后端地址已保存';
+    addLog('success', `后端地址已更新为: ${backendForm.backendUrl}`);
+  } catch (e) {
+    errorMessage.value = '保存后端地址失败';
+    addLog('error', '保存后端地址失败');
+  }
+}
+
+async function testBackendConnection() {
+  clearMessages();
+  testingBackendConnection.value = true;
+  backendTestResult.value = null;
+  addLog('info', `测试后端连接: ${backendForm.backendUrl}`);
+  
+  try {
+    // 先保存后端地址
+    await axios.post('/config/backend', { backendUrl: backendForm.backendUrl.trim() });
+    
+    // 然后测试连接
+    const response = await axios.get('/api/health', { timeout: 5000 });
+    if (response.data?.status === 'ok') {
+      backendTestResult.value = { success: true, message: '连接成功' };
+      addLog('success', '后端连接测试成功');
+    } else {
+      backendTestResult.value = { success: false, message: '后端响应异常' };
+      addLog('error', '后端响应异常');
+    }
+  } catch (e) {
+    const errMsg = (e as Error).message || '连接失败';
+    backendTestResult.value = { success: false, message: errMsg };
+    addLog('error', `后端连接测试失败: ${errMsg}`);
+  } finally {
+    testingBackendConnection.value = false;
+  }
 }
 
 function saveEmailListLimit() {
@@ -232,6 +290,7 @@ onMounted(async () => {
   if (user.value) { profileForm.nickname = user.value.nickname || ''; profileForm.avatar = user.value.avatar || ''; }
   if (userStore.settings) Object.assign(aiForm, userStore.settings);
   await accountStore.fetchAccounts();
+  await loadBackendUrl();
   addLog('info', `已加载 ${accounts.value.length} 个邮箱账户`);
 });
 </script>
@@ -357,10 +416,38 @@ onMounted(async () => {
 
       <div v-if="activeTab === 'backend'" class="panel">
         <h2>后端设置</h2>
-        <form @submit.prevent="saveBackendSettings">
-          <div class="form-group"><label class="form-label">API 密钥</label><input v-model="backendForm.apiKey" type="password" class="form-input" placeholder="输入后端 API 密钥" /><p class="hint">用于连接后端服务的认证密钥</p></div>
-          <button type="submit" class="btn primary">保存设置</button>
-        </form>
+        
+        <div class="form-section">
+          <h3>后端服务器地址</h3>
+          <div class="form-group">
+            <label class="form-label">后端 URL</label>
+            <input v-model="backendForm.backendUrl" type="text" class="form-input" placeholder="http://your-server:8080" />
+            <p class="hint">后端服务器的完整地址，包含协议和端口</p>
+          </div>
+          <div class="button-group">
+            <button type="button" class="btn" @click="testBackendConnection" :disabled="testingBackendConnection">
+              {{ testingBackendConnection ? '测试中...' : '测试连接' }}
+            </button>
+            <button type="button" class="btn primary" @click="saveBackendUrl">保存地址</button>
+          </div>
+          <div v-if="backendTestResult" :class="['test-result', backendTestResult.success ? 'success' : 'error']">
+            <svg v-if="backendTestResult.success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <span>{{ backendTestResult.success ? '连接成功' : backendTestResult.message }}</span>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h3>API 认证</h3>
+          <form @submit.prevent="saveBackendSettings">
+            <div class="form-group">
+              <label class="form-label">API 密钥</label>
+              <input v-model="backendForm.apiKey" type="password" class="form-input" placeholder="输入后端 API 密钥" />
+              <p class="hint">用于连接后端服务的认证密钥</p>
+            </div>
+            <button type="submit" class="btn primary">保存密钥</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -477,6 +564,10 @@ onMounted(async () => {
 .test-result svg { width: 18px; height: 18px; flex-shrink: 0; }
 .test-result.success { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); color: #4caf50; }
 .test-result.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.3); color: #f44336; }
+.form-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #2d2d44; }
+.form-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.form-section h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; color: #888; }
+.button-group { display: flex; gap: 12px; margin-top: 16px; }
 .logs-panel { margin-top: 24px; border: 1px solid #2d2d44; border-radius: 8px; background: #16162a; }
 .logs-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2d2d44; }
 .logs-header h3 { margin: 0; font-size: 0.875rem; font-weight: 600; }
