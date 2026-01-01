@@ -29,6 +29,8 @@ const emailStore = useEmailStore();
 const attachments = ref<Attachment[]>([]);
 const loadingAttachments = ref(false);
 const downloadingFile = ref<string | null>(null);
+const attachmentRetryCount = ref(0);
+const maxRetries = 2;
 
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
@@ -39,7 +41,16 @@ async function loadAttachments() {
   
   loadingAttachments.value = true;
   try {
-    attachments.value = await emailStore.fetchAttachments(props.email.id);
+    const result = await emailStore.fetchAttachments(props.email.id);
+    attachments.value = result;
+    
+    // 如果附件列表为空且还有重试次数，延迟后重试
+    if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
+      attachmentRetryCount.value++;
+      setTimeout(() => {
+        loadAttachments();
+      }, 1500); // 1.5秒后重试
+    }
   } catch (err) {
     console.error('加载附件失败:', err);
   } finally {
@@ -84,6 +95,8 @@ function getFileIcon(filename: string): string {
 
 // 监听邮件变化，重新加载附件
 watch(() => props.email.id, () => {
+  attachmentRetryCount.value = 0; // 重置重试计数
+  attachments.value = []; // 清空附件列表
   loadAttachments();
 }, { immediate: true });
 
@@ -284,7 +297,7 @@ function handleForward() {
         
         <!-- 无附件 -->
         <div v-else class="attachments-empty">
-          <p>附件未能获取，可能需要重新同步邮件</p>
+          <p>附件正在解析中，请稍候刷新...</p>
         </div>
       </div>
     </div>

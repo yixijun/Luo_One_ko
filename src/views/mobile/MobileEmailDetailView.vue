@@ -27,6 +27,8 @@ const iframeRef = ref<HTMLIFrameElement | null>(null);
 const attachments = ref<Attachment[]>([]);
 const loadingAttachments = ref(false);
 const downloadingFile = ref<string | null>(null);
+const attachmentRetryCount = ref(0);
+const maxRetries = 2;
 
 // 计算属性
 const email = computed(() => emailStore.currentEmail);
@@ -59,7 +61,16 @@ async function loadAttachments() {
   
   loadingAttachments.value = true;
   try {
-    attachments.value = await emailStore.fetchAttachments(email.value.id);
+    const result = await emailStore.fetchAttachments(email.value.id);
+    attachments.value = result;
+    
+    // 如果附件列表为空且还有重试次数，延迟后重试
+    if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
+      attachmentRetryCount.value++;
+      setTimeout(() => {
+        loadAttachments();
+      }, 1500); // 1.5秒后重试
+    }
   } catch (err) {
     console.error('加载附件失败:', err);
   } finally {
@@ -133,6 +144,8 @@ const copyVerificationCode = async () => {
 
 const loadEmail = async () => {
   if (emailId.value) {
+    attachmentRetryCount.value = 0; // 重置重试计数
+    attachments.value = []; // 清空附件列表
     await emailStore.fetchEmail(emailId.value);
     // 标记为已读
     if (email.value && !email.value.isRead) {
@@ -356,7 +369,7 @@ onMounted(() => {
             
             <!-- 无附件 -->
             <div v-else class="attachments-empty">
-              <span>附件未能获取，可能需要重新同步邮件</span>
+              <span>附件正在解析中，请稍候刷新...</span>
             </div>
           </div>
           
