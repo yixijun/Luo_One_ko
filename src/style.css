@@ -1,5 +1,42 @@
+/* 字体引入 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
+/* MiSans 字体 - 需要本地安装或使用 CDN */
+@font-face {
+  font-family: 'MiSans';
+  src: local('MiSans'), local('MI Lan Pro');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: local('MiSans Medium'), local('MI Lan Pro Medium');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: local('MiSans Semibold'), local('MI Lan Pro Semibold');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: local('MiSans Bold'), local('MI Lan Pro Bold');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
   line-height: 1.6;
   font-weight: 400;
 

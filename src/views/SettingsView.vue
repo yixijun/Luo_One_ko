@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore, getEmailListLimit, setEmailListLimit } from '@/stores/email';
-import { useThemeStore, themes, type ThemeName } from '@/stores/theme';
+import { useThemeStore, themes, fonts, type ThemeName, type FontName } from '@/stores/theme';
 import { apiKeyManager, backendUrlManager } from '@/api/client';
 import apiClient from '@/api/client';
 import type { EmailAccount, UserSettings } from '@/types';
@@ -79,6 +79,12 @@ const passwordValid = computed(() => passwordForm.newPassword.length >= 6 && pas
 function selectTheme(themeName: ThemeName) {
   themeStore.setTheme(themeName);
   successMessage.value = '主题已切换';
+}
+
+// 字体相关
+function selectFont(fontName: FontName) {
+  themeStore.setFont(fontName);
+  successMessage.value = '字体已切换';
 }
 
 function clearMessages() { successMessage.value = ''; errorMessage.value = ''; }
@@ -419,6 +425,40 @@ onMounted(async () => {
             </button>
           </div>
         </div>
+        
+        <div class="font-section">
+          <h3>选择字体</h3>
+          <div class="font-grid">
+            <button 
+              v-for="font in fonts" 
+              :key="font.name"
+              :class="['font-card', { active: themeStore.currentFont === font.name }]"
+              @click="selectFont(font.name)"
+            >
+              <div class="font-preview" :style="{ fontFamily: font.fontFamily }">
+                <span class="font-sample-zh">洛一邮箱</span>
+                <span class="font-sample-en">Luo One</span>
+              </div>
+              <div class="font-info">
+                <span class="font-name">{{ font.label }}</span>
+                <span class="font-desc">{{ font.description }}</span>
+              </div>
+              <div v-if="themeStore.currentFont === font.name" class="font-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </button>
+          </div>
+          <p class="font-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            MiSans 字体需要在系统中安装才能生效
+          </p>
+        </div>
       </div>
 
       <div v-if="activeTab === 'password'" class="panel">
@@ -622,6 +662,24 @@ onMounted(async () => {
 .theme-info .theme-color { width: 20px; height: 20px; border-radius: 50%; margin-top: 6px; box-shadow: 0 2px 8px var(--shadow-color); }
 .theme-check { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px var(--shadow-color); }
 .theme-check svg { width: 16px; height: 16px; color: #fff; }
+
+/* 字体选择区域 */
+.font-section { margin-top: 32px; }
+.font-section h3 { margin: 0 0 20px; font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+.font-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.font-card { position: relative; display: flex; flex-direction: column; padding: 0; border: 2px solid var(--border-color); border-radius: var(--radius-lg, 14px); background: var(--card-bg); cursor: pointer; transition: all var(--transition-fast, 0.15s ease); overflow: hidden; text-align: left; }
+.font-card:hover { border-color: var(--text-tertiary); transform: translateY(-2px); }
+.font-card.active { border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
+.font-preview { padding: 20px 16px; display: flex; flex-direction: column; gap: 4px; background: var(--hover-bg); }
+.font-sample-zh { font-size: 1.25rem; font-weight: 500; color: var(--text-primary); }
+.font-sample-en { font-size: 0.875rem; color: var(--text-secondary); }
+.font-info { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border-color); }
+.font-info .font-name { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); }
+.font-info .font-desc { font-size: 0.75rem; color: var(--text-secondary); }
+.font-check { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px var(--shadow-color); }
+.font-check svg { width: 16px; height: 16px; color: #fff; }
+.font-hint { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); font-size: 0.8125rem; color: var(--text-secondary); }
+.font-hint svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--primary-color); }
 
 .email-limit-setting { margin-bottom: 24px; padding: 18px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--card-bg); }
 .email-limit-setting .form-label { margin-bottom: 12px; }
