@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -34,6 +34,12 @@ const successMessage = ref('');
 const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
 const checkingOAuthConfig = ref(false);
+
+// 监听 googleOAuthConfigured 的变化
+watch(googleOAuthConfigured, (newVal, oldVal) => {
+  console.log('[OAuth] googleOAuthConfigured changed from', oldVal, 'to', newVal);
+  console.trace('[OAuth] Stack trace:');
+});
 
 // 计算是否显示 OAuth 未配置警告
 const showOAuthWarning = computed(() => {
