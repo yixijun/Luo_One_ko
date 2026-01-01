@@ -672,7 +672,7 @@ onUnmounted(() => {
                 
                 <!-- 无附件 -->
                 <div v-else class="attachments-empty">
-                  <span>附件正在解析中...</span>
+                  <span>{{ attachmentRetryCount >= maxRetries ? '附件需要重新同步邮件获取' : '附件正在解析中...' }}</span>
                 </div>
               </div>
             </div>

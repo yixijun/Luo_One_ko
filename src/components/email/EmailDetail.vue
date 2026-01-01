@@ -297,7 +297,7 @@ function handleForward() {
         
         <!-- 无附件 -->
         <div v-else class="attachments-empty">
-          <p>附件正在解析中，请稍候刷新...</p>
+          <p>{{ attachmentRetryCount >= maxRetries ? '附件需要重新同步邮件获取' : '附件正在解析中...' }}</p>
         </div>
       </div>
     </div>
