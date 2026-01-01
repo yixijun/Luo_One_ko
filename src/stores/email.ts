@@ -335,7 +335,10 @@ export const useEmailStore = defineStore('email', () => {
     try {
       const response = await apiClient.get<{ success: boolean; data: Attachment[] }>(`/emails/${emailId}/attachments`);
       // 后端返回格式: { success: true, data: [...] }
-      return response.data?.data || [];
+      console.log('Attachments API response:', response.data);
+      const attachments = response.data?.data || [];
+      console.log('Parsed attachments:', attachments);
+      return attachments;
     } catch (err) {
       console.error('获取附件列表失败:', err);
       return [];
