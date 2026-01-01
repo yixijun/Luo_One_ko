@@ -5,7 +5,7 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 
-export type ThemeName = 'dark' | 'luo' | 'light' | 'purple';
+export type ThemeName = 'dark' | 'luo' | 'light';
 
 export interface Theme {
   name: ThemeName;
@@ -15,10 +15,9 @@ export interface Theme {
 }
 
 export const themes: Theme[] = [
-  { name: 'dark', label: '深色', primaryColor: '#646cff', description: '经典深色主题' },
+  { name: 'dark', label: '深色', primaryColor: '#6366f1', description: '经典深色主题' },
   { name: 'luo', label: 'Luo', primaryColor: '#66ccff', description: '清新蓝色主题' },
-  { name: 'light', label: '浅色', primaryColor: '#646cff', description: '明亮浅色主题' },
-  { name: 'purple', label: '紫罗兰', primaryColor: '#a855f7', description: '优雅紫色主题' },
+  { name: 'light', label: '浅色', primaryColor: '#4f46e5', description: '明亮浅色主题' },
 ];
 
 const THEME_STORAGE_KEY = 'luo-one-theme';

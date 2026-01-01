@@ -137,48 +137,6 @@
   --radius-xl: 20px;
 }
 
-/* 紫罗兰主题 */
-[data-theme="purple"] {
-  color: rgba(255, 255, 255, 0.95);
-  background-color: #0f0a1a;
-  
-  --bg-primary: #0f0a1a;
-  --bg-gradient: linear-gradient(145deg, #0f0a1a 0%, #1a1030 40%, #251545 100%);
-  --panel-bg: #1a1030;
-  --sidebar-bg: #140c24;
-  --header-bg: rgba(26, 16, 48, 0.9);
-  --content-bg: #0f0a1a;
-  --input-bg: #251545;
-  --card-bg: rgba(168, 85, 247, 0.06);
-  --border-color: rgba(168, 85, 247, 0.15);
-  --hover-bg: rgba(168, 85, 247, 0.1);
-  --active-bg: rgba(168, 85, 247, 0.2);
-  --selected-bg: rgba(168, 85, 247, 0.25);
-  --unread-bg: rgba(168, 85, 247, 0.12);
-  --primary-color: #a855f7;
-  --primary-hover: #9333ea;
-  --primary-light: rgba(168, 85, 247, 0.2);
-  --primary-glow: rgba(168, 85, 247, 0.5);
-  --text-primary: #faf5ff;
-  --text-secondary: #d8b4fe;
-  --text-tertiary: #c084fc;
-  --success-color: #4ade80;
-  --warning-color: #fbbf24;
-  --error-color: #f87171;
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 40px rgba(40, 0, 80, 0.4);
-  --bubble-bg: rgba(168, 85, 247, 0.08);
-  --meta-bg: rgba(168, 85, 247, 0.05);
-  --glass-bg: rgba(26, 16, 48, 0.85);
-  --glass-border: rgba(168, 85, 247, 0.2);
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-}
-
 * {
   margin: 0;
   padding: 0;
