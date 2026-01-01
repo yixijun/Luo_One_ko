@@ -296,8 +296,21 @@ export const useEmailStore = defineStore('email', () => {
   // 获取全量同步进度
   async function getSyncProgress(accountId: number): Promise<SyncProgress | null> {
     try {
-      const response = await apiClient.get<SyncProgress>(`/emails/sync/progress?account_id=${accountId}`);
-      return response.data ?? null;
+      const response = await apiClient.get<Record<string, unknown>>(`/emails/sync/progress?account_id=${accountId}`);
+      const data = response.data;
+      if (!data) return null;
+      // 转换 snake_case 到 camelCase
+      return {
+        accountId: data.account_id as number,
+        status: data.status as SyncProgress['status'],
+        totalMessages: data.total_messages as number,
+        processed: data.processed as number,
+        saved: data.saved as number,
+        skipped: data.skipped as number,
+        currentBatch: data.current_batch as number,
+        totalBatches: data.total_batches as number,
+        error: data.error as string | undefined,
+      };
     } catch {
       return null;
     }
