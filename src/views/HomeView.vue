@@ -4,7 +4,7 @@
  * Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7
  * 整合布局组件和邮件组件，实现完整的邮件管理界面
  */
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useAccountStore } from '@/stores/account';
@@ -25,12 +25,43 @@ const showEmailDetail = ref(false);
 const selectedEmail = ref<Email | null>(null);
 const isMobileView = ref(false);
 
+// 自动刷新定时器
+let autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
+const AUTO_REFRESH_INTERVAL = 60000; // 60秒自动刷新一次
+
 // 计算属性
 const isLoading = computed(() => userStore.loading || accountStore.loading || emailStore.loading);
 
 // 检测移动端视图
 function checkMobileView() {
   isMobileView.value = window.innerWidth < 768;
+}
+
+// 自动刷新邮件列表
+async function autoRefreshEmails() {
+  // 如果正在加载或没有账户，跳过
+  if (emailStore.loading || !accountStore.hasAccounts) return;
+  
+  // 静默刷新邮件列表（不显示loading）
+  try {
+    await emailStore.fetchEmails({ accountId: accountStore.currentAccountId || undefined });
+  } catch (e) {
+    // 静默失败，不显示错误
+  }
+}
+
+// 启动自动刷新
+function startAutoRefresh() {
+  if (autoRefreshTimer) return;
+  autoRefreshTimer = setInterval(autoRefreshEmails, AUTO_REFRESH_INTERVAL);
+}
+
+// 停止自动刷新
+function stopAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
 }
 
 // 选择邮件查看详情
@@ -103,6 +134,15 @@ onMounted(() => {
   if (!emailStore.hasEmails) {
     emailStore.fetchEmails();
   }
+  
+  // 启动自动刷新
+  startAutoRefresh();
+});
+
+// 组件卸载时清理
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobileView);
+  stopAutoRefresh();
 });
 
 // 监听账户变化，重新加载邮件
