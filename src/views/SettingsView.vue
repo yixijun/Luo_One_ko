@@ -180,6 +180,7 @@ async function syncAccount(id: number) {
       await emailStore.fetchEmails({ accountId: id });
       
       addLog('success', `新增同步 ${syncedCount} 封邮件`);
+      addLog('info', `${account?.email || id} 共有 ${emailStore.total} 封邮件`);
       successMessage.value = `同步完成，新增 ${syncedCount} 封邮件`;
       
       await accountStore.fetchAccounts();
