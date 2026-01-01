@@ -531,7 +531,7 @@ onUnmounted(() => {
           <h3>添加邮箱账户</h3>
           <button class="close-btn" @click="closeAccountModal">×</button>
         </div>
-        <form @submit.prevent="saveAccount" class="modal-body">
+        <div class="modal-body">
           <!-- 消息提示 -->
           <div v-if="successMessage" class="message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="message error">{{ errorMessage }}</div>
@@ -546,104 +546,34 @@ onUnmounted(() => {
           </div>
           <div class="form-group">
             <label>邮箱地址 *</label>
-            <input 
-              type="email" 
-              v-model="accountForm.email" 
-              placeholder="example@mail.com"
-              class="input"
-              required
-              @blur="autoSelectPreset"
-            />
+            <input type="email" v-model="accountForm.email" placeholder="example@mail.com" class="input" required @blur="autoSelectPreset" />
           </div>
           <div class="form-group">
             <label>显示名称</label>
-            <input 
-              type="text" 
-              v-model="accountForm.displayName" 
-              placeholder="用于显示的名称"
-              class="input"
-            />
+            <input type="text" v-model="accountForm.displayName" placeholder="用于显示的名称" class="input" />
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>IMAP 服务器 *</label>
-              <input 
-                type="text" 
-                v-model="accountForm.imapHost" 
-                placeholder="imap.example.com"
-                class="input"
-                required
-              />
-            </div>
-            <div class="form-group small">
-              <label>端口 *</label>
-              <input 
-                type="number" 
-                v-model="accountForm.imapPort" 
-                class="input"
-                required
-              />
-            </div>
+            <div class="form-group"><label>IMAP 服务器 *</label><input type="text" v-model="accountForm.imapHost" placeholder="imap.example.com" class="input" required /></div>
+            <div class="form-group small"><label>端口</label><input type="number" v-model="accountForm.imapPort" class="input" required /></div>
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>SMTP 服务器 *</label>
-              <input 
-                type="text" 
-                v-model="accountForm.smtpHost" 
-                placeholder="smtp.example.com"
-                class="input"
-                required
-              />
-            </div>
-            <div class="form-group small">
-              <label>端口 *</label>
-              <input 
-                type="number" 
-                v-model="accountForm.smtpPort" 
-                class="input"
-                required
-              />
-            </div>
+            <div class="form-group"><label>SMTP 服务器 *</label><input type="text" v-model="accountForm.smtpHost" placeholder="smtp.example.com" class="input" required /></div>
+            <div class="form-group small"><label>端口</label><input type="number" v-model="accountForm.smtpPort" class="input" required /></div>
           </div>
           <div class="form-group">
             <label>用户名 *</label>
-            <input 
-              type="text" 
-              v-model="accountForm.username" 
-              placeholder="登录用户名"
-              class="input"
-              required
-            />
+            <input type="text" v-model="accountForm.username" placeholder="登录用户名" class="input" required />
           </div>
           <div class="form-group">
             <label>密码 *</label>
-            <input 
-              type="password" 
-              v-model="accountForm.password" 
-              placeholder="登录密码"
-              class="input"
-              required
-            />
+            <input type="password" v-model="accountForm.password" placeholder="登录密码" class="input" required />
           </div>
-          <div class="form-group checkbox">
-            <label>
-              <input type="checkbox" v-model="accountForm.useSSL" />
-              使用 SSL/TLS
-            </label>
-          </div>
-          <div class="form-group checkbox">
-            <label>
-              <input type="checkbox" v-model="accountForm.enabled" />
-              启用此账户
-            </label>
-          </div>
-        </form>
+          <div class="form-group checkbox"><label><input type="checkbox" v-model="accountForm.useSSL" /> 使用 SSL/TLS</label></div>
+          <div class="form-group checkbox"><label><input type="checkbox" v-model="accountForm.enabled" /> 启用此账户</label></div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn" @click="closeAccountModal">取消</button>
-          <button type="submit" class="btn primary" :disabled="isSubmitting" @click="saveAccount">
-            {{ isSubmitting ? '添加中...' : '添加账户' }}
-          </button>
+          <button type="button" class="btn primary" :disabled="isSubmitting" @click="saveAccount">{{ isSubmitting ? '添加中...' : '添加账户' }}</button>
         </div>
       </div>
     </div>
