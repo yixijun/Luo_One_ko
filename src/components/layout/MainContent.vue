@@ -40,7 +40,12 @@ const selectedEmailIds = ref<Set<number>>(new Set());
 const currentAccount = computed(() => accountStore.currentAccount);
 const emails = computed(() => emailStore.emails);
 const loading = computed(() => emailStore.loading);
+const loadingMore = computed(() => emailStore.loadingMore);
 const hasEmails = computed(() => emailStore.hasEmails);
+const hasMore = computed(() => emailStore.hasMore);
+
+// 邮件列表滚动容器引用
+const emailsListRef = ref<HTMLElement | null>(null);
 
 // 文件夹选项
 const folderOptions = [
@@ -289,6 +294,20 @@ function getImportanceLabel(importance: string): string {
   }
 }
 
+// 滚动加载更多
+function handleScroll(event: Event) {
+  const target = event.target as HTMLElement;
+  if (!target) return;
+  
+  // 距离底部 100px 时触发加载
+  const threshold = 100;
+  const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < threshold;
+  
+  if (isNearBottom && hasMore.value && !loadingMore.value && !loading.value) {
+    emailStore.loadMoreEmails();
+  }
+}
+
 // 初始化
 onMounted(() => {
   checkMobileView();
@@ -345,7 +364,7 @@ onUnmounted(() => {
         </div>
       </div>
       
-      <div class="emails-list" v-if="!loading">
+      <div class="emails-list" ref="emailsListRef" @scroll="handleScroll" v-if="!loading">
         <div v-if="!hasEmails" class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -354,52 +373,65 @@ onUnmounted(() => {
           <p>暂无邮件</p>
         </div>
         
-        <button
-          v-else
-          v-for="email in emails"
-          :key="email.id"
-          class="email-item"
-          :class="{ 
-            active: selectedEmail?.id === email.id, 
-            unread: !email.isRead,
-            selected: selectedEmailIds.has(email.id)
-          }"
-          @click="isSelectMode ? toggleEmailSelection(email.id, $event) : selectEmail(email)"
-        >
-          <div class="email-sender">
-            <input 
-              v-if="isSelectMode"
-              type="checkbox" 
-              :checked="selectedEmailIds.has(email.id)"
-              @click="toggleEmailSelection(email.id, $event)"
-              class="select-checkbox"
-            />
-            <span class="sender-name">{{ getSenderName(email.from) }}</span>
-            <span class="email-date">{{ formatDate(email.date) }}</span>
+        <template v-else>
+          <button
+            v-for="email in emails"
+            :key="email.id"
+            class="email-item"
+            :class="{ 
+              active: selectedEmail?.id === email.id, 
+              unread: !email.isRead,
+              selected: selectedEmailIds.has(email.id)
+            }"
+            @click="isSelectMode ? toggleEmailSelection(email.id, $event) : selectEmail(email)"
+          >
+            <div class="email-sender">
+              <input 
+                v-if="isSelectMode"
+                type="checkbox" 
+                :checked="selectedEmailIds.has(email.id)"
+                @click="toggleEmailSelection(email.id, $event)"
+                class="select-checkbox"
+              />
+              <span class="sender-name">{{ getSenderName(email.from) }}</span>
+              <span class="email-date">{{ formatDate(email.date) }}</span>
+            </div>
+            <div class="email-subject">{{ email.subject || '(无主题)' }}</div>
+            <div class="email-preview">{{ email.body?.substring(0, 80) || '' }}...</div>
+            <div class="email-tags" v-if="email.processedResult">
+              <span 
+                v-if="email.processedResult.verificationCode" 
+                class="tag code-tag"
+              >
+                验证码
+              </span>
+              <span 
+                v-if="email.processedResult.isAd" 
+                class="tag ad-tag"
+              >
+                广告
+              </span>
+              <span 
+                class="tag importance-tag"
+                :style="{ backgroundColor: getImportanceColor(email.processedResult.importance) }"
+              >
+                {{ getImportanceLabel(email.processedResult.importance) }}
+              </span>
+            </div>
+          </button>
+          
+          <!-- 加载更多提示 -->
+          <div v-if="loadingMore" class="load-more-indicator">
+            <span class="loading-spinner small"></span>
+            <span>加载更多...</span>
           </div>
-          <div class="email-subject">{{ email.subject || '(无主题)' }}</div>
-          <div class="email-preview">{{ email.body?.substring(0, 80) || '' }}...</div>
-          <div class="email-tags" v-if="email.processedResult">
-            <span 
-              v-if="email.processedResult.verificationCode" 
-              class="tag code-tag"
-            >
-              验证码
-            </span>
-            <span 
-              v-if="email.processedResult.isAd" 
-              class="tag ad-tag"
-            >
-              广告
-            </span>
-            <span 
-              class="tag importance-tag"
-              :style="{ backgroundColor: getImportanceColor(email.processedResult.importance) }"
-            >
-              {{ getImportanceLabel(email.processedResult.importance) }}
-            </span>
+          <div v-else-if="hasMore" class="load-more-hint">
+            <span>下滑加载更多 ({{ emails.length }}/{{ emailStore.total }})</span>
           </div>
-        </button>
+          <div v-else-if="emails.length > 0" class="load-more-end">
+            <span>已加载全部 {{ emails.length }} 封邮件</span>
+          </div>
+        </template>
       </div>
       
       <div v-else class="loading-state">
@@ -1091,6 +1123,27 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   border-width: 2px;
+}
+
+/* 加载更多提示 */
+.load-more-indicator,
+.load-more-hint,
+.load-more-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.load-more-indicator {
+  color: var(--primary-color);
+}
+
+.load-more-indicator .loading-spinner.small {
+  margin-bottom: 0;
 }
 
 @keyframes spin {

@@ -13,7 +13,9 @@ const EMAIL_LIST_LIMIT_KEY = 'luo_one_email_list_limit';
 
 export function getEmailListLimit(): number {
   const saved = localStorage.getItem(EMAIL_LIST_LIMIT_KEY);
-  return saved ? parseInt(saved, 10) : 20;
+  const limit = saved ? parseInt(saved, 10) : 20;
+  // 即使设置为不限制(-1)，也限制最大为 500，避免加载过多数据
+  return limit === -1 ? 500 : limit;
 }
 
 export function setEmailListLimit(limit: number): void {
@@ -28,12 +30,14 @@ export const useEmailStore = defineStore('email', () => {
   const page = ref(1);
   const limit = ref(20);
   const loading = ref(false);
+  const loadingMore = ref(false);
   const error = ref<string | null>(null);
 
   // 计算属性
   const hasEmails = computed(() => emails.value.length > 0);
   const unreadCount = computed(() => emails.value.filter(e => !e.isRead).length);
   const totalPages = computed(() => Math.ceil(total.value / limit.value));
+  const hasMore = computed(() => emails.value.length < total.value);
 
   // 转换后端响应为前端 camelCase 格式
   function toEmailCamelCase(data: Record<string, unknown>): Email {
@@ -73,10 +77,15 @@ export const useEmailStore = defineStore('email', () => {
     };
   }
 
+  // 保存当前查询参数，用于加载更多
+  const lastQueryParams = ref<EmailListParams>({});
+
   // 获取邮件列表
   async function fetchEmails(params: EmailListParams = {}): Promise<void> {
     loading.value = true;
     error.value = null;
+    // 保存查询参数
+    lastQueryParams.value = { ...params };
     try {
       // 转换参数为 snake_case
       const queryParams: Record<string, unknown> = {};
@@ -98,6 +107,45 @@ export const useEmailStore = defineStore('email', () => {
       error.value = (err as Error).message || '获取邮件列表失败';
     } finally {
       loading.value = false;
+    }
+  }
+
+  // 加载更多邮件（无限滚动）
+  async function loadMoreEmails(): Promise<boolean> {
+    if (loadingMore.value || !hasMore.value) return false;
+    
+    loadingMore.value = true;
+    error.value = null;
+    try {
+      const nextPage = page.value + 1;
+      const queryParams: Record<string, unknown> = {
+        page: nextPage,
+        limit: limit.value,
+      };
+      
+      // 使用上次的查询参数
+      if (lastQueryParams.value.accountId) queryParams.account_id = lastQueryParams.value.accountId;
+      if (lastQueryParams.value.folder) queryParams.folder = lastQueryParams.value.folder;
+      if (lastQueryParams.value.sort) queryParams.sort = lastQueryParams.value.sort;
+      if (lastQueryParams.value.search) queryParams.search = lastQueryParams.value.search;
+      
+      const response = await apiClient.get<{ total: number; page: number; limit: number; emails: Record<string, unknown>[] }>('/emails', { params: queryParams });
+      const newEmails = (response.data.emails || []).map(toEmailCamelCase);
+      
+      // 追加到现有列表，去重
+      const existingIds = new Set(emails.value.map(e => e.id));
+      const uniqueNewEmails = newEmails.filter(e => !existingIds.has(e.id));
+      emails.value = [...emails.value, ...uniqueNewEmails];
+      
+      total.value = response.data.total;
+      page.value = response.data.page;
+      
+      return uniqueNewEmails.length > 0;
+    } catch (err) {
+      error.value = (err as Error).message || '加载更多邮件失败';
+      return false;
+    } finally {
+      loadingMore.value = false;
     }
   }
 
@@ -262,11 +310,14 @@ export const useEmailStore = defineStore('email', () => {
     page,
     limit,
     loading,
+    loadingMore,
     error,
     hasEmails,
     unreadCount,
     totalPages,
+    hasMore,
     fetchEmails,
+    loadMoreEmails,
     fetchEmail,
     deleteEmail,
     markAsRead,
