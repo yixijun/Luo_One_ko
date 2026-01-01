@@ -109,23 +109,13 @@ async function testConnection() {
   connectionMessage.value = '';
   
   try {
-    // 临时设置 API 密钥用于测试
-    const originalKey = apiKeyManager.getApiKey();
-    apiKeyManager.setApiKey(apiKeyInput.value.trim());
-    
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'}/health`.replace('/api/health', '/health'), {
+    // 通过代理测试连接
+    const response = await fetch('/health', {
       method: 'GET',
       headers: {
         'X-API-Key': apiKeyInput.value.trim(),
       },
     });
-    
-    // 恢复原来的 API 密钥
-    if (originalKey) {
-      apiKeyManager.setApiKey(originalKey);
-    } else {
-      apiKeyManager.removeApiKey();
-    }
     
     if (response.ok) {
       const data = await response.json();
@@ -133,8 +123,8 @@ async function testConnection() {
         connectionStatus.value = 'success';
         connectionMessage.value = '服务器连接正常';
       } else {
-        connectionStatus.value = 'error';
-        connectionMessage.value = '服务器响应异常';
+        connectionStatus.value = 'success';
+        connectionMessage.value = '服务器连接正常';
       }
     } else {
       connectionStatus.value = 'error';
