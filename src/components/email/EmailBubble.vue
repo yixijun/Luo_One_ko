@@ -22,13 +22,22 @@ const emit = defineEmits<{
 function sanitizeHtml(html: string): string {
   if (!html) return '';
   
-  // 移除所有 border-left 相关的内联样式
+  // 移除所有 border 相关的内联样式
   let cleaned = html
+    // 移除 border-left 相关
     .replace(/border-left\s*:\s*[^;]+;?/gi, '')
-    .replace(/border\s*:\s*[^;]*solid[^;]*;?/gi, '')
     .replace(/border-left-width\s*:\s*[^;]+;?/gi, '')
     .replace(/border-left-style\s*:\s*[^;]+;?/gi, '')
-    .replace(/border-left-color\s*:\s*[^;]+;?/gi, '');
+    .replace(/border-left-color\s*:\s*[^;]+;?/gi, '')
+    // 移除所有 border 样式
+    .replace(/border\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-width\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-style\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-color\s*:\s*[^;]+;?/gi, '')
+    // 移除其他方向的 border
+    .replace(/border-right\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-top\s*:\s*[^;]+;?/gi, '')
+    .replace(/border-bottom\s*:\s*[^;]+;?/gi, '');
   
   return cleaned;
 }
