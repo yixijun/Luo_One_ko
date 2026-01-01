@@ -1001,12 +1001,53 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    padding: 0 12px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+  }
+  
   .header-center {
-    margin: 0 12px;
+    margin: 0 8px;
+    min-width: 0;
+    flex: 1;
+  }
+  
+  .search-bar {
+    padding: 0 8px;
+  }
+  
+  .search-input {
+    padding: 8px;
+    font-size: 0.8125rem;
   }
   
   .search-btn {
     display: none;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+  
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
   }
   
   .form-row {
