@@ -333,10 +333,19 @@ export const useEmailStore = defineStore('email', () => {
   // 获取邮件附件列表
   async function fetchAttachments(emailId: number): Promise<Attachment[]> {
     try {
-      const response = await apiClient.get<{ success: boolean; data: Attachment[] }>(`/emails/${emailId}/attachments`);
-      // 后端返回格式: { success: true, data: [...] }
+      const response = await apiClient.get<{ success: boolean; data: Attachment[] } | Attachment[]>(`/emails/${emailId}/attachments`);
       console.log('Attachments API response:', response.data);
-      const attachments = response.data?.data || [];
+      
+      // 兼容两种返回格式：
+      // 1. { success: true, data: [...] }
+      // 2. 直接返回数组 [...]
+      let attachments: Attachment[];
+      if (Array.isArray(response.data)) {
+        attachments = response.data;
+      } else {
+        attachments = response.data?.data || [];
+      }
+      
       console.log('Parsed attachments:', attachments);
       return attachments;
     } catch (err) {
