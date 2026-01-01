@@ -807,15 +807,16 @@ onMounted(async () => {
 .account-sync-time { font-size: 0.6875rem; color: var(--text-tertiary); }
 .account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-.modal { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-xl, 20px); width: 90%; max-width: 520px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+.modal { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-xl, 20px); width: 90%; max-width: 520px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; box-shadow: var(--shadow-lg); overflow: hidden; }
+.modal > form { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
 .modal-header h3 { margin: 0; font-size: 1.125rem; font-weight: 600; }
 .close-btn { width: 32px; height: 32px; border: none; background: transparent; font-size: 24px; cursor: pointer; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm, 6px); transition: all var(--transition-fast, 0.15s ease); }
 .close-btn:hover { color: var(--text-primary); background: var(--hover-bg); }
-.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; min-height: 0; max-height: calc(100vh - 200px); }
 .modal-body .form-group { margin-bottom: 14px; }
 .modal-body .hint { margin-top: 4px; font-size: 0.6875rem; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-color); flex-shrink: 0; background: var(--panel-bg); }
 .test-result { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--radius-md, 10px); margin-top: 16px; }
 .test-result svg { width: 18px; height: 18px; flex-shrink: 0; }
 .test-result.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); color: var(--success-color); }
