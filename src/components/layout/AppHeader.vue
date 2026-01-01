@@ -587,8 +587,13 @@ onUnmounted(() => {
         <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
         <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
         
+        <!-- 调试信息 -->
+        <div style="font-size: 10px; color: #888; margin-bottom: 8px;">
+          DEBUG: preset={{ selectedPreset }}, checking={{ oauthState.checking }}, configured={{ oauthState.googleConfigured }}
+        </div>
+        
         <!-- 警告：只在 Gmail 且未配置 OAuth 时显示 -->
-        <div v-if="selectedPreset === 'Gmail' && !oauthState.checking && !oauthState.googleConfigured" class="account-modal-message warning">
+        <div v-if="selectedPreset === 'Gmail' && oauthState.checking === false && oauthState.googleConfigured === false" class="account-modal-message warning">
           Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
         </div>
         
