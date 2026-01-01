@@ -11,14 +11,9 @@ const TOKEN_KEY = 'luo_one_token';
 const API_KEY_KEY = 'luo_one_api_key';
 const BACKEND_URL_KEY = 'luo_one_backend_url';
 
-// 获取后端地址
-function getBackendUrl(): string {
-  return localStorage.getItem(BACKEND_URL_KEY) || '/api';
-}
-
-// 创建 axios 实例
+// 创建 axios 实例 - 始终使用 /api 代理路径
 const apiClient: AxiosInstance = axios.create({
-  baseURL: getBackendUrl(),
+  baseURL: '/api',
   timeout: 30000, // 默认 30 秒
   headers: {
     'Content-Type': 'application/json',
