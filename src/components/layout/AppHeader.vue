@@ -284,14 +284,18 @@ async function saveAccount() {
 // 使用 Google 账号登录
 async function loginWithGoogle() {
   try {
-    const response = await apiClient.get<{ success: boolean; data: { auth_url: string }; error?: { message: string } }>('/oauth/google/auth');
+    const response = await apiClient.get('/oauth/google/auth');
     console.log('[AppHeader] loginWithGoogle response:', response.data);
     
-    if (response.data.success && response.data.data?.auth_url) {
+    // 获取 auth_url - 兼容不同的响应结构
+    const authUrl = response.data?.data?.auth_url || response.data?.auth_url;
+    
+    if (authUrl) {
       // 直接跳转到 Google 授权页面
-      window.location.href = response.data.data.auth_url;
+      window.location.href = authUrl;
     } else {
-      errorMessage.value = response.data.error?.message || '获取授权链接失败';
+      console.error('[AppHeader] No auth_url in response:', response.data);
+      errorMessage.value = response.data?.error?.message || '获取授权链接失败';
     }
   } catch (err: any) {
     console.error('[AppHeader] loginWithGoogle error:', err);
