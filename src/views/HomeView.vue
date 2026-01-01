@@ -164,23 +164,28 @@ function handleForwardEmail() {
 }
 
 // 监听窗口大小变化
-onMounted(() => {
+onMounted(async () => {
   checkMobileView();
   window.addEventListener('resize', checkMobileView);
   
-  // 初始化数据
-  if (!userStore.user) {
-    userStore.fetchProfile();
-  }
-  if (!accountStore.hasAccounts) {
-    accountStore.fetchAccounts();
-  }
-  if (!emailStore.hasEmails) {
-    emailStore.fetchEmails();
+  // 串行初始化数据，避免同时发起太多请求
+  try {
+    if (!userStore.user) {
+      await userStore.fetchProfile();
+    }
+    if (!accountStore.hasAccounts) {
+      await accountStore.fetchAccounts();
+    }
+    if (!emailStore.hasEmails) {
+      // 初始加载只获取 20 封邮件，加快首屏速度
+      await emailStore.fetchEmails({ limit: 20 });
+    }
+  } catch (e) {
+    console.error('[HomeView] 初始化失败:', e);
   }
   
-  // 启动自动刷新
-  startAutoRefresh();
+  // 延迟启动自动刷新，避免影响首屏加载
+  setTimeout(startAutoRefresh, 5000);
 });
 
 // 组件卸载时清理

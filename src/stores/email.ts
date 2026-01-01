@@ -13,7 +13,7 @@ const EMAIL_LIST_LIMIT_KEY = 'luo_one_email_list_limit';
 
 export function getEmailListLimit(): number {
   const saved = localStorage.getItem(EMAIL_LIST_LIMIT_KEY);
-  return saved ? parseInt(saved, 10) : 100;
+  return saved ? parseInt(saved, 10) : 20;
 }
 
 export function setEmailListLimit(limit: number): void {
