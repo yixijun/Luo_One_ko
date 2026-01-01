@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -34,19 +34,6 @@ const successMessage = ref('');
 const errorMessage = ref('');
 const googleOAuthConfigured = ref(false);
 const checkingOAuthConfig = ref(false);
-
-// 监听 googleOAuthConfigured 的变化
-watch(googleOAuthConfigured, (newVal, oldVal) => {
-  console.log('[OAuth] googleOAuthConfigured changed from', oldVal, 'to', newVal);
-  console.trace('[OAuth] Stack trace:');
-});
-
-// 计算是否显示 OAuth 未配置警告
-const showOAuthWarning = computed(() => {
-  const show = selectedPreset.value === 'Gmail' && !checkingOAuthConfig.value && !googleOAuthConfigured.value;
-  console.log('[OAuth Warning] selectedPreset:', selectedPreset.value, 'checkingOAuthConfig:', checkingOAuthConfig.value, 'googleOAuthConfigured:', googleOAuthConfigured.value, 'showWarning:', show);
-  return show;
-});
 
 // 用户信息
 const user = computed(() => userStore.user);
@@ -249,7 +236,7 @@ async function openAccountModal() {
   showAccountModal.value = true;
   checkingOAuthConfig.value = true;
   
-  // 检查 Google OAuth 配置状态（使用原生 fetch 避免 401 跳转）
+  // 检查 Google OAuth 配置状态
   try {
     const token = localStorage.getItem('luo_one_token');
     const apiKey = localStorage.getItem('luo_one_api_key');
@@ -257,24 +244,16 @@ async function openAccountModal() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (apiKey) headers['X-API-Key'] = apiKey;
     
-    console.log('[OAuth Config] Fetching /api/oauth/config with headers:', { hasToken: !!token, hasApiKey: !!apiKey });
     const response = await fetch('/api/oauth/config', { headers });
-    console.log('[OAuth Config] Response status:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('[OAuth Config] Response data:', JSON.stringify(data));
-      // 兼容两种响应格式
       const googleEnabled = data?.data?.google_enabled ?? data?.google_enabled ?? false;
       googleOAuthConfigured.value = googleEnabled;
-      console.log('[OAuth Config] googleOAuthConfigured set to:', googleOAuthConfigured.value);
     } else {
-      const errorText = await response.text();
-      console.error('[OAuth Config] Error response:', response.status, errorText);
       googleOAuthConfigured.value = false;
     }
-  } catch (err) {
-    console.error('[OAuth Config] Fetch error:', err);
+  } catch {
     googleOAuthConfigured.value = false;
   } finally {
     checkingOAuthConfig.value = false;
@@ -602,9 +581,7 @@ onUnmounted(() => {
         <div class="account-modal-body">
           <div v-if="successMessage" class="account-modal-message success">{{ successMessage }}</div>
           <div v-if="errorMessage" class="account-modal-message error">{{ errorMessage }}</div>
-          <div v-if="showOAuthWarning" class="account-modal-message warning">
-            Google OAuth 未配置，请先在「设置 → AI 配置」中配置 Google OAuth
-          </div>
+          <!-- OAuth 配置警告已移除，因为配置检查正常工作 -->
           
           <div class="account-modal-field">
             <label>邮箱服务商</label>
