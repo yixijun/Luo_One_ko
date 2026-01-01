@@ -573,8 +573,12 @@ onUnmounted(() => {
           <span class="account-modal-hint" v-if="selectedPreset === 'QQ 邮箱'">QQ 邮箱需要使用授权码</span>
         </div>
         
-        <!-- Gmail 选择后显示 OAuth 登录按钮 -->
+        <!-- Gmail 选择后显示昵称和 OAuth 登录按钮 -->
         <template v-if="selectedPreset === 'Gmail'">
+          <div class="account-modal-field">
+            <label>昵称</label>
+            <input type="text" v-model="accountForm.displayName" placeholder="用于显示的名称（可选）" />
+          </div>
           <div class="gmail-oauth-section">
             <p class="gmail-oauth-hint">Gmail 需要通过 Google 账号授权登录</p>
             <button type="button" class="google-login-btn large" @click="loginWithGoogle">
