@@ -641,6 +641,21 @@ onUnmounted(() => {
                     <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
                   </div>
                 </div>
+
+                <div class="info-card importance">
+                  <div 
+                    class="info-icon" 
+                    :style="{ backgroundColor: getImportanceColor(selectedEmail.processedResult.importance) }"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">重要度</span>
+                    <span class="info-value">{{ getImportanceLabel(selectedEmail.processedResult.importance) }}</span>
+                  </div>
+                </div>
               </div>
               <div v-else class="no-processed">
                 <span>暂无处理结果</span>
