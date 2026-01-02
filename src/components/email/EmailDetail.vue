@@ -90,17 +90,27 @@ async function loadAttachments() {
 // 加载图片预览
 async function loadImagePreview(attachment: Attachment) {
   const rawFilename = attachment.raw_filename || attachment.filename;
-  if (imagePreviewUrls.value[rawFilename]) return;
+  console.log('[Preview] Starting load for:', rawFilename, 'current urls:', imagePreviewUrls.value);
+  if (imagePreviewUrls.value[rawFilename]) {
+    console.log('[Preview] Already loaded:', rawFilename);
+    return;
+  }
   
   loadingPreview.value = rawFilename;
   try {
+    console.log('[Preview] Fetching blob for email:', props.email.id, 'file:', rawFilename);
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    console.log('[Preview] Got blob:', blob, 'size:', blob?.size, 'type:', blob?.type);
     if (blob && blob.size > 0) {
       const url = URL.createObjectURL(blob);
+      console.log('[Preview] Created URL:', url);
       imagePreviewUrls.value = { ...imagePreviewUrls.value, [rawFilename]: url };
+      console.log('[Preview] Updated urls:', imagePreviewUrls.value);
+    } else {
+      console.log('[Preview] Blob is empty or null');
     }
   } catch (err) {
-    console.error('加载图片预览失败:', err);
+    console.error('[Preview] Error loading:', err);
   } finally {
     loadingPreview.value = null;
   }
