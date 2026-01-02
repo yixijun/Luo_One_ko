@@ -461,13 +461,13 @@ export const useEmailStore = defineStore('email', () => {
       });
       console.log('Attachment response:', response);
       return new Blob([response.data as BlobPart]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('获取附件失败:', err);
       console.error('Error details:', {
-        message: err.message,
-        code: err.code,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
+        message: err?.message,
+        code: err?.code,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
         url: `/emails/${emailId}/attachments/${encodeURIComponent(rawFilename)}`
       });
       return null;
