@@ -67,28 +67,47 @@ function getPreviewUrl(attachment: Attachment): string | undefined {
 // 加载图片预览
 async function loadImagePreview(attachment: Attachment) {
   const rawFilename = attachment.raw_filename || attachment.filename;
-  if (imagePreviewUrls[rawFilename] || loadingPreviews.has(rawFilename)) return;
+  console.log('[Preview] Start loading:', rawFilename);
+  if (imagePreviewUrls[rawFilename]) {
+    console.log('[Preview] Already loaded:', rawFilename);
+    return;
+  }
+  if (loadingPreviews.has(rawFilename)) {
+    console.log('[Preview] Already loading:', rawFilename);
+    return;
+  }
   
   loadingPreviews.add(rawFilename);
+  console.log('[Preview] Added to loading set:', rawFilename);
   try {
+    console.log('[Preview] Fetching blob for email:', props.email.id, 'file:', rawFilename);
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    console.log('[Preview] Got blob:', blob, 'size:', blob?.size);
     if (blob && blob.size > 0) {
-      imagePreviewUrls[rawFilename] = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      console.log('[Preview] Created URL:', url);
+      imagePreviewUrls[rawFilename] = url;
+      console.log('[Preview] Stored URL for:', rawFilename);
+    } else {
+      console.log('[Preview] Blob is empty or null');
     }
   } catch (err) {
-    console.error('加载图片预览失败:', err);
+    console.error('[Preview] Error loading:', rawFilename, err);
   } finally {
     loadingPreviews.delete(rawFilename);
+    console.log('[Preview] Removed from loading set:', rawFilename);
   }
 }
 
 // 加载附件列表
 async function loadAttachments() {
+  console.log('[Attachments] loadAttachments called, hasAttachments:', props.email.hasAttachments);
   if (!props.email.hasAttachments) return;
   
   loadingAttachments.value = true;
   try {
     const result = await emailStore.fetchAttachments(props.email.id);
+    console.log('[Attachments] Fetched:', result);
     attachments.value = result;
     
     // 如果附件列表为空且还有重试次数，延迟后重试
@@ -101,12 +120,14 @@ async function loadAttachments() {
     
     // 为可预览的图片加载缩略图
     for (const att of result) {
-      if (canPreview(att)) {
+      const isImg = isImageFile(att.filename);
+      console.log('[Attachments] Checking:', att.filename, 'isImage:', isImg);
+      if (isImg) {
         loadImagePreview(att);
       }
     }
   } catch (err) {
-    console.error('加载附件失败:', err);
+    console.error('[Attachments] Error:', err);
   } finally {
     loadingAttachments.value = false;
   }
@@ -164,7 +185,8 @@ function getFileIcon(filename: string): string {
 }
 
 // 监听邮件变化，重新加载附件
-watch(() => props.email.id, () => {
+watch(() => props.email.id, (newId) => {
+  console.log('[EmailDetail] Watch triggered, email id:', newId);
   attachmentRetryCount.value = 0;
   attachments.value = [];
   // 清空预览 URL
