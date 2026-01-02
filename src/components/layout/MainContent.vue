@@ -667,7 +667,7 @@ onUnmounted(() => {
                   </div>
                 </div>
 
-                <div class="info-card importance">
+                <div class="info-card importance clickable" @click="showImportanceSelector = !showImportanceSelector" title="点击修改重要度">
                   <div 
                     class="info-icon" 
                     :style="{ backgroundColor: getImportanceColor(selectedEmail.processedResult.importance) }"
@@ -677,17 +677,11 @@ onUnmounted(() => {
                     </svg>
                   </div>
                   <div class="info-content">
-                    <span class="info-label">重要度</span>
+                    <span class="info-label">重要度 (点击修改)</span>
                     <span class="info-value">{{ getImportanceLabel(selectedEmail.processedResult.importance) }}</span>
                   </div>
-                  <button class="importance-edit-btn" @click="showImportanceSelector = !showImportanceSelector" title="修改重要度">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                  </button>
                   <!-- 重要度选择器 -->
-                  <div class="importance-selector" v-if="showImportanceSelector">
+                  <div class="importance-selector" v-if="showImportanceSelector" @click.stop>
                     <button 
                       v-for="opt in importanceOptions" 
                       :key="opt.value"
@@ -1187,37 +1181,15 @@ onUnmounted(() => {
   transform: scale(0.98);
 }
 
-/* 重要度编辑按钮 */
-.importance-edit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-left: auto;
-}
-
-.importance-edit-btn:hover {
-  background: var(--hover-bg);
-  color: var(--primary-color);
-}
-
-.importance-edit-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 /* 重要度选择器 */
+.info-card.importance {
+  position: relative;
+}
+
 .importance-selector {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   margin-top: 8px;
   padding: 8px;
   background: var(--card-bg);
@@ -1250,10 +1222,6 @@ onUnmounted(() => {
 .importance-option.active {
   background: var(--opt-color);
   color: #fff;
-}
-
-.info-card.importance {
-  position: relative;
 }
 
 .info-icon {
