@@ -43,9 +43,10 @@ function clearLogs() { operationLogs.value = []; }
 const profileForm = reactive({ nickname: '', avatar: '' });
 const passwordForm = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' });
 const aiForm = reactive<UserSettings>({
-  aiEnabled: false, aiProvider: '', aiApiKey: '', aiModel: '',
+  aiEnabled: false, aiProvider: '', aiApiKey: '', aiBaseUrl: '', aiModel: '',
   extractCode: true, detectAd: true, summarize: true, judgeImportance: true,
   extractCodeMode: 'local', detectAdMode: 'local', summarizeMode: 'local', judgeImportanceMode: 'local',
+  promptExtractCode: '', promptDetectAd: '', promptSummarize: '', promptJudgeImportance: '',
   googleClientId: '', googleClientSecret: '', googleRedirectUrl: '',
 });
 const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
@@ -548,6 +549,7 @@ onMounted(async () => {
     aiForm.aiEnabled = s.ai_enabled ?? s.aiEnabled ?? false;
     aiForm.aiProvider = s.ai_provider ?? s.aiProvider ?? '';
     aiForm.aiApiKey = s.ai_api_key ?? s.aiApiKey ?? '';
+    aiForm.aiBaseUrl = s.ai_base_url ?? s.aiBaseUrl ?? '';
     aiForm.aiModel = s.ai_model ?? s.aiModel ?? '';
     aiForm.extractCode = s.extract_code ?? s.extractCode ?? true;
     aiForm.detectAd = s.detect_ad ?? s.detectAd ?? true;
@@ -557,6 +559,10 @@ onMounted(async () => {
     aiForm.detectAdMode = s.detect_ad_mode ?? s.detectAdMode ?? 'local';
     aiForm.summarizeMode = s.summarize_mode ?? s.summarizeMode ?? 'local';
     aiForm.judgeImportanceMode = s.judge_importance_mode ?? s.judgeImportanceMode ?? 'local';
+    aiForm.promptExtractCode = s.prompt_extract_code ?? s.promptExtractCode ?? '';
+    aiForm.promptDetectAd = s.prompt_detect_ad ?? s.promptDetectAd ?? '';
+    aiForm.promptSummarize = s.prompt_summarize ?? s.promptSummarize ?? '';
+    aiForm.promptJudgeImportance = s.prompt_judge_importance ?? s.promptJudgeImportance ?? '';
     aiForm.googleClientId = s.google_client_id ?? s.googleClientId ?? '';
     aiForm.googleClientSecret = s.google_client_secret ?? s.googleClientSecret ?? '';
     aiForm.googleRedirectUrl = s.google_redirect_url ?? s.googleRedirectUrl ?? '';
@@ -754,9 +760,10 @@ onMounted(async () => {
         <form @submit.prevent="saveAISettings">
           <div class="form-section">
             <h3>AI 服务配置</h3>
-            <div class="form-group"><label class="form-label">AI 提供商</label><select v-model="aiForm.aiProvider" class="form-input"><option value="">请选择</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="local">本地模型</option></select></div>
+            <div class="form-group"><label class="form-label">AI 提供商</label><select v-model="aiForm.aiProvider" class="form-input"><option value="">请选择</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="custom">自定义</option></select></div>
+            <div class="form-group"><label class="form-label">API 地址</label><input v-model="aiForm.aiBaseUrl" type="text" class="form-input" placeholder="https://api.openai.com/v1 (留空使用默认)" /><p class="hint">自定义 API 地址，支持 OpenAI 兼容接口</p></div>
             <div class="form-group"><label class="form-label">API Key</label><input v-model="aiForm.aiApiKey" type="password" class="form-input" placeholder="输入 API Key" /></div>
-            <div class="form-group"><label class="form-label">模型</label><input v-model="aiForm.aiModel" type="text" class="form-input" placeholder="如 gpt-4, claude-3" /></div>
+            <div class="form-group"><label class="form-label">模型</label><input v-model="aiForm.aiModel" type="text" class="form-input" placeholder="如 gpt-4, claude-3, deepseek-chat" /></div>
           </div>
           
           <div class="form-section">
@@ -764,36 +771,60 @@ onMounted(async () => {
             <p class="section-desc">选择每个功能是否启用，以及使用本地处理还是 AI 处理</p>
             
             <div class="feature-config">
-              <div class="feature-row">
-                <label class="feature-checkbox"><input v-model="aiForm.extractCode" type="checkbox" /> 提取验证码</label>
-                <select v-model="aiForm.extractCodeMode" class="mode-select" :disabled="!aiForm.extractCode">
-                  <option value="local">本地</option>
-                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
-                </select>
+              <div class="feature-item">
+                <div class="feature-row">
+                  <label class="feature-checkbox"><input v-model="aiForm.extractCode" type="checkbox" /> 提取验证码</label>
+                  <select v-model="aiForm.extractCodeMode" class="mode-select" :disabled="!aiForm.extractCode">
+                    <option value="local">本地</option>
+                    <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                  </select>
+                </div>
+                <div class="prompt-config" v-if="aiForm.extractCodeMode === 'ai'">
+                  <label class="form-label">自定义提示词</label>
+                  <textarea v-model="aiForm.promptExtractCode" class="form-textarea" placeholder="留空使用默认提示词" rows="3"></textarea>
+                </div>
               </div>
               
-              <div class="feature-row">
-                <label class="feature-checkbox"><input v-model="aiForm.detectAd" type="checkbox" /> 检测广告</label>
-                <select v-model="aiForm.detectAdMode" class="mode-select" :disabled="!aiForm.detectAd">
-                  <option value="local">本地</option>
-                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
-                </select>
+              <div class="feature-item">
+                <div class="feature-row">
+                  <label class="feature-checkbox"><input v-model="aiForm.detectAd" type="checkbox" /> 检测广告</label>
+                  <select v-model="aiForm.detectAdMode" class="mode-select" :disabled="!aiForm.detectAd">
+                    <option value="local">本地</option>
+                    <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                  </select>
+                </div>
+                <div class="prompt-config" v-if="aiForm.detectAdMode === 'ai'">
+                  <label class="form-label">自定义提示词</label>
+                  <textarea v-model="aiForm.promptDetectAd" class="form-textarea" placeholder="留空使用默认提示词" rows="3"></textarea>
+                </div>
               </div>
               
-              <div class="feature-row">
-                <label class="feature-checkbox"><input v-model="aiForm.summarize" type="checkbox" /> 生成摘要</label>
-                <select v-model="aiForm.summarizeMode" class="mode-select" :disabled="!aiForm.summarize">
-                  <option value="local">本地</option>
-                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
-                </select>
+              <div class="feature-item">
+                <div class="feature-row">
+                  <label class="feature-checkbox"><input v-model="aiForm.summarize" type="checkbox" /> 生成摘要</label>
+                  <select v-model="aiForm.summarizeMode" class="mode-select" :disabled="!aiForm.summarize">
+                    <option value="local">本地</option>
+                    <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                  </select>
+                </div>
+                <div class="prompt-config" v-if="aiForm.summarizeMode === 'ai'">
+                  <label class="form-label">自定义提示词</label>
+                  <textarea v-model="aiForm.promptSummarize" class="form-textarea" placeholder="留空使用默认提示词" rows="3"></textarea>
+                </div>
               </div>
               
-              <div class="feature-row">
-                <label class="feature-checkbox"><input v-model="aiForm.judgeImportance" type="checkbox" /> 判断重要性</label>
-                <select v-model="aiForm.judgeImportanceMode" class="mode-select" :disabled="!aiForm.judgeImportance">
-                  <option value="local">本地</option>
-                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
-                </select>
+              <div class="feature-item">
+                <div class="feature-row">
+                  <label class="feature-checkbox"><input v-model="aiForm.judgeImportance" type="checkbox" /> 判断重要性</label>
+                  <select v-model="aiForm.judgeImportanceMode" class="mode-select" :disabled="!aiForm.judgeImportance">
+                    <option value="local">本地</option>
+                    <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                  </select>
+                </div>
+                <div class="prompt-config" v-if="aiForm.judgeImportanceMode === 'ai'">
+                  <label class="form-label">自定义提示词</label>
+                  <textarea v-model="aiForm.promptJudgeImportance" class="form-textarea" placeholder="留空使用默认提示词" rows="3"></textarea>
+                </div>
               </div>
             </div>
             
@@ -1084,6 +1115,13 @@ onMounted(async () => {
 .mode-select { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); background: var(--input-bg); color: var(--text-primary); font-size: 0.8125rem; cursor: pointer; }
 .mode-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .mode-select option:disabled { color: var(--text-tertiary); }
+.feature-item { margin-bottom: 16px; }
+.feature-item:last-child { margin-bottom: 0; }
+.prompt-config { margin-top: 12px; padding: 12px; background: var(--hover-bg); border-radius: var(--radius-sm, 6px); }
+.prompt-config .form-label { font-size: 0.75rem; margin-bottom: 6px; display: block; }
+.form-textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); background: var(--input-bg); color: var(--text-primary); font-size: 0.8125rem; font-family: inherit; resize: vertical; min-height: 60px; }
+.form-textarea:focus { outline: none; border-color: var(--primary-color); }
+.form-textarea::placeholder { color: var(--text-tertiary); }
 .oauth-help { margin-top: 24px; padding: 18px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); }
 .oauth-help h4 { margin: 0 0 12px; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
 .oauth-help ol { margin: 0; padding-left: 20px; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.8; }

@@ -74,6 +74,7 @@ export interface UserSettings {
   aiEnabled: boolean;
   aiProvider: string;
   aiApiKey: string;
+  aiBaseUrl?: string;
   aiModel: string;
   extractCode: boolean;
   detectAd: boolean;
@@ -84,6 +85,11 @@ export interface UserSettings {
   detectAdMode?: string;
   summarizeMode?: string;
   judgeImportanceMode?: string;
+  // AI 提示词配置
+  promptExtractCode?: string;
+  promptDetectAd?: string;
+  promptSummarize?: string;
+  promptJudgeImportance?: string;
   emailListLimit?: number; // 邮件列表数量限制: -1=不限制, 20/50/100/500
   // Google OAuth 配置
   googleClientId?: string;
