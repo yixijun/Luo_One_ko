@@ -779,7 +779,7 @@ function handleForward() { emit('forward'); }
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -788,10 +788,9 @@ function handleForward() { emit('forward'); }
 
 .importance-selector {
   padding: 20px;
-  background: var(--card-bg, #1a1a2e);
-  border: 1px solid var(--border-color, #2d2d44);
+  background: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -801,17 +800,17 @@ function handleForward() { emit('forward'); }
 .selector-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary, #fff);
+  color: #333;
   text-align: center;
   margin-bottom: 8px;
 }
 
 .importance-option {
   padding: 14px 20px;
-  border: none;
+  border: 1px solid #e0e0e0;
   border-radius: 10px;
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #fff);
+  background: #f5f5f5;
+  color: #333;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -820,11 +819,12 @@ function handleForward() { emit('forward'); }
 }
 
 .importance-option:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.15));
+  background: #e8e8e8;
 }
 
 .importance-option.active {
   background: var(--opt-color);
+  border-color: var(--opt-color);
   color: #fff;
 }
 
