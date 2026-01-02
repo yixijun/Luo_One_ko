@@ -399,6 +399,24 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 更新邮件重要度
+  async function updateEmailImportance(emailId: number, importance: string): Promise<void> {
+    try {
+      await apiClient.put(`/emails/${emailId}/importance`, { importance });
+      // 更新本地状态
+      const email = emails.value.find(e => e.id === emailId);
+      if (email?.processedResult) {
+        email.processedResult.importance = importance as ProcessedResult['importance'];
+      }
+      if (currentEmail.value?.id === emailId && currentEmail.value.processedResult) {
+        currentEmail.value.processedResult.importance = importance as ProcessedResult['importance'];
+      }
+    } catch (err) {
+      error.value = (err as Error).message || '更新重要度失败';
+      throw err;
+    }
+  }
+
   // 清除当前邮件
   function clearCurrentEmail(): void {
     currentEmail.value = null;
@@ -583,6 +601,7 @@ export const useEmailStore = defineStore('email', () => {
     processSingleEmail,
     deleteProcessedResult,
     fetchEmailDetail,
+    updateEmailImportance,
     clearCurrentEmail,
     reset,
     fetchAttachments,

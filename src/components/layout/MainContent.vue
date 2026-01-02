@@ -41,6 +41,31 @@ const maxRetries = 2;
 // 复制验证码状态
 const codeCopied = ref(false);
 
+// 重要度选择器状态
+const showImportanceSelector = ref(false);
+const importanceOptions = [
+  { value: 'critical', label: '紧急', color: '#f44336' },
+  { value: 'high', label: '重要', color: '#ff9800' },
+  { value: 'medium', label: '一般', color: '#2196f3' },
+  { value: 'low', label: '普通', color: '#9e9e9e' },
+];
+
+// 更新重要度
+async function updateImportance(importance: string) {
+  if (!selectedEmail.value) return;
+  
+  try {
+    await emailStore.updateEmailImportance(selectedEmail.value.id, importance);
+    if (selectedEmail.value.processedResult) {
+      selectedEmail.value.processedResult.importance = importance;
+    }
+    showImportanceSelector.value = false;
+  } catch (err) {
+    console.error('更新重要度失败:', err);
+    alert('更新重要度失败');
+  }
+}
+
 // 复制验证码
 async function copyVerificationCode() {
   const code = selectedEmail.value?.processedResult?.verificationCode;
@@ -655,6 +680,25 @@ onUnmounted(() => {
                     <span class="info-label">重要度</span>
                     <span class="info-value">{{ getImportanceLabel(selectedEmail.processedResult.importance) }}</span>
                   </div>
+                  <button class="importance-edit-btn" @click="showImportanceSelector = !showImportanceSelector" title="修改重要度">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                  <!-- 重要度选择器 -->
+                  <div class="importance-selector" v-if="showImportanceSelector">
+                    <button 
+                      v-for="opt in importanceOptions" 
+                      :key="opt.value"
+                      class="importance-option"
+                      :class="{ active: selectedEmail.processedResult.importance === opt.value }"
+                      :style="{ '--opt-color': opt.color }"
+                      @click="updateImportance(opt.value)"
+                    >
+                      {{ opt.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
               <div v-else class="no-processed">
@@ -1141,6 +1185,75 @@ onUnmounted(() => {
 
 .info-card.clickable:active {
   transform: scale(0.98);
+}
+
+/* 重要度编辑按钮 */
+.importance-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.importance-edit-btn:hover {
+  background: var(--hover-bg);
+  color: var(--primary-color);
+}
+
+.importance-edit-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 重要度选择器 */
+.importance-selector {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 100px;
+}
+
+.importance-option {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.importance-option:hover {
+  background: var(--hover-bg);
+}
+
+.importance-option.active {
+  background: var(--opt-color);
+  color: #fff;
+}
+
+.info-card.importance {
+  position: relative;
 }
 
 .info-icon {
