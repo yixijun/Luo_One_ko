@@ -32,29 +32,8 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
-// 图片预览相关
-const previewImage = ref<string | null>(null);
-const previewImageName = ref('');
-const loadingPreview = ref(false);
-
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
-
-// 判断是否为图片文件
-function isImageFile(filename: string): boolean {
-  const ext = filename.split('.').pop()?.toLowerCase() || '';
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
-}
-
-// 处理图标点击 - 所有附件都尝试预览
-function handleIconClick(event: Event, attachment: Attachment) {
-  event.stopPropagation();
-  event.preventDefault();
-  alert('点击了图标: ' + attachment.filename);
-  console.log('=== Icon clicked ===', attachment.filename);
-  // 强制尝试图片预览
-  handleImageClick(attachment);
-}
 
 // 加载附件列表
 async function loadAttachments() {
@@ -65,7 +44,6 @@ async function loadAttachments() {
     const result = await emailStore.fetchAttachments(props.email.id);
     attachments.value = result;
     
-    // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
       attachmentRetryCount.value++;
       setTimeout(() => {
@@ -77,42 +55,6 @@ async function loadAttachments() {
   } finally {
     loadingAttachments.value = false;
   }
-}
-
-// 点击图片图标时预览图片
-async function handleImageClick(attachment: Attachment) {
-  console.log('handleImageClick called with:', attachment);
-  const rawFilename = attachment.raw_filename || attachment.filename;
-  
-  loadingPreview.value = true;
-  previewImageName.value = attachment.filename;
-  
-  try {
-    console.log('Fetching blob for:', rawFilename);
-    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
-    console.log('Blob received:', blob);
-    if (blob && blob.size > 0) {
-      previewImage.value = URL.createObjectURL(blob);
-      console.log('Preview URL created:', previewImage.value);
-    } else {
-      console.error('Blob is empty or null');
-      alert('无法加载图片预览');
-    }
-  } catch (err) {
-    console.error('加载图片预览失败:', err);
-    alert('加载图片预览失败');
-  } finally {
-    loadingPreview.value = false;
-  }
-}
-
-// 关闭图片预览
-function closeImagePreview() {
-  if (previewImage.value) {
-    URL.revokeObjectURL(previewImage.value);
-  }
-  previewImage.value = null;
-  previewImageName.value = '';
 }
 
 // 下载附件
@@ -139,7 +81,6 @@ function formatFileSize(bytes: number): string {
 // 获取文件图标类型
 function getFileIcon(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
-  console.log('getFileIcon:', filename, 'ext:', ext);
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return 'image';
   if (['pdf'].includes(ext)) return 'pdf';
   if (['doc', 'docx'].includes(ext)) return 'word';
@@ -156,7 +97,6 @@ function getFileIcon(filename: string): string {
 watch(() => props.email.id, () => {
   attachmentRetryCount.value = 0;
   attachments.value = [];
-  closeImagePreview();
   loadAttachments();
 }, { immediate: true });
 
@@ -184,25 +124,10 @@ function getSenderEmail(from: string): string {
   return match?.[1] ?? from;
 }
 
-// 处理关闭
-function handleClose() {
-  emit('close');
-}
-
-// 处理删除
-function handleDelete() {
-  emit('delete');
-}
-
-// 处理回复
-function handleReply() {
-  emit('reply');
-}
-
-// 处理转发
-function handleForward() {
-  emit('forward');
-}
+function handleClose() { emit('close'); }
+function handleDelete() { emit('delete'); }
+function handleReply() { emit('reply'); }
+function handleForward() { emit('forward'); }
 </script>
 
 <template>
@@ -261,8 +186,6 @@ function handleForward() {
             </div>
           </div>
         </div>
-        
-        <!-- 已读/未读状态 -->
         <div class="read-status" :class="{ unread: !email.isRead }">
           {{ email.isRead ? '已读' : '未读' }}
         </div>
@@ -301,54 +224,39 @@ function handleForward() {
           附件 ({{ attachments.length }})
         </h3>
         
-        <!-- 加载中 -->
         <div v-if="loadingAttachments" class="attachments-loading">
           <div class="spinner"></div>
           <span>加载附件列表...</span>
         </div>
         
-        <!-- 附件列表 -->
         <div v-else-if="attachments.length > 0" class="attachments-list">
           <div 
             v-for="attachment in attachments" 
             :key="attachment.raw_filename || attachment.filename"
             class="attachment-item"
+            @click="handleDownload(attachment)"
           >
-            <!-- 文件图标 - 图片类型点击预览，其他类型点击下载 -->
-            <div 
-              class="attachment-icon" 
-              :class="getFileIcon(attachment.filename)"
-              @click.stop.prevent="handleIconClick($event, attachment)"
-            >
-              <!-- 图片图标 -->
+            <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
               <svg v-if="getFileIcon(attachment.filename) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
-              <!-- PDF图标 -->
               <svg v-else-if="getFileIcon(attachment.filename) === 'pdf'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
                 <path d="M9 15h6"/>
               </svg>
-              <!-- 压缩包图标 -->
-              <svg v-else-if="getFileIcon(attachment.filename) === 'archive'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                <line x1="12" y1="11" x2="12" y2="17"/>
-                <line x1="9" y1="14" x2="15" y2="14"/>
-              </svg>
-              <!-- 默认文件图标 -->
               <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
             </div>
-            <div class="attachment-info" @click="handleDownload(attachment)">
+            <div class="attachment-info">
               <span class="attachment-name">{{ attachment.filename }}</span>
               <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
             </div>
-            <div class="attachment-action" @click="handleDownload(attachment)">
+            <div class="attachment-action">
               <div v-if="downloadingFile === (attachment.raw_filename || attachment.filename)" class="spinner small"></div>
               <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -359,30 +267,9 @@ function handleForward() {
           </div>
         </div>
         
-        <!-- 无附件 -->
         <div v-else class="attachments-empty">
           <p>{{ attachmentRetryCount >= maxRetries ? '附件需要重新同步邮件获取' : '附件正在解析中...' }}</p>
         </div>
-      </div>
-    </div>
-
-    <!-- 图片预览弹窗 -->
-    <div v-if="previewImage || loadingPreview" class="image-preview-modal" @click="closeImagePreview">
-      <div class="preview-header">
-        <span class="preview-title">{{ previewImageName }}</span>
-        <button class="preview-close" @click="closeImagePreview">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="preview-content" @click.stop>
-        <div v-if="loadingPreview" class="preview-loading">
-          <div class="spinner large"></div>
-          <span>加载中...</span>
-        </div>
-        <img v-else-if="previewImage" :src="previewImage" :alt="previewImageName" />
       </div>
     </div>
   </div>
@@ -425,10 +312,7 @@ function handleForward() {
   color: var(--text-primary, #fff);
 }
 
-.back-btn svg {
-  width: 20px;
-  height: 20px;
-}
+.back-btn svg { width: 20px; height: 20px; }
 
 .detail-title {
   flex: 1;
@@ -441,10 +325,7 @@ function handleForward() {
   text-overflow: ellipsis;
 }
 
-.header-actions {
-  display: flex;
-  gap: 4px;
-}
+.header-actions { display: flex; gap: 4px; }
 
 .action-btn {
   display: flex;
@@ -470,10 +351,7 @@ function handleForward() {
   color: #f44336;
 }
 
-.action-btn svg {
-  width: 18px;
-  height: 18px;
-}
+.action-btn svg { width: 18px; height: 18px; }
 
 .detail-content {
   flex: 1;
@@ -491,10 +369,7 @@ function handleForward() {
   margin-bottom: 16px;
 }
 
-.meta-main {
-  display: flex;
-  gap: 12px;
-}
+.meta-main { display: flex; gap: 12px; }
 
 .sender-avatar {
   width: 48px;
@@ -510,44 +385,19 @@ function handleForward() {
   flex-shrink: 0;
 }
 
-.meta-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.meta-info { display: flex; flex-direction: column; gap: 4px; }
 
-.sender-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.sender-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 
-.sender-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #fff);
-}
+.sender-name { font-size: 1rem; font-weight: 600; color: var(--text-primary, #fff); }
 
-.sender-email {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #888);
-}
+.sender-email { font-size: 0.8125rem; color: var(--text-secondary, #888); }
 
-.recipient-row,
-.date-row {
-  display: flex;
-  gap: 6px;
-  font-size: 0.8125rem;
-}
+.recipient-row, .date-row { display: flex; gap: 6px; font-size: 0.8125rem; }
 
-.meta-label {
-  color: var(--text-secondary, #888);
-}
+.meta-label { color: var(--text-secondary, #888); }
 
-.meta-value {
-  color: var(--text-primary, #fff);
-}
+.meta-value { color: var(--text-primary, #fff); }
 
 .read-status {
   padding: 4px 10px;
@@ -573,25 +423,11 @@ function handleForward() {
   color: var(--text-secondary, #888);
 }
 
-.section-title svg {
-  width: 16px;
-  height: 16px;
-}
+.section-title svg { width: 16px; height: 16px; }
 
-.processed-section {
-  margin-bottom: 16px;
-}
+.processed-section, .email-body-section, .attachments-section { margin-bottom: 16px; }
 
-.email-body-section {
-  margin-bottom: 16px;
-}
-
-.attachments-section {
-  margin-bottom: 16px;
-}
-
-.attachments-loading,
-.attachments-empty {
+.attachments-loading, .attachments-empty {
   padding: 24px;
   background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
   border-radius: 12px;
@@ -612,26 +448,11 @@ function handleForward() {
   animation: spin 0.8s linear infinite;
 }
 
-.spinner.small {
-  width: 16px;
-  height: 16px;
-}
+.spinner.small { width: 16px; height: 16px; }
 
-.spinner.large {
-  width: 40px;
-  height: 40px;
-  border-width: 3px;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.attachments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.attachments-list { display: flex; flex-direction: column; gap: 8px; }
 
 .attachment-item {
   display: flex;
@@ -640,6 +461,7 @@ function handleForward() {
   padding: 12px 16px;
   background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
   border-radius: 10px;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -657,42 +479,14 @@ function handleForward() {
   background-color: var(--primary-bg, rgba(100, 108, 255, 0.1));
   color: var(--primary-color, #646cff);
   flex-shrink: 0;
-  cursor: pointer;
-  transition: transform 0.2s;
 }
 
-.attachment-icon:hover {
-  transform: scale(1.1);
-}
+.attachment-icon.image { background-color: rgba(76, 175, 80, 0.1); color: #4caf50; }
+.attachment-icon.pdf { background-color: rgba(244, 67, 54, 0.1); color: #f44336; }
 
-.attachment-icon.image {
-  background-color: rgba(76, 175, 80, 0.1);
-  color: #4caf50;
-}
+.attachment-icon svg { width: 20px; height: 20px; }
 
-.attachment-icon.pdf {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-}
-
-.attachment-icon.archive {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
-}
-
-.attachment-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.attachment-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  cursor: pointer;
-}
+.attachment-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 .attachment-name {
   font-size: 0.875rem;
@@ -703,10 +497,7 @@ function handleForward() {
   text-overflow: ellipsis;
 }
 
-.attachment-size {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #888);
-}
+.attachment-size { font-size: 0.75rem; color: var(--text-secondary, #888); }
 
 .attachment-action {
   width: 32px;
@@ -716,100 +507,12 @@ function handleForward() {
   justify-content: center;
   color: var(--text-secondary, #888);
   flex-shrink: 0;
-  cursor: pointer;
 }
 
-.attachment-action svg {
-  width: 18px;
-  height: 18px;
-}
+.attachment-action svg { width: 18px; height: 18px; }
 
-.attachment-item:hover .attachment-action {
-  color: var(--primary-color, #646cff);
-}
+.attachment-item:hover .attachment-action { color: var(--primary-color, #646cff); }
 
-/* 图片预览弹窗 */
-.image-preview-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.9);
-  display: flex;
-  flex-direction: column;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.preview-title {
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.preview-close {
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.preview-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.preview-close svg {
-  width: 20px;
-  height: 20px;
-}
-
-.preview-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  overflow: auto;
-}
-
-.preview-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  color: #fff;
-}
-
-.preview-content img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* 响应式布局 */
 @media (max-width: 768px) {
   .detail-header {
     padding: 12px 16px;
@@ -818,42 +521,13 @@ function handleForward() {
     top: 0;
     z-index: 10;
   }
-  
-  .back-btn {
-    width: 40px;
-    height: 40px;
-    background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
-  }
-  
-  .back-btn svg {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .detail-title {
-    font-size: 0.9375rem;
-  }
-  
-  .detail-content {
-    padding: 12px;
-  }
-  
-  .email-meta {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .read-status {
-    align-self: flex-start;
-  }
-  
-  .header-actions {
-    gap: 2px;
-  }
-  
-  .action-btn {
-    width: 40px;
-    height: 40px;
-  }
+  .back-btn { width: 40px; height: 40px; background-color: var(--hover-bg, rgba(255, 255, 255, 0.1)); }
+  .back-btn svg { width: 24px; height: 24px; }
+  .detail-title { font-size: 0.9375rem; }
+  .detail-content { padding: 12px; }
+  .email-meta { flex-direction: column; gap: 12px; }
+  .read-status { align-self: flex-start; }
+  .header-actions { gap: 2px; }
+  .action-btn { width: 40px; height: 40px; }
 }
 </style>
