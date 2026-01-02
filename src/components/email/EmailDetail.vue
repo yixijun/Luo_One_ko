@@ -347,6 +347,9 @@ function handleForward() { emit('forward'); }
                 </div>
               </div>
             </div>
+            <div v-else class="no-processed">
+              <span>暂无处理结果</span>
+            </div>
             
             <!-- 重要度选择器弹窗 -->
             <Teleport to="body">
@@ -366,9 +369,6 @@ function handleForward() { emit('forward'); }
                 </div>
               </div>
             </Teleport>
-            <div v-else class="no-processed">
-              <span>暂无处理结果</span>
-            </div>
           </div>
           
           <!-- 处理按钮 -->
