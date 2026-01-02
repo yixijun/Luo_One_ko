@@ -345,8 +345,14 @@ function handleForward() { emit('forward'); }
                   <span class="info-label">重要度 (点击修改)</span>
                   <span class="info-value">{{ getImportanceLabel(email.processedResult?.importance || 'low') }}</span>
                 </div>
-                <!-- 重要度选择器 -->
-                <div class="importance-selector" v-if="showImportanceSelector" @click.stop>
+              </div>
+            </div>
+            
+            <!-- 重要度选择器弹窗 -->
+            <Teleport to="body">
+              <div class="importance-overlay" v-if="showImportanceSelector" @click="showImportanceSelector = false">
+                <div class="importance-selector" @click.stop>
+                  <div class="selector-title">选择重要度</div>
                   <button 
                     v-for="opt in importanceOptions" 
                     :key="opt.value"
@@ -359,7 +365,7 @@ function handleForward() { emit('forward'); }
                   </button>
                 </div>
               </div>
-            </div>
+            </Teleport>
             <div v-else class="no-processed">
               <span>暂无处理结果</span>
             </div>
@@ -767,37 +773,54 @@ function handleForward() { emit('forward'); }
 }
 
 /* 重要度选择器 */
-.importance-selector {
-  position: absolute;
-  top: 100%;
+.importance-overlay {
+  position: fixed;
+  top: 0;
   left: 0;
-  margin-top: 8px;
-  padding: 8px;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.importance-selector {
+  padding: 20px;
   background: var(--card-bg, #1a1a2e);
   border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-  z-index: 100;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 100px;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.selector-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .importance-option {
-  padding: 8px 12px;
+  padding: 14px 20px;
   border: none;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 10px;
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
   color: var(--text-primary, #fff);
-  font-size: 0.8125rem;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all 0.15s;
 }
 
 .importance-option:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  background: var(--hover-bg, rgba(255, 255, 255, 0.15));
 }
 
 .importance-option.active {
