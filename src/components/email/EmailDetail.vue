@@ -55,35 +55,44 @@ function isImageFile(filename: string): boolean {
 // 加载单个图片预览
 async function loadSinglePreview(att: AttachmentWithPreview, index: number) {
   const rawFilename = att.raw_filename || att.filename;
+  console.log('[loadSinglePreview] Starting for:', rawFilename, 'index:', index);
   
   // 标记为加载中
   attachmentsWithPreview.value[index] = { ...att, loadingPreview: true };
   
   try {
+    console.log('[loadSinglePreview] Calling getAttachmentBlob');
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    console.log('[loadSinglePreview] Got blob:', blob, 'size:', blob?.size);
     if (blob && blob.size > 0) {
       const url = URL.createObjectURL(blob);
+      console.log('[loadSinglePreview] Created URL:', url);
       attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], previewUrl: url, loadingPreview: false };
+      console.log('[loadSinglePreview] Updated attachmentsWithPreview[', index, ']:', attachmentsWithPreview.value[index]);
     } else {
+      console.log('[loadSinglePreview] Blob is empty or null');
       attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], loadingPreview: false };
     }
   } catch (err) {
-    console.error('加载图片预览失败:', err);
+    console.error('[loadSinglePreview] Error:', err);
     attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], loadingPreview: false };
   }
 }
 
 // 加载附件列表
 async function loadAttachments() {
+  console.log('[loadAttachments] Called, hasAttachments:', props.email.hasAttachments);
   if (!props.email.hasAttachments) return;
   
   loadingAttachments.value = true;
   try {
     const result = await emailStore.fetchAttachments(props.email.id);
+    console.log('[loadAttachments] Fetched attachments:', result);
     attachments.value = result;
     
     // 初始化带预览的附件列表
     attachmentsWithPreview.value = result.map(att => ({ ...att }));
+    console.log('[loadAttachments] Initialized attachmentsWithPreview:', attachmentsWithPreview.value);
     
     // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
@@ -96,12 +105,14 @@ async function loadAttachments() {
     
     // 为可预览的图片加载缩略图
     result.forEach((att, index) => {
-      if (isImageFile(att.filename)) {
+      const isImg = isImageFile(att.filename);
+      console.log('[loadAttachments] Checking attachment:', att.filename, 'isImage:', isImg);
+      if (isImg) {
         loadSinglePreview(att, index);
       }
     });
   } catch (err) {
-    console.error('加载附件失败:', err);
+    console.error('[loadAttachments] Error:', err);
   } finally {
     loadingAttachments.value = false;
   }
