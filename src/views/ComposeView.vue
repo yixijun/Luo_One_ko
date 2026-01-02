@@ -32,10 +32,15 @@ interface AttachmentFile {
   uploading: boolean;
   uploaded: boolean;
   error?: string;
+  previewUrl?: string; // 图片预览 URL
 }
 const attachments = ref<AttachmentFile[]>([]);
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
+
+// 图片预览弹窗
+const previewImage = ref<string | null>(null);
+const previewImageName = ref('');
 
 // 邮件表单
 const emailForm = reactive<SendEmailRequest>({
@@ -131,6 +136,28 @@ function getFileIcon(filename: string): string {
   return 'file';
 }
 
+// 判断是否为图片文件
+function isImageFile(file: File): boolean {
+  const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp'];
+  if (imageTypes.includes(file.type)) return true;
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+}
+
+// 打开图片预览
+function openImagePreview(att: AttachmentFile) {
+  if (att.previewUrl) {
+    previewImage.value = att.previewUrl;
+    previewImageName.value = att.name;
+  }
+}
+
+// 关闭图片预览
+function closeImagePreview() {
+  previewImage.value = null;
+  previewImageName.value = '';
+}
+
 // 触发文件选择
 function triggerFileSelect() {
   fileInputRef.value?.click();
@@ -167,6 +194,7 @@ function handleDrop(event: DragEvent) {
 function addFiles(files: File[]) {
   const maxSize = 25 * 1024 * 1024; // 25MB 单文件限制
   const maxTotal = 50 * 1024 * 1024; // 50MB 总大小限制
+  const maxPreviewSize = 20 * 1024 * 1024; // 20MB 以下的图片才预览
   
   for (const file of files) {
     // 检查是否已存在
@@ -186,19 +214,31 @@ function addFiles(files: File[]) {
       break;
     }
     
-    attachments.value.push({
+    const attachment: AttachmentFile = {
       file,
       name: file.name,
       size: file.size,
       type: file.type,
       uploading: false,
       uploaded: false,
-    });
+    };
+    
+    // 如果是图片且小于 20MB，生成预览
+    if (isImageFile(file) && file.size <= maxPreviewSize) {
+      attachment.previewUrl = URL.createObjectURL(file);
+    }
+    
+    attachments.value.push(attachment);
   }
 }
 
 // 移除附件
 function removeAttachment(index: number) {
+  const att = attachments.value[index];
+  // 释放预览 URL
+  if (att.previewUrl) {
+    URL.revokeObjectURL(att.previewUrl);
+  }
   attachments.value.splice(index, 1);
 }
 
@@ -566,8 +606,24 @@ onMounted(async () => {
                 v-for="(att, index) in attachments" 
                 :key="att.name + att.size"
                 class="attachment-item"
+                :class="{ 'has-preview': att.previewUrl }"
               >
-                <div class="attachment-icon" :class="getFileIcon(att.name)">
+                <!-- 图片预览缩略图 -->
+                <div 
+                  v-if="att.previewUrl" 
+                  class="attachment-preview"
+                  @click="openImagePreview(att)"
+                >
+                  <img :src="att.previewUrl" :alt="att.name" />
+                  <div class="preview-overlay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </div>
+                </div>
+                <!-- 非图片文件图标 -->
+                <div v-else class="attachment-icon" :class="getFileIcon(att.name)">
                   <svg v-if="getFileIcon(att.name) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -643,6 +699,22 @@ onMounted(async () => {
         </div>
       </div>
     </template>
+
+    <!-- 图片预览弹窗 -->
+    <div v-if="previewImage" class="image-preview-modal" @click="closeImagePreview">
+      <div class="preview-header">
+        <span class="preview-title">{{ previewImageName }}</span>
+        <button class="preview-close" @click="closeImagePreview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-content" @click.stop>
+        <img :src="previewImage" :alt="previewImageName" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1059,6 +1131,48 @@ onMounted(async () => {
   height: 20px;
 }
 
+/* 图片预览缩略图 */
+.attachment-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.attachment-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-preview .preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.attachment-preview:hover .preview-overlay {
+  opacity: 1;
+}
+
+.attachment-preview .preview-overlay svg {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+}
+
+.attachment-item.has-preview {
+  padding: 8px 16px;
+}
+
 .attachment-info {
   flex: 1;
   min-width: 0;
@@ -1197,5 +1311,78 @@ onMounted(async () => {
   .compose-footer {
     padding: 16px;
   }
+}
+
+/* 图片预览弹窗 */
+.image-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.preview-title {
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.preview-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.preview-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.preview-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+}
+
+.preview-content img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md, 10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 </style>
