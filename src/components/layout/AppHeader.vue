@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 应用头部组件
  * Requirements: 8.1
  */
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useEmailStore } from '@/stores/email';
@@ -185,10 +185,7 @@ const currentThemeInfo = computed(() => {
   return themes.find(t => t.name === themeStore.currentTheme) || themes[0];
 });
 
-// 获取当前字体信息
-const currentFontInfo = computed(() => {
-  return fonts.find(f => f.name === themeStore.currentFont) || fonts[0];
-});
+
 
 // 打开个人信息弹窗
 function openProfileModal() {
@@ -404,9 +401,9 @@ onUnmounted(() => {
         <button 
           class="icon-btn theme-btn" 
           @click.stop="toggleThemeMenu" 
-          :title="`当前主题: ${currentThemeInfo.label}`"
+          :title="`当前主题: ${currentThemeInfo?.label || '默认'}`"
         >
-          <span class="theme-indicator" :style="{ backgroundColor: currentThemeInfo.primaryColor }"></span>
+          <span class="theme-indicator" :style="{ backgroundColor: currentThemeInfo?.primaryColor || '#646cff' }"></span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="4"/>
             <path d="M12 2v2"/>

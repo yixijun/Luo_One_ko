@@ -11,7 +11,8 @@
     "dist/**/*",
     "dist-server/**/*",
     "electron-dist/**/*",
-    "public/**/*"
+    "public/**/*",
+    "electron/config.json"
   ],
   "extraMetadata": {
     "main": "electron-dist/main.js"

@@ -67,9 +67,6 @@ const loadingMore = computed(() => emailStore.loadingMore);
 const hasEmails = computed(() => emailStore.hasEmails);
 const hasMore = computed(() => emailStore.hasMore);
 
-// 邮件列表滚动容器引用
-const emailsListRef = ref<HTMLElement | null>(null);
-
 // 文件夹选项
 const folderOptions = [
   { value: 'inbox', label: '收件箱' },
@@ -78,11 +75,7 @@ const folderOptions = [
   { value: 'all', label: '全部' },
 ];
 
-// 获取当前文件夹标签
-const currentFolderLabel = computed(() => {
-  const folder = folderOptions.find(f => f.value === currentFolder.value);
-  return folder?.label || '收件箱';
-});
+
 
 // 删除状态
 const isDeleting = ref(false);
@@ -439,7 +432,7 @@ onUnmounted(() => {
         </div>
       </div>
       
-      <div class="emails-list" ref="emailsListRef" @scroll="handleScroll" v-if="!loading">
+      <div class="emails-list" @scroll="handleScroll" v-if="!loading">
         <div v-if="!hasEmails" class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="2" y="4" width="20" height="16" rx="2"/>

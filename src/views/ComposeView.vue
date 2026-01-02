@@ -236,7 +236,7 @@ function addFiles(files: File[]) {
 function removeAttachment(index: number) {
   const att = attachments.value[index];
   // 释放预览 URL
-  if (att.previewUrl) {
+  if (att && att.previewUrl) {
     URL.revokeObjectURL(att.previewUrl);
   }
   attachments.value.splice(index, 1);
@@ -301,7 +301,7 @@ function fileToBase64(file: File): Promise<string> {
     reader.onload = () => {
       const result = reader.result as string;
       // 移除 data:xxx;base64, 前缀
-      const base64 = result.split(',')[1];
+      const base64 = result.split(',')[1] || '';
       resolve(base64);
     };
     reader.onerror = reject;

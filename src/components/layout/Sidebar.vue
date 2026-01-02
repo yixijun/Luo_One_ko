@@ -3,7 +3,7 @@
  * 洛一 (Luo One) 邮箱管理系统 - 侧边栏组件
  * Requirements: 8.2
  */
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
@@ -21,9 +21,6 @@ const emailStore = useEmailStore();
 const accounts = computed(() => accountStore.accounts);
 const currentAccountId = computed(() => accountStore.currentAccountId);
 const loading = computed(() => accountStore.loading);
-
-// 删除状态
-const deletingAccountId = ref<number | null>(null);
 
 // 选择邮箱账户
 function selectAccount(account: EmailAccount) {
@@ -44,26 +41,7 @@ function goToCompose() {
   router.push('/compose');
 }
 
-// 删除账户
-async function deleteAccount(account: EmailAccount, event: Event) {
-  event.stopPropagation();
-  
-  const confirmed = window.confirm(`确定要删除邮箱账户 "${account.displayName || account.email}" 吗？\n\n该账户下的所有邮件也将被删除。`);
-  if (!confirmed) return;
-  
-  deletingAccountId.value = account.id;
-  try {
-    const success = await accountStore.deleteAccount(account.id);
-    if (success) {
-      // 如果删除的是当前选中的账户，显示全部邮件
-      if (currentAccountId.value === account.id) {
-        showAllEmails();
-      }
-    }
-  } finally {
-    deletingAccountId.value = null;
-  }
-}
+
 
 // 获取账户状态图标颜色
 function getStatusColor(account: EmailAccount): string {
