@@ -63,8 +63,10 @@ async function updateAdType(isAd: boolean) {
   
   try {
     await emailStore.updateEmailAdType(selectedEmail.value.id, isAd);
-    if (selectedEmail.value.processedResult) {
-      selectedEmail.value.processedResult.isAd = isAd;
+    // 重新从列表获取更新后的邮件
+    const updated = emails.value.find(e => e.id === selectedEmail.value?.id);
+    if (updated) {
+      selectedEmail.value = updated;
     }
     showAdSelector.value = false;
   } catch (err) {
@@ -79,8 +81,10 @@ async function updateImportance(importance: string) {
   
   try {
     await emailStore.updateEmailImportance(selectedEmail.value.id, importance);
-    if (selectedEmail.value.processedResult) {
-      selectedEmail.value.processedResult.importance = importance;
+    // 重新从列表获取更新后的邮件
+    const updated = emails.value.find(e => e.id === selectedEmail.value?.id);
+    if (updated) {
+      selectedEmail.value = updated;
     }
     showImportanceSelector.value = false;
   } catch (err) {

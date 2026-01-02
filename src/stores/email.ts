@@ -404,9 +404,12 @@ export const useEmailStore = defineStore('email', () => {
     try {
       await apiClient.put(`/emails/${emailId}/importance`, { importance });
       // 更新本地状态
-      const email = emails.value.find(e => e.id === emailId);
-      if (email?.processedResult) {
+      const index = emails.value.findIndex(e => e.id === emailId);
+      const email = index !== -1 ? emails.value[index] : undefined;
+      if (email && email.processedResult) {
         email.processedResult.importance = importance as ProcessedResult['importance'];
+        // 触发响应式更新
+        emails.value = [...emails.value];
       }
       if (currentEmail.value?.id === emailId && currentEmail.value.processedResult) {
         currentEmail.value.processedResult.importance = importance as ProcessedResult['importance'];
@@ -422,9 +425,12 @@ export const useEmailStore = defineStore('email', () => {
     try {
       await apiClient.put(`/emails/${emailId}/ad-type`, { is_ad: isAd });
       // 更新本地状态
-      const email = emails.value.find(e => e.id === emailId);
-      if (email?.processedResult) {
+      const index = emails.value.findIndex(e => e.id === emailId);
+      const email = index !== -1 ? emails.value[index] : undefined;
+      if (email && email.processedResult) {
         email.processedResult.isAd = isAd;
+        // 触发响应式更新
+        emails.value = [...emails.value];
       }
       if (currentEmail.value?.id === emailId && currentEmail.value.processedResult) {
         currentEmail.value.processedResult.isAd = isAd;
