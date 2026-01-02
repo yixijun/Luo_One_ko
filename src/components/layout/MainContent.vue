@@ -35,6 +35,22 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
+// 复制验证码状态
+const codeCopied = ref(false);
+
+// 复制验证码
+async function copyVerificationCode() {
+  const code = selectedEmail.value?.processedResult?.verificationCode;
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    codeCopied.value = true;
+    setTimeout(() => { codeCopied.value = false; }, 2000);
+  } catch (err) {
+    console.error('复制失败:', err);
+  }
+}
+
 function checkMobileView() {
   isMobileView.value = window.innerWidth < 768;
 }
@@ -568,7 +584,12 @@ onUnmounted(() => {
               </div>
               <div class="info-content">
                 <span class="info-label">验证码</span>
-                <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
+                <div class="code-value-row">
+                  <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
+                  <button class="copy-code-btn" :class="{ copied: codeCopied }" @click="copyVerificationCode">
+                    {{ codeCopied ? '✓ 已复制' : '复制' }}
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -1090,6 +1111,37 @@ onUnmounted(() => {
   font-weight: 700;
   color: var(--success-color);
   letter-spacing: 3px;
+}
+
+.code-value-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.copy-code-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--primary-color, #646cff);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.copy-code-btn:hover {
+  background-color: #5558dd;
+  transform: scale(1.05);
+}
+
+.copy-code-btn:active {
+  transform: scale(0.95);
+}
+
+.copy-code-btn.copied {
+  background-color: #4caf50;
 }
 
 /* 邮件气泡 */
