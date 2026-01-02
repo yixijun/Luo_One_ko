@@ -83,16 +83,21 @@ async function loadAttachments() {
 
 // 点击图片图标时预览图片
 async function handleImageClick(attachment: Attachment) {
+  console.log('handleImageClick called with:', attachment);
   const rawFilename = attachment.raw_filename || attachment.filename;
   
   loadingPreview.value = true;
   previewImageName.value = attachment.filename;
   
   try {
+    console.log('Fetching blob for:', rawFilename);
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    console.log('Blob received:', blob);
     if (blob && blob.size > 0) {
       previewImage.value = URL.createObjectURL(blob);
+      console.log('Preview URL created:', previewImage.value);
     } else {
+      console.error('Blob is empty or null');
       alert('无法加载图片预览');
     }
   } catch (err) {
