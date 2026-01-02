@@ -116,14 +116,13 @@ async function copyVerificationCode() {
         <span class="info-label">验证码</span>
         <div class="code-value-wrapper">
           <span class="info-value code-value">{{ result.verificationCode }}</span>
-          <button class="copy-btn" :class="{ copied }" @click="copyVerificationCode" :title="copied ? '已复制' : '复制验证码'">
-            <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
+          <button 
+            class="copy-btn" 
+            :class="{ copied }" 
+            @click.stop="copyVerificationCode" 
+            :title="copied ? '已复制' : '点击复制'"
+          >
+            {{ copied ? '✓' : '复制' }}
           </button>
         </div>
       </div>
@@ -315,32 +314,31 @@ async function copyVerificationCode() {
 }
 
 .copy-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  padding: 4px 12px;
   border: none;
   border-radius: 6px;
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
-  color: var(--text-secondary, #888);
+  background-color: var(--primary-color, #646cff);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .copy-btn:hover {
-  background-color: var(--primary-color, #646cff);
-  color: #fff;
+  background-color: #5558dd;
+  transform: scale(1.05);
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
 }
 
 .copy-btn.copied {
   background-color: #4caf50;
-  color: #fff;
-}
-
-.copy-btn svg {
-  width: 16px;
-  height: 16px;
 }
 
 .summary-value {
