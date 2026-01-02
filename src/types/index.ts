@@ -79,6 +79,11 @@ export interface UserSettings {
   detectAd: boolean;
   summarize: boolean;
   judgeImportance: boolean;
+  // 每个功能的处理模式: 'local' | 'ai'
+  extractCodeMode?: string;
+  detectAdMode?: string;
+  summarizeMode?: string;
+  judgeImportanceMode?: string;
   emailListLimit?: number; // 邮件列表数量限制: -1=不限制, 20/50/100/500
   // Google OAuth 配置
   googleClientId?: string;

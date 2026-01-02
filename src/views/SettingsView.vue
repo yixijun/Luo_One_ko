@@ -45,6 +45,7 @@ const passwordForm = reactive({ oldPassword: '', newPassword: '', confirmPasswor
 const aiForm = reactive<UserSettings>({
   aiEnabled: false, aiProvider: '', aiApiKey: '', aiModel: '',
   extractCode: true, detectAd: true, summarize: true, judgeImportance: true,
+  extractCodeMode: 'local', detectAdMode: 'local', summarizeMode: 'local', judgeImportanceMode: 'local',
   googleClientId: '', googleClientSecret: '', googleRedirectUrl: '',
 });
 const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
@@ -552,6 +553,10 @@ onMounted(async () => {
     aiForm.detectAd = s.detect_ad ?? s.detectAd ?? true;
     aiForm.summarize = s.summarize ?? false;
     aiForm.judgeImportance = s.judge_importance ?? s.judgeImportance ?? true;
+    aiForm.extractCodeMode = s.extract_code_mode ?? s.extractCodeMode ?? 'local';
+    aiForm.detectAdMode = s.detect_ad_mode ?? s.detectAdMode ?? 'local';
+    aiForm.summarizeMode = s.summarize_mode ?? s.summarizeMode ?? 'local';
+    aiForm.judgeImportanceMode = s.judge_importance_mode ?? s.judgeImportanceMode ?? 'local';
     aiForm.googleClientId = s.google_client_id ?? s.googleClientId ?? '';
     aiForm.googleClientSecret = s.google_client_secret ?? s.googleClientSecret ?? '';
     aiForm.googleRedirectUrl = s.google_redirect_url ?? s.googleRedirectUrl ?? '';
@@ -747,14 +752,54 @@ onMounted(async () => {
       <div v-if="activeTab === 'ai'" class="panel">
         <h2>AI 配置</h2>
         <form @submit.prevent="saveAISettings">
-          <div class="form-group checkbox"><label><input v-model="aiForm.aiEnabled" type="checkbox" /> 启用 AI 处理</label></div>
-          <div class="form-group"><label class="form-label">AI 提供商</label><select v-model="aiForm.aiProvider" class="form-input"><option value="">请选择</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="local">本地模型</option></select></div>
-          <div class="form-group"><label class="form-label">API Key</label><input v-model="aiForm.aiApiKey" type="password" class="form-input" placeholder="输入 API Key" /></div>
-          <div class="form-group"><label class="form-label">模型</label><input v-model="aiForm.aiModel" type="text" class="form-input" placeholder="如 gpt-4, claude-3" /></div>
-          <div class="form-group checkbox"><label><input v-model="aiForm.extractCode" type="checkbox" /> 提取验证码</label></div>
-          <div class="form-group checkbox"><label><input v-model="aiForm.detectAd" type="checkbox" /> 检测广告</label></div>
-          <div class="form-group checkbox"><label><input v-model="aiForm.summarize" type="checkbox" /> 生成摘要</label></div>
-          <div class="form-group checkbox"><label><input v-model="aiForm.judgeImportance" type="checkbox" /> 判断重要性</label></div>
+          <div class="form-section">
+            <h3>AI 服务配置</h3>
+            <div class="form-group"><label class="form-label">AI 提供商</label><select v-model="aiForm.aiProvider" class="form-input"><option value="">请选择</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="local">本地模型</option></select></div>
+            <div class="form-group"><label class="form-label">API Key</label><input v-model="aiForm.aiApiKey" type="password" class="form-input" placeholder="输入 API Key" /></div>
+            <div class="form-group"><label class="form-label">模型</label><input v-model="aiForm.aiModel" type="text" class="form-input" placeholder="如 gpt-4, claude-3" /></div>
+          </div>
+          
+          <div class="form-section">
+            <h3>功能配置</h3>
+            <p class="section-desc">选择每个功能是否启用，以及使用本地处理还是 AI 处理</p>
+            
+            <div class="feature-config">
+              <div class="feature-row">
+                <label class="feature-checkbox"><input v-model="aiForm.extractCode" type="checkbox" /> 提取验证码</label>
+                <select v-model="aiForm.extractCodeMode" class="mode-select" :disabled="!aiForm.extractCode">
+                  <option value="local">本地</option>
+                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                </select>
+              </div>
+              
+              <div class="feature-row">
+                <label class="feature-checkbox"><input v-model="aiForm.detectAd" type="checkbox" /> 检测广告</label>
+                <select v-model="aiForm.detectAdMode" class="mode-select" :disabled="!aiForm.detectAd">
+                  <option value="local">本地</option>
+                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                </select>
+              </div>
+              
+              <div class="feature-row">
+                <label class="feature-checkbox"><input v-model="aiForm.summarize" type="checkbox" /> 生成摘要</label>
+                <select v-model="aiForm.summarizeMode" class="mode-select" :disabled="!aiForm.summarize">
+                  <option value="local">本地</option>
+                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                </select>
+              </div>
+              
+              <div class="feature-row">
+                <label class="feature-checkbox"><input v-model="aiForm.judgeImportance" type="checkbox" /> 判断重要性</label>
+                <select v-model="aiForm.judgeImportanceMode" class="mode-select" :disabled="!aiForm.judgeImportance">
+                  <option value="local">本地</option>
+                  <option value="ai" :disabled="!aiForm.aiApiKey">AI</option>
+                </select>
+              </div>
+            </div>
+            
+            <p class="hint" v-if="!aiForm.aiApiKey">提示：配置 API Key 后才能使用 AI 处理模式</p>
+          </div>
+          
           <button type="submit" class="btn primary" :disabled="isSubmitting">{{ isSubmitting ? '保存中...' : '保存设置' }}</button>
         </form>
       </div>
@@ -1032,6 +1077,13 @@ onMounted(async () => {
 .section-desc { margin: 0 0 20px; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5; }
 .section-desc a { color: var(--primary-color); text-decoration: none; }
 .section-desc a:hover { text-decoration: underline; }
+.feature-config { display: flex; flex-direction: column; gap: 12px; }
+.feature-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); }
+.feature-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-primary); cursor: pointer; }
+.feature-checkbox input { width: 16px; height: 16px; cursor: pointer; }
+.mode-select { padding: 6px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); background: var(--input-bg); color: var(--text-primary); font-size: 0.8125rem; cursor: pointer; }
+.mode-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.mode-select option:disabled { color: var(--text-tertiary); }
 .oauth-help { margin-top: 24px; padding: 18px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); }
 .oauth-help h4 { margin: 0 0 12px; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
 .oauth-help ol { margin: 0; padding-left: 20px; font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.8; }
