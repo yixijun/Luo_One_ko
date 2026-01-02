@@ -46,16 +46,14 @@ function isImageFile(filename: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
-// 处理图标点击 - 图片预览，其他下载
+// 处理图标点击 - 所有附件都尝试预览
 function handleIconClick(event: Event, attachment: Attachment) {
   event.stopPropagation();
   event.preventDefault();
-  console.log('Icon clicked:', attachment.filename, 'isImage:', isImageFile(attachment.filename));
-  if (isImageFile(attachment.filename)) {
-    handleImageClick(attachment);
-  } else {
-    handleDownload(attachment);
-  }
+  alert('点击了图标: ' + attachment.filename);
+  console.log('=== Icon clicked ===', attachment.filename);
+  // 强制尝试图片预览
+  handleImageClick(attachment);
 }
 
 // 加载附件列表
