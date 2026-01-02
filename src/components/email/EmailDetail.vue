@@ -36,7 +36,7 @@ const maxRetries = 2;
 const previewImage = ref<string | null>(null);
 const previewImageName = ref('');
 const loadingPreview = ref<string | null>(null);
-const imagePreviewUrls = ref<Map<string, string>>(new Map());
+const imagePreviewUrls = ref<Record<string, string>>({});
 
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
@@ -90,14 +90,14 @@ async function loadAttachments() {
 // 加载图片预览
 async function loadImagePreview(attachment: Attachment) {
   const rawFilename = attachment.raw_filename || attachment.filename;
-  if (imagePreviewUrls.value.has(rawFilename)) return;
+  if (imagePreviewUrls.value[rawFilename]) return;
   
   loadingPreview.value = rawFilename;
   try {
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
     if (blob && blob.size > 0) {
       const url = URL.createObjectURL(blob);
-      imagePreviewUrls.value.set(rawFilename, url);
+      imagePreviewUrls.value = { ...imagePreviewUrls.value, [rawFilename]: url };
     }
   } catch (err) {
     console.error('加载图片预览失败:', err);
@@ -109,7 +109,7 @@ async function loadImagePreview(attachment: Attachment) {
 // 获取图片预览URL
 function getPreviewUrl(attachment: Attachment): string | undefined {
   const rawFilename = attachment.raw_filename || attachment.filename;
-  return imagePreviewUrls.value.get(rawFilename);
+  return imagePreviewUrls.value[rawFilename];
 }
 
 // 打开图片预览
@@ -167,6 +167,7 @@ function getFileIcon(filename: string): string {
 watch(() => props.email.id, () => {
   attachmentRetryCount.value = 0; // 重置重试计数
   attachments.value = []; // 清空附件列表
+  imagePreviewUrls.value = {}; // 清空预览 URL
   loadAttachments();
 }, { immediate: true });
 
