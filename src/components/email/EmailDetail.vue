@@ -46,6 +46,18 @@ function isImageFile(filename: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
+// 处理图标点击 - 图片预览，其他下载
+function handleIconClick(event: Event, attachment: Attachment) {
+  event.stopPropagation();
+  event.preventDefault();
+  console.log('Icon clicked:', attachment.filename, 'isImage:', isImageFile(attachment.filename));
+  if (isImageFile(attachment.filename)) {
+    handleImageClick(attachment);
+  } else {
+    handleDownload(attachment);
+  }
+}
+
 // 加载附件列表
 async function loadAttachments() {
   if (!props.email.hasAttachments) return;
@@ -302,7 +314,7 @@ function handleForward() {
             <div 
               class="attachment-icon" 
               :class="getFileIcon(attachment.filename)"
-              @click="isImageFile(attachment.filename) ? handleImageClick(attachment) : handleDownload(attachment)"
+              @click.stop.prevent="handleIconClick($event, attachment)"
             >
               <!-- 图片图标 -->
               <svg v-if="getFileIcon(attachment.filename) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
