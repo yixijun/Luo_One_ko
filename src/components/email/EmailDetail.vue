@@ -4,7 +4,7 @@
  * Requirements: 8.6
  * 点击气泡打开详情，展示完整邮件内容
  */
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, reactive } from 'vue';
 import type { Email, Attachment } from '@/types';
 import { useEmailStore } from '@/stores/email';
 import EmailBubble from './EmailBubble.vue';
@@ -32,12 +32,11 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
-// 图片预览相关
+// 图片预览相关 - 使用 reactive 确保响应式
 const previewImage = ref<string | null>(null);
 const previewImageName = ref('');
-const loadingPreview = ref<string | null>(null);
-const imagePreviewUrls = ref<Record<string, string>>({});
-const previewUpdateKey = ref(0); // 用于强制更新
+const loadingPreviews = reactive<Set<string>>(new Set());
+const imagePreviewUrls = reactive<Record<string, string>>({});
 
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
@@ -48,14 +47,39 @@ function isImageFile(filename: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
-// 判断是否可以预览（小于20MB的图片，或者 size 未知时也允许预览）
+// 判断是否可以预览（图片文件）
 function canPreview(attachment: Attachment): boolean {
-  const maxPreviewSize = 20 * 1024 * 1024; // 20MB
-  // 如果 size 为 0 或 undefined，也允许预览（后端可能没返回 size）
-  if (!attachment.size || attachment.size === 0) {
-    return isImageFile(attachment.filename);
+  return isImageFile(attachment.filename);
+}
+
+// 检查是否正在加载预览
+function isLoadingPreview(attachment: Attachment): boolean {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  return loadingPreviews.has(rawFilename);
+}
+
+// 获取图片预览URL
+function getPreviewUrl(attachment: Attachment): string | undefined {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  return imagePreviewUrls[rawFilename];
+}
+
+// 加载图片预览
+async function loadImagePreview(attachment: Attachment) {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  if (imagePreviewUrls[rawFilename] || loadingPreviews.has(rawFilename)) return;
+  
+  loadingPreviews.add(rawFilename);
+  try {
+    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    if (blob && blob.size > 0) {
+      imagePreviewUrls[rawFilename] = URL.createObjectURL(blob);
+    }
+  } catch (err) {
+    console.error('加载图片预览失败:', err);
+  } finally {
+    loadingPreviews.delete(rawFilename);
   }
-  return isImageFile(attachment.filename) && attachment.size <= maxPreviewSize;
 }
 
 // 加载附件列表
@@ -66,22 +90,18 @@ async function loadAttachments() {
   try {
     const result = await emailStore.fetchAttachments(props.email.id);
     attachments.value = result;
-    console.log('[Attachments] Loaded:', result);
     
     // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
       attachmentRetryCount.value++;
       setTimeout(() => {
         loadAttachments();
-      }, 1500); // 1.5秒后重试
+      }, 1500);
     }
     
     // 为可预览的图片加载缩略图
     for (const att of result) {
-      const isImg = isImageFile(att.filename);
-      const canPrev = canPreview(att);
-      console.log('[Attachments] Check preview:', att.filename, 'isImage:', isImg, 'size:', att.size, 'canPreview:', canPrev);
-      if (canPrev) {
+      if (canPreview(att)) {
         loadImagePreview(att);
       }
     }
@@ -90,44 +110,6 @@ async function loadAttachments() {
   } finally {
     loadingAttachments.value = false;
   }
-}
-
-// 加载图片预览
-async function loadImagePreview(attachment: Attachment) {
-  const rawFilename = attachment.raw_filename || attachment.filename;
-  console.log('[Preview] Starting load for:', rawFilename, 'current urls:', imagePreviewUrls.value);
-  if (imagePreviewUrls.value[rawFilename]) {
-    console.log('[Preview] Already loaded:', rawFilename);
-    return;
-  }
-  
-  loadingPreview.value = rawFilename;
-  try {
-    console.log('[Preview] Fetching blob for email:', props.email.id, 'file:', rawFilename);
-    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
-    console.log('[Preview] Got blob:', blob, 'size:', blob?.size, 'type:', blob?.type);
-    if (blob && blob.size > 0) {
-      const url = URL.createObjectURL(blob);
-      console.log('[Preview] Created URL:', url);
-      imagePreviewUrls.value[rawFilename] = url;
-      previewUpdateKey.value++; // 强制触发更新
-      console.log('[Preview] Updated urls:', imagePreviewUrls.value);
-    } else {
-      console.log('[Preview] Blob is empty or null');
-    }
-  } catch (err) {
-    console.error('[Preview] Error loading:', err);
-  } finally {
-    loadingPreview.value = null;
-  }
-}
-
-// 获取图片预览URL
-function getPreviewUrl(attachment: Attachment): string | undefined {
-  // 使用 previewUpdateKey 来确保响应式更新
-  void previewUpdateKey.value;
-  const rawFilename = attachment.raw_filename || attachment.filename;
-  return imagePreviewUrls.value[rawFilename];
 }
 
 // 打开图片预览
@@ -182,12 +164,12 @@ function getFileIcon(filename: string): string {
 }
 
 // 监听邮件变化，重新加载附件
-watch(() => props.email.id, (newId) => {
-  console.log('[EmailDetail] Email changed, id:', newId, 'hasAttachments:', props.email.hasAttachments);
-  attachmentRetryCount.value = 0; // 重置重试计数
-  attachments.value = []; // 清空附件列表
-  imagePreviewUrls.value = {}; // 清空预览 URL
-  previewUpdateKey.value++; // 触发更新
+watch(() => props.email.id, () => {
+  attachmentRetryCount.value = 0;
+  attachments.value = [];
+  // 清空预览 URL
+  Object.keys(imagePreviewUrls).forEach(key => delete imagePreviewUrls[key]);
+  loadingPreviews.clear();
   loadAttachments();
 }, { immediate: true });
 
@@ -361,7 +343,7 @@ function handleForward() {
               </div>
             </div>
             <!-- 图片加载中 -->
-            <div v-else-if="canPreview(attachment) && loadingPreview === (attachment.raw_filename || attachment.filename)" class="attachment-preview loading">
+            <div v-else-if="canPreview(attachment) && isLoadingPreview(attachment)" class="attachment-preview loading">
               <div class="spinner"></div>
             </div>
             <!-- 非图片文件图标 -->
