@@ -47,9 +47,13 @@ function isImageFile(filename: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
-// 判断是否可以预览（小于20MB的图片）
+// 判断是否可以预览（小于20MB的图片，或者 size 未知时也允许预览）
 function canPreview(attachment: Attachment): boolean {
   const maxPreviewSize = 20 * 1024 * 1024; // 20MB
+  // 如果 size 为 0 或 undefined，也允许预览（后端可能没返回 size）
+  if (!attachment.size || attachment.size === 0) {
+    return isImageFile(attachment.filename);
+  }
   return isImageFile(attachment.filename) && attachment.size <= maxPreviewSize;
 }
 
@@ -62,8 +66,6 @@ async function loadAttachments() {
     const result = await emailStore.fetchAttachments(props.email.id);
     attachments.value = result;
     
-    console.log('Loaded attachments:', result);
-    
     // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
       attachmentRetryCount.value++;
@@ -74,7 +76,6 @@ async function loadAttachments() {
     
     // 为可预览的图片加载缩略图
     for (const att of result) {
-      console.log('Checking attachment for preview:', att.filename, 'isImage:', isImageFile(att.filename), 'size:', att.size, 'canPreview:', canPreview(att));
       if (canPreview(att)) {
         loadImagePreview(att);
       }
@@ -91,14 +92,11 @@ async function loadImagePreview(attachment: Attachment) {
   const rawFilename = attachment.raw_filename || attachment.filename;
   if (imagePreviewUrls.value.has(rawFilename)) return;
   
-  console.log('Loading image preview for:', rawFilename);
   loadingPreview.value = rawFilename;
   try {
     const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
-    console.log('Got blob:', blob, 'size:', blob?.size);
-    if (blob) {
+    if (blob && blob.size > 0) {
       const url = URL.createObjectURL(blob);
-      console.log('Created preview URL:', url);
       imagePreviewUrls.value.set(rawFilename, url);
     }
   } catch (err) {
