@@ -116,6 +116,25 @@ function getImportanceLabel(importance: string): string {
 function handleSelect(email: Email) {
   emit('select', email);
 }
+
+// 获取邮件预览文本
+function getEmailPreview(email: Email): string {
+  // 优先使用纯文本 body
+  if (email.body && email.body.trim()) {
+    // 清理多余空白字符
+    const cleaned = email.body.replace(/\s+/g, ' ').trim();
+    return cleaned.substring(0, 60) + (cleaned.length > 60 ? '...' : '');
+  }
+  // 如果有 HTML body，提取文本
+  if (email.htmlBody && email.htmlBody.trim()) {
+    // 简单移除 HTML 标签
+    const text = email.htmlBody.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (text) {
+      return text.substring(0, 60) + (text.length > 60 ? '...' : '');
+    }
+  }
+  return '—';
+}
 </script>
 
 <template>
@@ -165,7 +184,7 @@ function handleSelect(email: Email) {
         </div>
         <div class="email-subject">{{ email.subject || '(无主题)' }}</div>
         <div class="email-meta">
-          <span class="email-preview">{{ email.body?.substring(0, 60) || '' }}...</span>
+          <span class="email-preview">{{ getEmailPreview(email) }}</span>
           <span v-if="email.createdAt" class="received-time" title="收取时间">
             📥 {{ formatReceivedTime(email.createdAt) }}
           </span>
