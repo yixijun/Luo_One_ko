@@ -65,6 +65,7 @@ async function loadAttachments() {
   try {
     const result = await emailStore.fetchAttachments(props.email.id);
     attachments.value = result;
+    console.log('[Attachments] Loaded:', result);
     
     // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
@@ -76,7 +77,10 @@ async function loadAttachments() {
     
     // 为可预览的图片加载缩略图
     for (const att of result) {
-      if (canPreview(att)) {
+      const isImg = isImageFile(att.filename);
+      const canPrev = canPreview(att);
+      console.log('[Attachments] Check preview:', att.filename, 'isImage:', isImg, 'size:', att.size, 'canPreview:', canPrev);
+      if (canPrev) {
         loadImagePreview(att);
       }
     }
