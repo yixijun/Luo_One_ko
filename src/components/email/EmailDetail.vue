@@ -37,6 +37,7 @@ const previewImage = ref<string | null>(null);
 const previewImageName = ref('');
 const loadingPreview = ref<string | null>(null);
 const imagePreviewUrls = ref<Record<string, string>>({});
+const previewUpdateKey = ref(0); // 用于强制更新
 
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
@@ -108,7 +109,8 @@ async function loadImagePreview(attachment: Attachment) {
     if (blob && blob.size > 0) {
       const url = URL.createObjectURL(blob);
       console.log('[Preview] Created URL:', url);
-      imagePreviewUrls.value = { ...imagePreviewUrls.value, [rawFilename]: url };
+      imagePreviewUrls.value[rawFilename] = url;
+      previewUpdateKey.value++; // 强制触发更新
       console.log('[Preview] Updated urls:', imagePreviewUrls.value);
     } else {
       console.log('[Preview] Blob is empty or null');
@@ -122,6 +124,8 @@ async function loadImagePreview(attachment: Attachment) {
 
 // 获取图片预览URL
 function getPreviewUrl(attachment: Attachment): string | undefined {
+  // 使用 previewUpdateKey 来确保响应式更新
+  void previewUpdateKey.value;
   const rawFilename = attachment.raw_filename || attachment.filename;
   return imagePreviewUrls.value[rawFilename];
 }
@@ -182,6 +186,7 @@ watch(() => props.email.id, () => {
   attachmentRetryCount.value = 0; // 重置重试计数
   attachments.value = []; // 清空附件列表
   imagePreviewUrls.value = {}; // 清空预览 URL
+  previewUpdateKey.value++; // 触发更新
   loadAttachments();
 }, { immediate: true });
 
