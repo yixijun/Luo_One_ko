@@ -596,60 +596,67 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 处理结果信息 -->
-          <div class="processed-info" v-if="selectedEmail.processedResult">
-            <div class="info-card clickable" v-if="selectedEmail.processedResult.verificationCode" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制验证码'">
-              <div class="info-icon code">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+          <!-- 处理结果区域 -->
+          <div class="processed-section">
+            <div class="processed-content">
+              <div class="processed-info" v-if="selectedEmail.processedResult">
+                <div class="info-card clickable" v-if="selectedEmail.processedResult.verificationCode" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制验证码'">
+                  <div class="info-icon code">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">验证码 {{ codeCopied ? '✓ 已复制' : '(点击复制)' }}</span>
+                    <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
+                  </div>
+                </div>
+                
+                <div class="info-card" v-if="selectedEmail.processedResult.isAd">
+                  <div class="info-icon ad">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">广告邮件</span>
+                    <span class="info-value">此邮件被识别为广告</span>
+                  </div>
+                </div>
+
+                <div class="info-card" v-if="selectedEmail.processedResult.summary">
+                  <div class="info-icon summary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">内容摘要</span>
+                    <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="info-content">
-                <span class="info-label">验证码 {{ codeCopied ? '✓ 已复制' : '(点击复制)' }}</span>
-                <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
+              <div v-else class="no-processed">
+                <span>暂无处理结果</span>
               </div>
             </div>
             
-            <div class="info-card" v-if="selectedEmail.processedResult.isAd">
-              <div class="info-icon ad">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+            <!-- 处理按钮 -->
+            <div class="process-action">
+              <button class="process-btn" @click="processCurrentEmail" :disabled="isProcessing">
+                <svg v-if="!isProcessing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                 </svg>
-              </div>
-              <div class="info-content">
-                <span class="info-label">广告邮件</span>
-                <span class="info-value">此邮件被识别为广告</span>
-              </div>
+                <span v-else class="loading-spinner small"></span>
+                {{ isProcessing ? '处理中...' : '处理' }}
+              </button>
             </div>
-
-            <div class="info-card" v-if="selectedEmail.processedResult.summary">
-              <div class="info-icon summary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-              </div>
-              <div class="info-content">
-                <span class="info-label">内容摘要</span>
-                <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 处理按钮 -->
-          <div class="action-buttons">
-            <button class="process-btn" @click="processCurrentEmail" :disabled="isProcessing">
-              <svg v-if="!isProcessing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              </svg>
-              <span v-else class="loading-spinner small"></span>
-              {{ isProcessing ? '处理中...' : '处理邮件' }}
-            </button>
           </div>
 
           <!-- 邮件正文（聊天气泡形式） -->
@@ -1057,11 +1064,42 @@ onUnmounted(() => {
   word-break: break-all;
 }
 
+/* 处理结果区域 - 大框 */
+.processed-section {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 14px);
+  margin-bottom: 18px;
+}
+
+.processed-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.no-processed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.process-action {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .processed-info {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-bottom: 18px;
 }
 
 .info-card {
@@ -1142,18 +1180,14 @@ onUnmounted(() => {
   letter-spacing: 3px;
 }
 
-/* 操作按钮区域 */
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
+/* 处理按钮 */
 .process-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 24px;
   border: none;
   border-radius: var(--radius-md, 10px);
   background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
@@ -1162,6 +1196,7 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 80px;
 }
 
 .process-btn:hover:not(:disabled) {
@@ -1179,8 +1214,8 @@ onUnmounted(() => {
 }
 
 .process-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .process-btn .loading-spinner.small {
