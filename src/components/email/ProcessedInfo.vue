@@ -4,7 +4,7 @@
  * Requirements: 8.5
  * 显示验证码、广告标识、重要度等处理结果
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { ProcessedResult } from '@/types';
 
 // Props
@@ -14,6 +14,9 @@ const props = withDefaults(defineProps<{
 }>(), {
   compact: false,
 });
+
+// 复制状态
+const copied = ref(false);
 
 // 获取重要度颜色
 const importanceColor = computed(() => {
@@ -50,7 +53,10 @@ async function copyVerificationCode() {
   if (props.result.verificationCode) {
     try {
       await navigator.clipboard.writeText(props.result.verificationCode);
-      // 可以添加一个 toast 提示
+      copied.value = true;
+      setTimeout(() => {
+        copied.value = false;
+      }, 2000);
     } catch (err) {
       console.error('复制失败:', err);
     }
@@ -110,10 +116,13 @@ async function copyVerificationCode() {
         <span class="info-label">验证码</span>
         <div class="code-value-wrapper">
           <span class="info-value code-value">{{ result.verificationCode }}</span>
-          <button class="copy-btn" @click="copyVerificationCode" title="复制验证码">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="copy-btn" :class="{ copied }" @click="copyVerificationCode" :title="copied ? '已复制' : '复制验证码'">
+            <svg v-if="!copied" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
             </svg>
           </button>
         </div>
@@ -321,6 +330,11 @@ async function copyVerificationCode() {
 
 .copy-btn:hover {
   background-color: var(--primary-color, #646cff);
+  color: #fff;
+}
+
+.copy-btn.copied {
+  background-color: #4caf50;
   color: #fff;
 }
 
