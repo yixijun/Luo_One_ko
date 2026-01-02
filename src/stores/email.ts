@@ -417,6 +417,24 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 更新邮件广告类型
+  async function updateEmailAdType(emailId: number, isAd: boolean): Promise<void> {
+    try {
+      await apiClient.put(`/emails/${emailId}/ad-type`, { is_ad: isAd });
+      // 更新本地状态
+      const email = emails.value.find(e => e.id === emailId);
+      if (email?.processedResult) {
+        email.processedResult.isAd = isAd;
+      }
+      if (currentEmail.value?.id === emailId && currentEmail.value.processedResult) {
+        currentEmail.value.processedResult.isAd = isAd;
+      }
+    } catch (err) {
+      error.value = (err as Error).message || '更新广告类型失败';
+      throw err;
+    }
+  }
+
   // 清除当前邮件
   function clearCurrentEmail(): void {
     currentEmail.value = null;
@@ -602,6 +620,7 @@ export const useEmailStore = defineStore('email', () => {
     deleteProcessedResult,
     fetchEmailDetail,
     updateEmailImportance,
+    updateEmailAdType,
     clearCurrentEmail,
     reset,
     fetchAttachments,

@@ -46,6 +46,13 @@ const importanceOptions = [
   { value: 'low', label: '普通', color: '#9e9e9e' },
 ];
 
+// 广告类型选择器状态
+const showAdSelector = ref(false);
+const adOptions = [
+  { value: true, label: '是广告', color: '#ff9800' },
+  { value: false, label: '非广告', color: '#4caf50' },
+];
+
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
 
@@ -73,6 +80,20 @@ async function updateImportance(importance: string) {
   } catch (err) {
     console.error('更新重要度失败:', err);
     alert('更新重要度失败');
+  }
+}
+
+// 更新广告类型
+async function updateAdType(isAd: boolean) {
+  try {
+    await emailStore.updateEmailAdType(props.email.id, isAd);
+    if (props.email.processedResult) {
+      props.email.processedResult.isAd = isAd;
+    }
+    showAdSelector.value = false;
+  } catch (err) {
+    console.error('更新广告类型失败:', err);
+    alert('更新广告类型失败');
   }
 }
 
@@ -301,8 +322,8 @@ function handleForward() { emit('forward'); }
               </div>
               
               <!-- 广告卡片 -->
-              <div class="info-card" v-if="email.processedResult?.isAd">
-                <div class="info-icon ad">
+              <div class="info-card ad-card clickable" @click="showAdSelector = !showAdSelector" title="点击修改广告类型">
+                <div class="info-icon" :class="email.processedResult?.isAd ? 'ad' : 'not-ad'">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                     <line x1="12" y1="9" x2="12" y2="13"/>
@@ -310,8 +331,8 @@ function handleForward() { emit('forward'); }
                   </svg>
                 </div>
                 <div class="info-content">
-                  <span class="info-label">广告邮件</span>
-                  <span class="info-value">此邮件被识别为广告</span>
+                  <span class="info-label">广告类型 (点击修改)</span>
+                  <span class="info-value">{{ email.processedResult?.isAd ? '广告邮件' : '非广告' }}</span>
                 </div>
               </div>
 
@@ -363,6 +384,25 @@ function handleForward() { emit('forward'); }
                     :class="{ active: email.processedResult?.importance === opt.value }"
                     :style="{ '--opt-color': opt.color }"
                     @click="updateImportance(opt.value)"
+                  >
+                    {{ opt.label }}
+                  </button>
+                </div>
+              </div>
+            </Teleport>
+            
+            <!-- 广告类型选择器弹窗 -->
+            <Teleport to="body">
+              <div class="importance-overlay" v-if="showAdSelector" @click="showAdSelector = false">
+                <div class="importance-selector" @click.stop>
+                  <div class="selector-title">选择广告类型</div>
+                  <button 
+                    v-for="opt in adOptions" 
+                    :key="String(opt.value)"
+                    class="importance-option"
+                    :class="{ active: email.processedResult?.isAd === opt.value }"
+                    :style="{ '--opt-color': opt.color }"
+                    @click="updateAdType(opt.value)"
                   >
                     {{ opt.label }}
                   </button>
@@ -663,7 +703,8 @@ function handleForward() { emit('forward'); }
   transform: scale(0.98);
 }
 
-.info-card.importance {
+.info-card.importance,
+.info-card.ad-card {
   position: relative;
 }
 
@@ -689,6 +730,10 @@ function handleForward() { emit('forward'); }
 
 .info-icon.ad {
   background-color: #ff9800;
+}
+
+.info-icon.not-ad {
+  background-color: #4caf50;
 }
 
 .info-icon.summary {
