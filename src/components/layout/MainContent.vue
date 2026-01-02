@@ -9,9 +9,6 @@ import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
 import type { Email, EmailFolder, Attachment } from '@/types';
 
-// 处理邮件状态
-const isProcessing = ref(false);
-
 const emit = defineEmits<{
   (e: 'email-select', email: Email): void;
 }>();
@@ -51,26 +48,6 @@ async function copyVerificationCode() {
     setTimeout(() => { codeCopied.value = false; }, 2000);
   } catch (err) {
     console.error('复制失败:', err);
-  }
-}
-
-// 处理单封邮件
-async function processCurrentEmail() {
-  if (!selectedEmail.value || isProcessing.value) return;
-  
-  isProcessing.value = true;
-  try {
-    await emailStore.processSingleEmail(selectedEmail.value.id);
-    // 刷新邮件详情
-    const updatedEmail = await emailStore.fetchEmailDetail(selectedEmail.value.id);
-    if (updatedEmail) {
-      selectedEmail.value = updatedEmail;
-    }
-  } catch (err) {
-    console.error('处理邮件失败:', err);
-    alert('处理邮件失败');
-  } finally {
-    isProcessing.value = false;
   }
 }
 
@@ -559,52 +536,25 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 处理结果区域 -->
-          <div class="processed-section">
-            <div class="processed-content">
-              <div class="processed-info" v-if="selectedEmail.processedResult">
-                <div class="info-card clickable" v-if="selectedEmail.processedResult.verificationCode" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制验证码'">
-                  <div class="info-icon code">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </div>
-                  <div class="info-content">
-                    <span class="info-label">验证码 {{ codeCopied ? '✓ 已复制' : '(点击复制)' }}</span>
-                    <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
-                  </div>
-                </div>
-
-                <div class="info-card" v-if="selectedEmail.processedResult.summary">
-                  <div class="info-icon summary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
-                    </svg>
-                  </div>
-                  <div class="info-content">
-                    <span class="info-label">内容摘要</span>
-                    <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="no-processed">
-                <span>暂无处理结果</span>
-              </div>
-            </div>
-            
-            <!-- 处理按钮 -->
-            <div class="process-action">
-              <button class="process-btn" @click="processCurrentEmail" :disabled="isProcessing">
-                <svg v-if="!isProcessing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          <!-- 验证码显示区域 -->
+          <div class="verification-code-section" v-if="selectedEmail.processedResult?.verificationCode">
+            <div class="code-card" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制'">
+              <div class="code-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                <span v-else class="loading-spinner small"></span>
-                {{ isProcessing ? '处理中...' : '处理' }}
-              </button>
+              </div>
+              <div class="code-content">
+                <span class="code-label">{{ codeCopied ? '✓ 已复制' : '验证码' }}</span>
+                <span class="code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
+              </div>
+              <div class="code-copy-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </div>
             </div>
           </div>
 
@@ -1013,216 +963,94 @@ onUnmounted(() => {
   word-break: break-all;
 }
 
-/* 处理结果区域 - 大框 */
-.processed-section {
-  display: flex;
-  align-items: stretch;
-  gap: 16px;
-  padding: 16px;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg, 14px);
+/* 验证码显示区域 */
+.verification-code-section {
   margin-bottom: 18px;
 }
 
-.processed-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.no-processed {
+.code-card {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.process-action {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.processed-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.info-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: var(--radius-lg, 14px);
-  min-width: 200px;
-}
-
-.info-card.clickable {
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.info-card.clickable:hover {
-  background-color: var(--hover-bg);
+.code-card:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.08));
   border-color: var(--success-color);
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
 
-.info-card.clickable:active {
-  transform: scale(0.98);
+.code-card:active {
+  transform: translateY(0);
 }
 
-/* 重要度选择器 */
-.info-card.importance,
-.info-card.ad-card {
-  position: relative;
-}
-
-.importance-selector,
-.ad-selector {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 8px;
-  padding: 12px;
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+.code-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 120px;
-}
-
-.importance-option,
-.ad-option {
-  padding: 10px 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: #f5f5f5;
-  color: #333;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s;
-}
-
-.importance-option:hover,
-.ad-option:hover {
-  background: #e8e8e8;
-}
-
-.importance-option.active,
-.ad-option.active {
-  background: var(--opt-color);
-  border-color: var(--opt-color);
-  color: #fff;
-}
-
-.info-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md, 10px);
+  background: var(--success-color);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.info-icon svg {
-  width: 20px;
-  height: 20px;
+.code-icon svg {
+  width: 24px;
+  height: 24px;
   color: #fff;
 }
 
-.info-icon.code {
-  background-color: var(--success-color);
-}
-
-.info-icon.ad {
-  background-color: var(--warning-color);
-}
-
-.info-icon.not-ad {
-  background-color: #4caf50;
-}
-
-.info-icon.summary {
-  background-color: #3b82f6;
-}
-
-.info-content {
+.code-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-.info-label {
+.code-label {
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
-.info-value {
-  font-size: 0.875rem;
-  color: var(--text-primary);
-}
-
 .code-value {
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 1.375rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--success-color);
-  letter-spacing: 3px;
+  letter-spacing: 4px;
 }
 
-/* 处理按钮 */
-.process-btn {
+.code-copy-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(76, 175, 80, 0.1);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 16px 24px;
-  border: none;
-  border-radius: var(--radius-md, 10px);
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  flex-shrink: 0;
+}
+
+.code-copy-icon svg {
+  width: 18px;
+  height: 18px;
+  color: var(--success-color);
+}
+
+.code-card:hover .code-copy-icon {
+  background: var(--success-color);
+}
+
+.code-card:hover .code-copy-icon svg {
   color: #fff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 80px;
-}
-
-.process-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
-}
-
-.process-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.process-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.process-btn svg {
-  width: 22px;
-  height: 22px;
-}
-
-.process-btn .loading-spinner.small {
-  margin-bottom: 0;
 }
 
 /* 邮件气泡 */

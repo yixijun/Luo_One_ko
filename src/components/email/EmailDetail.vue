@@ -4,7 +4,7 @@
  * Requirements: 8.6
  * 点击气泡打开详情，展示完整邮件内容
  */
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import type { Email, Attachment } from '@/types';
 import { useEmailStore } from '@/stores/email';
 import EmailBubble from './EmailBubble.vue';
@@ -31,14 +31,8 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
-// 处理相关状态
-const processing = ref(false);
-
 // 复制验证码状态
 const codeCopied = ref(false);
-
-// 是否有处理结果
-const hasProcessedResult = computed(() => !!props.email.processedResult);
 
 // 复制验证码
 async function copyVerificationCode() {
@@ -50,21 +44,6 @@ async function copyVerificationCode() {
     setTimeout(() => { codeCopied.value = false; }, 2000);
   } catch (err) {
     console.error('复制失败:', err);
-  }
-}
-
-// 处理单封邮件
-async function handleProcess() {
-  processing.value = true;
-  try {
-    await emailStore.processSingleEmail(props.email.id);
-    // 刷新邮件详情
-    await emailStore.fetchEmailDetail(props.email.id);
-  } catch (err) {
-    console.error('处理邮件失败:', err);
-    alert('处理邮件失败');
-  } finally {
-    processing.value = false;
   }
 }
 
@@ -145,11 +124,6 @@ function formatFullDate(timestamp: number): string {
   });
 }
 
-// 格式化处理时间
-function formatProcessedTime(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleString('zh-CN');
-}
-
 // 获取发件人名称
 function getSenderName(from: string): string {
   const match = from.match(/^(.+?)\s*<.+>$/);
@@ -160,15 +134,6 @@ function getSenderName(from: string): string {
 function getSenderEmail(from: string): string {
   const match = from.match(/<(.+)>$/);
   return match?.[1] ?? from;
-}
-
-// 获取处理方式标签
-function getProcessedByLabel(processedBy: string): string {
-  switch (processedBy) {
-    case 'ai': return 'AI处理';
-    case 'local': return '本地处理';
-    default: return processedBy;
-  }
 }
 
 function handleClose() { emit('close'); }
@@ -238,74 +203,25 @@ function handleForward() { emit('forward'); }
         </div>
       </div>
 
-      <!-- 处理结果信息 -->
-      <div class="processed-section">
-        <div class="processed-box">
-          <div class="processed-content">
-            <div class="processed-info" v-if="hasProcessedResult">
-              <!-- 验证码卡片 -->
-              <div class="info-card clickable" v-if="email.processedResult?.verificationCode" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制验证码'">
-                <div class="info-icon code">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">验证码 {{ codeCopied ? '✓ 已复制' : '(点击复制)' }}</span>
-                  <span class="info-value code-value">{{ email.processedResult.verificationCode }}</span>
-                </div>
-              </div>
-
-              <!-- 摘要卡片 -->
-              <div class="info-card" v-if="email.processedResult?.summary">
-                <div class="info-icon summary">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                  </svg>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">内容摘要</span>
-                  <span class="info-value">{{ email.processedResult.summary }}</span>
-                </div>
-              </div>
-            </div>
-            <div v-else class="no-processed">
-              <span>暂无处理结果</span>
-            </div>
-          </div>
-          
-          <!-- 处理按钮 -->
-          <div class="process-action">
-            <button class="process-btn" @click="handleProcess" :disabled="processing">
-              <svg v-if="!processing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              </svg>
-              <span v-else class="spinner small"></span>
-              {{ processing ? '处理中' : '处理' }}
-            </button>
-          </div>
-        </div>
-        
-        <!-- 处理时间和方式 -->
-        <div class="processed-meta" v-if="hasProcessedResult && email.processedResult">
-          <span class="meta-item">
+      <!-- 验证码显示区域 -->
+      <div class="verification-code-section" v-if="email.processedResult?.verificationCode">
+        <div class="code-card" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制'">
+          <div class="code-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
-            {{ formatProcessedTime(email.processedResult.processedAt) }}
-          </span>
-          <span class="meta-item">
+          </div>
+          <div class="code-content">
+            <span class="code-label">{{ codeCopied ? '✓ 已复制' : '验证码' }}</span>
+            <span class="code-value">{{ email.processedResult.verificationCode }}</span>
+          </div>
+          <div class="code-copy-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4M12 8h.01"/>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
-            {{ getProcessedByLabel(email.processedResult.processedBy) }}
-          </span>
+          </div>
         </div>
       </div>
 
@@ -519,251 +435,92 @@ function handleForward() { emit('forward'); }
   color: var(--primary-color, #646cff);
 }
 
-/* 处理结果区域 - 大框样式 */
-.processed-section {
+/* 验证码显示区域 */
+.verification-code-section {
   margin-bottom: 16px;
 }
 
-.processed-box {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  padding: 12px;
-  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 12px;
-}
-
-.processed-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.processed-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.info-card {
+.code-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background-color: var(--meta-bg, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: 10px;
-  min-width: 140px;
-}
-
-.info-card.clickable {
+  gap: 14px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.info-card.clickable:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.08));
-  border-color: var(--primary-color, #646cff);
+.code-card:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.08));
+  border-color: #4caf50;
 }
 
-.info-card.clickable:active {
+.code-card:active {
   transform: scale(0.98);
 }
 
-.info-card.importance,
-.info-card.ad-card {
-  position: relative;
-}
-
-.info-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+.code-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #4caf50;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.info-icon svg {
-  width: 18px;
-  height: 18px;
+.code-icon svg {
+  width: 22px;
+  height: 22px;
   color: #fff;
 }
 
-.info-icon.code {
-  background-color: #4caf50;
-}
-
-.info-icon.ad {
-  background-color: #ff9800;
-}
-
-.info-icon.not-ad {
-  background-color: #4caf50;
-}
-
-.info-icon.summary {
-  background-color: #3b82f6;
-}
-
-.info-content {
+.code-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
 
-.info-label {
+.code-label {
   font-size: 0.6875rem;
   color: var(--text-secondary, #888);
 }
 
-.info-value {
-  font-size: 0.8125rem;
-  color: var(--text-primary, #fff);
-}
-
 .code-value {
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #4caf50;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
-.no-processed {
+.code-copy-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(76, 175, 80, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  color: var(--text-secondary, #888);
-  font-size: 0.8125rem;
-}
-
-.process-action {
-  display: flex;
-  align-items: center;
   flex-shrink: 0;
 }
 
-.process-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary-color, #646cff), #5558dd);
+.code-copy-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #4caf50;
+}
+
+.code-card:hover .code-copy-icon {
+  background: #4caf50;
+}
+
+.code-card:hover .code-copy-icon svg {
   color: #fff;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 60px;
-}
-
-.process-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
-}
-
-.process-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.process-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.process-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* 重要度选择器 */
-.importance-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.importance-selector {
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 200px;
-}
-
-.selector-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.importance-option {
-  padding: 14px 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #f5f5f5;
-  color: #333;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s;
-}
-
-.importance-option:hover {
-  background: #e8e8e8;
-}
-
-.importance-option.active {
-  background: var(--opt-color);
-  border-color: var(--opt-color);
-  color: #fff;
-}
-
-/* 处理时间和方式 */
-.processed-meta {
-  display: flex;
-  gap: 16px;
-  margin-top: 10px;
-  padding: 0 4px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: var(--text-secondary, #888);
-}
-
-.meta-item svg {
-  width: 14px;
-  height: 14px;
-}
-
-.meta-item svg {
-  width: 14px;
-  height: 14px;
 }
 
 .section-title {
