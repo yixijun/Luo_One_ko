@@ -141,6 +141,7 @@ function formatFileSize(bytes: number): string {
 // 获取文件图标类型
 function getFileIcon(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
+  console.log('getFileIcon:', filename, 'ext:', ext);
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return 'image';
   if (['pdf'].includes(ext)) return 'pdf';
   if (['doc', 'docx'].includes(ext)) return 'word';
