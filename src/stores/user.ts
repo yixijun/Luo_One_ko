@@ -117,9 +117,42 @@ export const useUserStore = defineStore('user', () => {
   async function updateSettings(data: Partial<UserSettings>): Promise<boolean> {
     loading.value = true;
     error.value = null;
-    console.log('[UserStore] updateSettings called with:', JSON.stringify(data).substring(0, 200));
+    
+    // 转换 camelCase 到 snake_case
+    const snakeCaseData: Record<string, any> = {};
+    const keyMap: Record<string, string> = {
+      aiEnabled: 'ai_enabled',
+      aiProvider: 'ai_provider',
+      aiApiKey: 'ai_api_key',
+      aiBaseUrl: 'ai_base_url',
+      aiModel: 'ai_model',
+      extractCode: 'extract_code',
+      detectAd: 'detect_ad',
+      summarize: 'summarize',
+      judgeImportance: 'judge_importance',
+      extractCodeMode: 'extract_code_mode',
+      detectAdMode: 'detect_ad_mode',
+      summarizeMode: 'summarize_mode',
+      judgeImportanceMode: 'judge_importance_mode',
+      promptExtractCode: 'prompt_extract_code',
+      promptDetectAd: 'prompt_detect_ad',
+      promptSummarize: 'prompt_summarize',
+      promptJudgeImportance: 'prompt_judge_importance',
+      googleClientId: 'google_client_id',
+      googleClientSecret: 'google_client_secret',
+      googleRedirectUrl: 'google_redirect_url',
+      theme: 'theme',
+      font: 'font',
+    };
+    
+    for (const [key, value] of Object.entries(data)) {
+      const snakeKey = keyMap[key] || key;
+      snakeCaseData[snakeKey] = value;
+    }
+    
+    console.log('[UserStore] updateSettings called with:', JSON.stringify(snakeCaseData).substring(0, 200));
     try {
-      const response = await apiClient.put<UserSettings>('/settings', data);
+      const response = await apiClient.put<UserSettings>('/settings', snakeCaseData);
       console.log('[UserStore] updateSettings response:', JSON.stringify(response.data).substring(0, 200));
       settings.value = response.data;
       return true;
