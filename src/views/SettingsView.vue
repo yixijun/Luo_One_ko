@@ -52,6 +52,8 @@ const aiForm = reactive<UserSettings>({
 const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
 const testingBackendConnection = ref(false);
 const backendTestResult = ref<{ success: boolean; message: string } | null>(null);
+const testingAI = ref(false);
+const aiTestResult = ref<{ success: boolean; message?: string; response?: string } | null>(null);
 const accountForm = reactive<Partial<EmailAccount>>({
   email: '', displayName: '', imapHost: '', imapPort: 993,
   smtpHost: '', smtpPort: 465, username: '', password: '', useSSL: true, enabled: true, syncDays: -1,
@@ -293,6 +295,39 @@ async function testBackendConnection() {
     addLog('error', `后端连接测试失败: ${errMsg}`);
   } finally {
     testingBackendConnection.value = false;
+  }
+}
+
+async function testAIConnection() {
+  clearMessages();
+  testingAI.value = true;
+  aiTestResult.value = null;
+  
+  addLog('info', `测试 AI 连接: ${aiForm.aiProvider || '自定义'} - ${aiForm.aiBaseUrl || '默认地址'}`);
+  
+  try {
+    const response = await apiClient.post<{ response?: string }>('/settings/test-ai', {
+      provider: aiForm.aiProvider,
+      base_url: aiForm.aiBaseUrl,
+      api_key: aiForm.aiApiKey,
+      model: aiForm.aiModel,
+    }, {
+      timeout: 30000,
+    });
+    
+    if (response.data?.response) {
+      aiTestResult.value = { success: true, response: response.data.response };
+      addLog('success', `AI 连接测试成功: ${response.data.response}`);
+    } else {
+      aiTestResult.value = { success: true, response: 'OK' };
+      addLog('success', 'AI 连接测试成功');
+    }
+  } catch (err: any) {
+    const errMsg = err?.response?.data?.error?.message || err?.message || '连接失败';
+    aiTestResult.value = { success: false, message: errMsg };
+    addLog('error', `AI 连接测试失败: ${errMsg}`);
+  } finally {
+    testingAI.value = false;
   }
 }
 
@@ -764,6 +799,16 @@ onMounted(async () => {
             <div class="form-group"><label class="form-label">API 地址</label><input v-model="aiForm.aiBaseUrl" type="text" class="form-input" placeholder="https://api.openai.com/v1 (留空使用默认)" /><p class="hint">自定义 API 地址，支持 OpenAI 兼容接口</p></div>
             <div class="form-group"><label class="form-label">API Key</label><input v-model="aiForm.aiApiKey" type="password" class="form-input" placeholder="输入 API Key" /></div>
             <div class="form-group"><label class="form-label">模型</label><input v-model="aiForm.aiModel" type="text" class="form-input" placeholder="如 gpt-4, claude-3, deepseek-chat" /></div>
+            <div class="button-group">
+              <button type="button" class="btn" @click="testAIConnection" :disabled="testingAI || !aiForm.aiApiKey">
+                {{ testingAI ? '测试中...' : '测试连接' }}
+              </button>
+            </div>
+            <div v-if="aiTestResult" :class="['test-result', aiTestResult.success ? 'success' : 'error']">
+              <svg v-if="aiTestResult.success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              <span>{{ aiTestResult.success ? 'AI 连接成功: ' + aiTestResult.response : aiTestResult.message }}</span>
+            </div>
           </div>
           
           <div class="form-section">
