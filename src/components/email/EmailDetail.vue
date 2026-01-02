@@ -182,7 +182,8 @@ function getFileIcon(filename: string): string {
 }
 
 // 监听邮件变化，重新加载附件
-watch(() => props.email.id, () => {
+watch(() => props.email.id, (newId) => {
+  console.log('[EmailDetail] Email changed, id:', newId, 'hasAttachments:', props.email.hasAttachments);
   attachmentRetryCount.value = 0; // 重置重试计数
   attachments.value = []; // 清空附件列表
   imagePreviewUrls.value = {}; // 清空预览 URL
