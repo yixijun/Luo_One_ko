@@ -37,22 +37,6 @@ const processing = ref(false);
 // 复制验证码状态
 const codeCopied = ref(false);
 
-// 重要度选择器状态
-const showImportanceSelector = ref(false);
-const importanceOptions = [
-  { value: 'critical', label: '紧急', color: '#f44336' },
-  { value: 'high', label: '重要', color: '#ff9800' },
-  { value: 'medium', label: '一般', color: '#2196f3' },
-  { value: 'low', label: '普通', color: '#9e9e9e' },
-];
-
-// 广告类型选择器状态
-const showAdSelector = ref(false);
-const adOptions = [
-  { value: true, label: '是广告', color: '#ff9800' },
-  { value: false, label: '非广告', color: '#4caf50' },
-];
-
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
 
@@ -66,28 +50,6 @@ async function copyVerificationCode() {
     setTimeout(() => { codeCopied.value = false; }, 2000);
   } catch (err) {
     console.error('复制失败:', err);
-  }
-}
-
-// 更新重要度
-async function updateImportance(importance: string) {
-  try {
-    await emailStore.updateEmailImportance(props.email.id, importance);
-    showImportanceSelector.value = false;
-  } catch (err) {
-    console.error('更新重要度失败:', err);
-    alert('更新重要度失败');
-  }
-}
-
-// 更新广告类型
-async function updateAdType(isAd: boolean) {
-  try {
-    await emailStore.updateEmailAdType(props.email.id, isAd);
-    showAdSelector.value = false;
-  } catch (err) {
-    console.error('更新广告类型失败:', err);
-    alert('更新广告类型失败');
   }
 }
 
@@ -200,26 +162,6 @@ function getSenderEmail(from: string): string {
   return match?.[1] ?? from;
 }
 
-// 获取重要度颜色
-function getImportanceColor(importance: string): string {
-  switch (importance) {
-    case 'critical': return '#f44336';
-    case 'high': return '#ff9800';
-    case 'medium': return '#2196f3';
-    default: return '#9e9e9e';
-  }
-}
-
-// 获取重要度标签
-function getImportanceLabel(importance: string): string {
-  switch (importance) {
-    case 'critical': return '紧急';
-    case 'high': return '重要';
-    case 'medium': return '一般';
-    default: return '普通';
-  }
-}
-
 // 获取处理方式标签
 function getProcessedByLabel(processedBy: string): string {
   switch (processedBy) {
@@ -314,21 +256,6 @@ function handleForward() { emit('forward'); }
                   <span class="info-value code-value">{{ email.processedResult.verificationCode }}</span>
                 </div>
               </div>
-              
-              <!-- 广告卡片 -->
-              <div class="info-card ad-card clickable" @click="showAdSelector = !showAdSelector" title="点击修改广告类型">
-                <div class="info-icon" :class="email.processedResult?.isAd ? 'ad' : 'not-ad'">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">广告类型 (点击修改)</span>
-                  <span class="info-value">{{ email.processedResult?.isAd ? '广告邮件' : '非广告' }}</span>
-                </div>
-              </div>
 
               <!-- 摘要卡片 -->
               <div class="info-card" v-if="email.processedResult?.summary">
@@ -345,64 +272,10 @@ function handleForward() { emit('forward'); }
                   <span class="info-value">{{ email.processedResult.summary }}</span>
                 </div>
               </div>
-
-              <!-- 重要度卡片 -->
-              <div class="info-card importance clickable" @click="showImportanceSelector = !showImportanceSelector" title="点击修改重要度">
-                <div 
-                  class="info-icon" 
-                  :style="{ backgroundColor: getImportanceColor(email.processedResult?.importance || 'low') }"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">重要度 (点击修改)</span>
-                  <span class="info-value">{{ getImportanceLabel(email.processedResult?.importance || 'low') }}</span>
-                </div>
-              </div>
             </div>
             <div v-else class="no-processed">
               <span>暂无处理结果</span>
             </div>
-            
-            <!-- 重要度选择器弹窗 -->
-            <Teleport to="body">
-              <div class="importance-overlay" v-if="showImportanceSelector" @click="showImportanceSelector = false">
-                <div class="importance-selector" @click.stop>
-                  <div class="selector-title">选择重要度</div>
-                  <button 
-                    v-for="opt in importanceOptions" 
-                    :key="opt.value"
-                    class="importance-option"
-                    :class="{ active: email.processedResult?.importance === opt.value }"
-                    :style="{ '--opt-color': opt.color }"
-                    @click="updateImportance(opt.value)"
-                  >
-                    {{ opt.label }}
-                  </button>
-                </div>
-              </div>
-            </Teleport>
-            
-            <!-- 广告类型选择器弹窗 -->
-            <Teleport to="body">
-              <div class="importance-overlay" v-if="showAdSelector" @click="showAdSelector = false">
-                <div class="importance-selector" @click.stop>
-                  <div class="selector-title">选择广告类型</div>
-                  <button 
-                    v-for="opt in adOptions" 
-                    :key="String(opt.value)"
-                    class="importance-option"
-                    :class="{ active: email.processedResult?.isAd === opt.value }"
-                    :style="{ '--opt-color': opt.color }"
-                    @click="updateAdType(opt.value)"
-                  >
-                    {{ opt.label }}
-                  </button>
-                </div>
-              </div>
-            </Teleport>
           </div>
           
           <!-- 处理按钮 -->

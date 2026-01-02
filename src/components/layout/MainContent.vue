@@ -41,58 +41,6 @@ const maxRetries = 2;
 // 复制验证码状态
 const codeCopied = ref(false);
 
-// 重要度选择器状态
-const showImportanceSelector = ref(false);
-const importanceOptions = [
-  { value: 'critical', label: '紧急', color: '#f44336' },
-  { value: 'high', label: '重要', color: '#ff9800' },
-  { value: 'medium', label: '一般', color: '#2196f3' },
-  { value: 'low', label: '普通', color: '#9e9e9e' },
-];
-
-// 广告类型选择器状态
-const showAdSelector = ref(false);
-const adOptions = [
-  { value: true, label: '是广告', color: '#ff9800' },
-  { value: false, label: '非广告', color: '#4caf50' },
-];
-
-// 更新广告类型
-async function updateAdType(isAd: boolean) {
-  if (!selectedEmail.value) return;
-  
-  try {
-    await emailStore.updateEmailAdType(selectedEmail.value.id, isAd);
-    // 重新从列表获取更新后的邮件
-    const updated = emails.value.find(e => e.id === selectedEmail.value?.id);
-    if (updated) {
-      selectedEmail.value = updated;
-    }
-    showAdSelector.value = false;
-  } catch (err) {
-    console.error('更新广告类型失败:', err);
-    alert('更新广告类型失败');
-  }
-}
-
-// 更新重要度
-async function updateImportance(importance: string) {
-  if (!selectedEmail.value) return;
-  
-  try {
-    await emailStore.updateEmailImportance(selectedEmail.value.id, importance);
-    // 重新从列表获取更新后的邮件
-    const updated = emails.value.find(e => e.id === selectedEmail.value?.id);
-    if (updated) {
-      selectedEmail.value = updated;
-    }
-    showImportanceSelector.value = false;
-  } catch (err) {
-    console.error('更新重要度失败:', err);
-    alert('更新重要度失败');
-  }
-}
-
 // 复制验证码
 async function copyVerificationCode() {
   const code = selectedEmail.value?.processedResult?.verificationCode;
@@ -372,26 +320,6 @@ function getSenderName(from: string): string {
   return match?.[1] ?? from.split('@')[0] ?? from;
 }
 
-// 获取重要度颜色
-function getImportanceColor(importance: string): string {
-  switch (importance) {
-    case 'critical': return '#f44336';
-    case 'high': return '#ff9800';
-    case 'medium': return '#2196f3';
-    default: return '#9e9e9e';
-  }
-}
-
-// 获取重要度标签
-function getImportanceLabel(importance: string): string {
-  switch (importance) {
-    case 'critical': return '紧急';
-    case 'high': return '重要';
-    case 'medium': return '一般';
-    default: return '普通';
-  }
-}
-
 // 滚动加载更多
 function handleScroll(event: Event) {
   const target = event.target as HTMLElement;
@@ -568,25 +496,8 @@ onUnmounted(() => {
             </div>
             <div class="email-subject">{{ email.subject || '(无主题)' }}</div>
             <div class="email-preview">{{ email.body?.substring(0, 80) || '' }}...</div>
-            <div class="email-tags" v-if="email.processedResult">
-              <span 
-                v-if="email.processedResult.verificationCode" 
-                class="tag code-tag"
-              >
-                验证码
-              </span>
-              <span 
-                v-if="email.processedResult.isAd" 
-                class="tag ad-tag"
-              >
-                广告
-              </span>
-              <span 
-                class="tag importance-tag"
-                :style="{ backgroundColor: getImportanceColor(email.processedResult.importance) }"
-              >
-                {{ getImportanceLabel(email.processedResult.importance) }}
-              </span>
+            <div class="email-tags" v-if="email.processedResult?.verificationCode">
+              <span class="tag code-tag">验证码</span>
             </div>
           </button>
           
@@ -664,33 +575,6 @@ onUnmounted(() => {
                     <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
                   </div>
                 </div>
-                
-                <div class="info-card ad-card clickable" @click="showAdSelector = !showAdSelector" title="点击修改广告类型">
-                  <div class="info-icon" :class="selectedEmail.processedResult.isAd ? 'ad' : 'not-ad'">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                  </div>
-                  <div class="info-content">
-                    <span class="info-label">广告类型 (点击修改)</span>
-                    <span class="info-value">{{ selectedEmail.processedResult.isAd ? '广告邮件' : '非广告' }}</span>
-                  </div>
-                  <!-- 广告类型选择器 -->
-                  <div class="ad-selector" v-if="showAdSelector" @click.stop>
-                    <button 
-                      v-for="opt in adOptions" 
-                      :key="String(opt.value)"
-                      class="ad-option"
-                      :class="{ active: selectedEmail.processedResult.isAd === opt.value }"
-                      :style="{ '--opt-color': opt.color }"
-                      @click="updateAdType(opt.value)"
-                    >
-                      {{ opt.label }}
-                    </button>
-                  </div>
-                </div>
 
                 <div class="info-card" v-if="selectedEmail.processedResult.summary">
                   <div class="info-icon summary">
@@ -704,34 +588,6 @@ onUnmounted(() => {
                   <div class="info-content">
                     <span class="info-label">内容摘要</span>
                     <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
-                  </div>
-                </div>
-
-                <div class="info-card importance clickable" @click="showImportanceSelector = !showImportanceSelector" title="点击修改重要度">
-                  <div 
-                    class="info-icon" 
-                    :style="{ backgroundColor: getImportanceColor(selectedEmail.processedResult.importance) }"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                  </div>
-                  <div class="info-content">
-                    <span class="info-label">重要度 (点击修改)</span>
-                    <span class="info-value">{{ getImportanceLabel(selectedEmail.processedResult.importance) }}</span>
-                  </div>
-                  <!-- 重要度选择器 -->
-                  <div class="importance-selector" v-if="showImportanceSelector" @click.stop>
-                    <button 
-                      v-for="opt in importanceOptions" 
-                      :key="opt.value"
-                      class="importance-option"
-                      :class="{ active: selectedEmail.processedResult.importance === opt.value }"
-                      :style="{ '--opt-color': opt.color }"
-                      @click="updateImportance(opt.value)"
-                    >
-                      {{ opt.label }}
-                    </button>
                   </div>
                 </div>
               </div>

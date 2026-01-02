@@ -186,12 +186,9 @@ onMounted(async () => {
               </div>
               
               <!-- 处理信息标签 -->
-              <div class="email-tags" v-if="email.processedResult">
-                <span v-if="email.processedResult.verificationCode" class="tag tag-code">
+              <div class="email-tags" v-if="email.processedResult?.verificationCode">
+                <span class="tag tag-code">
                   验证码: {{ email.processedResult.verificationCode }}
-                </span>
-                <span v-if="email.processedResult.isAd" class="tag tag-ad">
-                  广告
                 </span>
               </div>
             </div>
