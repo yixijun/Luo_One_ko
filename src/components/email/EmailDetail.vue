@@ -73,9 +73,6 @@ async function copyVerificationCode() {
 async function updateImportance(importance: string) {
   try {
     await emailStore.updateEmailImportance(props.email.id, importance);
-    if (props.email.processedResult) {
-      props.email.processedResult.importance = importance as any;
-    }
     showImportanceSelector.value = false;
   } catch (err) {
     console.error('更新重要度失败:', err);
@@ -87,9 +84,6 @@ async function updateImportance(importance: string) {
 async function updateAdType(isAd: boolean) {
   try {
     await emailStore.updateEmailAdType(props.email.id, isAd);
-    if (props.email.processedResult) {
-      props.email.processedResult.isAd = isAd;
-    }
     showAdSelector.value = false;
   } catch (err) {
     console.error('更新广告类型失败:', err);
