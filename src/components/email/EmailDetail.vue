@@ -32,8 +32,43 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
+// 处理相关状态
+const processing = ref(false);
+const deleting = ref(false);
+
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
+
+// 处理单封邮件
+async function handleProcess() {
+  processing.value = true;
+  try {
+    await emailStore.processSingleEmail(props.email.id);
+    // 刷新邮件详情
+    await emailStore.fetchEmailDetail(props.email.id);
+  } catch (err) {
+    console.error('处理邮件失败:', err);
+    alert('处理邮件失败');
+  } finally {
+    processing.value = false;
+  }
+}
+
+// 删除处理结果
+async function handleDeleteResult() {
+  if (!confirm('确定要删除处理结果吗？')) return;
+  deleting.value = true;
+  try {
+    await emailStore.deleteProcessedResult(props.email.id);
+    // 刷新邮件详情
+    await emailStore.fetchEmailDetail(props.email.id);
+  } catch (err) {
+    console.error('删除处理结果失败:', err);
+    alert('删除处理结果失败');
+  } finally {
+    deleting.value = false;
+  }
+}
 
 // 加载附件列表
 async function loadAttachments() {
@@ -192,15 +227,60 @@ function handleForward() { emit('forward'); }
       </div>
 
       <!-- 处理结果信息 -->
-      <div class="processed-section" v-if="hasProcessedResult">
-        <h3 class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-            <path d="M12 2a10 10 0 0 1 10 10"/>
-          </svg>
-          处理结果
-        </h3>
-        <ProcessedInfo :result="email.processedResult!" />
+      <div class="processed-section">
+        <div class="section-header">
+          <h3 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+              <path d="M12 2a10 10 0 0 1 10 10"/>
+            </svg>
+            处理结果
+          </h3>
+          <div class="section-actions">
+            <button 
+              v-if="hasProcessedResult" 
+              class="section-btn edit" 
+              @click="handleProcess" 
+              :disabled="processing"
+              title="重新处理"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              {{ processing ? '处理中...' : '重新处理' }}
+            </button>
+            <button 
+              v-if="hasProcessedResult" 
+              class="section-btn delete" 
+              @click="handleDeleteResult" 
+              :disabled="deleting"
+              title="删除结果"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              {{ deleting ? '删除中...' : '删除' }}
+            </button>
+            <button 
+              class="section-btn process" 
+              @click="handleProcess" 
+              :disabled="processing"
+              title="处理邮件"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="10 8 16 12 10 16 10 8"/>
+              </svg>
+              {{ processing ? '处理中...' : '处理' }}
+            </button>
+          </div>
+        </div>
+        <ProcessedInfo v-if="hasProcessedResult" :result="email.processedResult!" />
+        <div v-else class="no-result">
+          <span>暂无处理结果，点击右侧"处理"按钮进行处理</span>
+        </div>
       </div>
 
       <!-- 邮件正文 -->
@@ -424,6 +504,81 @@ function handleForward() { emit('forward'); }
 }
 
 .section-title svg { width: 16px; height: 16px; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+.section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.section-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.section-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.section-btn.edit {
+  background-color: rgba(100, 108, 255, 0.1);
+  color: var(--primary-color, #646cff);
+}
+
+.section-btn.edit:hover:not(:disabled) {
+  background-color: rgba(100, 108, 255, 0.2);
+}
+
+.section-btn.delete {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.section-btn.delete:hover:not(:disabled) {
+  background-color: rgba(244, 67, 54, 0.2);
+}
+
+.section-btn.process {
+  background-color: rgba(156, 39, 176, 0.1);
+  color: #9c27b0;
+}
+
+.section-btn.process:hover:not(:disabled) {
+  background-color: rgba(156, 39, 176, 0.2);
+}
+
+.section-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.no-result {
+  padding: 16px;
+  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-secondary, #888);
+  font-size: 0.875rem;
+}
 
 .processed-section, .email-body-section, .attachments-section { margin-bottom: 16px; }
 

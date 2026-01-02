@@ -335,6 +335,70 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 处理单封邮件
+  async function processSingleEmail(emailId: number): Promise<void> {
+    loading.value = true;
+    error.value = null;
+    try {
+      await apiClient.post('/emails/process-single', {
+        email_id: emailId,
+      }, {
+        timeout: 60000, // 1分钟超时
+      });
+    } catch (err) {
+      error.value = (err as Error).message || '处理邮件失败';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 删除处理结果
+  async function deleteProcessedResult(emailId: number): Promise<void> {
+    loading.value = true;
+    error.value = null;
+    try {
+      await apiClient.delete(`/emails/${emailId}/processed-result`);
+      // 更新本地状态
+      const email = emails.value.find(e => e.id === emailId);
+      if (email) {
+        email.processedResult = undefined;
+      }
+      if (currentEmail.value?.id === emailId) {
+        currentEmail.value.processedResult = undefined;
+      }
+    } catch (err) {
+      error.value = (err as Error).message || '删除处理结果失败';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 获取邮件详情
+  async function fetchEmailDetail(emailId: number): Promise<Email | null> {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await apiClient.get<Email>(`/emails/${emailId}`);
+      const emailData = response.data as unknown as Record<string, unknown>;
+      const email = toEmailCamelCase(emailData);
+      
+      // 更新本地状态
+      const index = emails.value.findIndex(e => e.id === emailId);
+      if (index !== -1) {
+        emails.value[index] = email;
+      }
+      currentEmail.value = email;
+      return email;
+    } catch (err) {
+      error.value = (err as Error).message || '获取邮件详情失败';
+      return null;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 清除当前邮件
   function clearCurrentEmail(): void {
     currentEmail.value = null;
@@ -516,6 +580,9 @@ export const useEmailStore = defineStore('email', () => {
     syncEmails,
     getSyncProgress,
     processEmails,
+    processSingleEmail,
+    deleteProcessedResult,
+    fetchEmailDetail,
     clearCurrentEmail,
     reset,
     fetchAttachments,
