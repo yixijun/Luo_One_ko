@@ -316,6 +316,25 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 处理邮件（提取验证码等）
+  async function processEmails(accountId: number): Promise<number> {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await apiClient.post<{ processed_count: number }>('/emails/process', {
+        account_id: accountId,
+      }, {
+        timeout: 300000, // 5分钟超时
+      });
+      return response.data?.processed_count ?? 0;
+    } catch (err) {
+      error.value = (err as Error).message || '处理邮件失败';
+      return -1;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 清除当前邮件
   function clearCurrentEmail(): void {
     currentEmail.value = null;
@@ -496,6 +515,7 @@ export const useEmailStore = defineStore('email', () => {
     sendEmail,
     syncEmails,
     getSyncProgress,
+    processEmails,
     clearCurrentEmail,
     reset,
     fetchAttachments,

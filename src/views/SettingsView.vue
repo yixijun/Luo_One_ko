@@ -28,6 +28,7 @@ const modalTestingConnection = ref(false);
 const modalTestResult = ref<{ success: boolean; message: string } | null>(null);
 const syncingAccountId = ref<number | null>(null);
 const fullSyncingAccountId = ref<number | null>(null);
+const processingAccountId = ref<number | null>(null);
 
 const operationLogs = ref<Array<{ time: string; type: 'info' | 'success' | 'error'; message: string }>>([]);
 
@@ -484,6 +485,39 @@ async function syncAllAccount(id: number) {
   }
 }
 
+async function processAccount(id: number) {
+  clearMessages();
+  processingAccountId.value = id;
+  const account = accounts.value.find(a => a.id === id);
+  addLog('info', `开始处理邮件: ${account?.email || id}`);
+  addLog('info', `处理邮件会提取验证码、检测广告等，可能需要一些时间...`);
+  
+  try {
+    addLog('info', `正在调用处理 API: POST /api/emails/process { account_id: ${id} }`);
+    
+    const processedCount = await emailStore.processEmails(id);
+    
+    if (processedCount >= 0) {
+      addLog('success', `邮件处理完成，共处理 ${processedCount} 封邮件`);
+      successMessage.value = `邮件处理完成，共处理 ${processedCount} 封邮件`;
+      
+      // 刷新邮件列表以显示处理结果
+      await emailStore.fetchEmails({ accountId: id });
+      addLog('info', '已刷新邮件列表');
+    } else {
+      const errMsg = emailStore.error || '处理邮件失败';
+      addLog('error', `处理邮件失败: ${errMsg}`);
+      errorMessage.value = errMsg;
+    }
+  } catch (err) {
+    const errMsg = (err as Error).message || '未知错误';
+    addLog('error', `处理邮件异常: ${errMsg}`);
+    errorMessage.value = errMsg;
+  } finally {
+    processingAccountId.value = null;
+  }
+}
+
 async function testModalConnection() {
   modalTestResult.value = null; modalTestingConnection.value = true;
   addLog('info', `测试连接配置: IMAP=${accountForm.imapHost}:${accountForm.imapPort}, SMTP=${accountForm.smtpHost}:${accountForm.smtpPort}, SSL=${accountForm.useSSL}`);
@@ -669,12 +703,17 @@ onMounted(async () => {
               <span class="account-sync-time" v-if="account.lastSyncAt">上次同步: {{ new Date(account.lastSyncAt * 1000).toLocaleString('zh-CN') }}</span>
             </div>
             <div class="account-actions">
-              <button class="btn small sync-btn" @click="syncAccount(account.id)" :disabled="syncingAccountId === account.id">{{ syncingAccountId === account.id ? '同步中...' : '同步' }}</button>
-              <button class="btn small sync-btn" @click="syncAllAccount(account.id)" :disabled="fullSyncingAccountId === account.id" title="同步所有邮件（可能需要较长时间）">{{ fullSyncingAccountId === account.id ? '全量同步中...' : '同步全部' }}</button>
-              <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
-              <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
-              <button class="btn small" @click="openEditAccountModal(account)">编辑</button>
-              <button class="btn small danger" @click="deleteAccount(account.id)">删除</button>
+              <div class="action-row">
+                <button class="btn small sync-btn" @click="syncAccount(account.id)" :disabled="syncingAccountId === account.id">{{ syncingAccountId === account.id ? '同步中...' : '同步' }}</button>
+                <button class="btn small sync-btn" @click="syncAllAccount(account.id)" :disabled="fullSyncingAccountId === account.id" title="同步所有邮件（可能需要较长时间）">{{ fullSyncingAccountId === account.id ? '全量同步中...' : '同步全部' }}</button>
+                <button class="btn small process-btn" @click="processAccount(account.id)" :disabled="processingAccountId === account.id" title="处理邮件（提取验证码等）">{{ processingAccountId === account.id ? '处理中...' : '处理' }}</button>
+                <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
+              </div>
+              <div class="action-row">
+                <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
+                <button class="btn small" @click="openEditAccountModal(account)">编辑</button>
+                <button class="btn small danger" @click="deleteAccount(account.id)">删除</button>
+              </div>
             </div>
             <!-- 全量同步进度条 -->
             <div v-if="fullSyncingAccountId === account.id && fullSyncProgress" class="sync-progress">
@@ -957,7 +996,11 @@ onMounted(async () => {
 .account-status.enabled { color: var(--success-color); }
 .account-email-count { font-size: 0.75rem; color: var(--primary-color); font-weight: 500; }
 .account-sync-time { font-size: 0.6875rem; color: var(--text-tertiary); }
-.account-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.account-actions { display: flex; flex-direction: column; gap: 8px; }
+.account-actions .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.process-btn { background-color: #9c27b0 !important; color: white !important; }
+.process-btn:hover { background-color: #7b1fa2 !important; }
+.process-btn:disabled { background-color: #ce93d8 !important; }
 .sync-progress { width: 100%; margin-top: 12px; padding: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); }
 .sync-progress .progress-info { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; flex-wrap: wrap; }
 .sync-progress .progress-bar { height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; }
