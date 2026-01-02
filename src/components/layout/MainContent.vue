@@ -9,6 +9,9 @@ import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
 import type { Email, EmailFolder, Attachment } from '@/types';
 
+// 处理邮件状态
+const isProcessing = ref(false);
+
 const emit = defineEmits<{
   (e: 'email-select', email: Email): void;
 }>();
@@ -48,6 +51,26 @@ async function copyVerificationCode() {
     setTimeout(() => { codeCopied.value = false; }, 2000);
   } catch (err) {
     console.error('复制失败:', err);
+  }
+}
+
+// 处理单封邮件
+async function processCurrentEmail() {
+  if (!selectedEmail.value || isProcessing.value) return;
+  
+  isProcessing.value = true;
+  try {
+    await emailStore.processSingleEmail(selectedEmail.value.id);
+    // 刷新邮件详情
+    const updatedEmail = await emailStore.fetchEmailDetail(selectedEmail.value.id);
+    if (updatedEmail) {
+      selectedEmail.value = updatedEmail;
+    }
+  } catch (err) {
+    console.error('处理邮件失败:', err);
+    alert('处理邮件失败');
+  } finally {
+    isProcessing.value = false;
   }
 }
 
@@ -575,7 +598,7 @@ onUnmounted(() => {
 
           <!-- 处理结果信息 -->
           <div class="processed-info" v-if="selectedEmail.processedResult">
-            <div class="info-card" v-if="selectedEmail.processedResult.verificationCode">
+            <div class="info-card clickable" v-if="selectedEmail.processedResult.verificationCode" @click="copyVerificationCode" :title="codeCopied ? '已复制' : '点击复制验证码'">
               <div class="info-icon code">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -583,13 +606,8 @@ onUnmounted(() => {
                 </svg>
               </div>
               <div class="info-content">
-                <span class="info-label">验证码</span>
-                <div class="code-value-row">
-                  <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
-                  <button class="copy-code-btn" :class="{ copied: codeCopied }" @click="copyVerificationCode">
-                    {{ codeCopied ? '✓ 已复制' : '复制' }}
-                  </button>
-                </div>
+                <span class="info-label">验证码 {{ codeCopied ? '✓ 已复制' : '(点击复制)' }}</span>
+                <span class="info-value code-value">{{ selectedEmail.processedResult.verificationCode }}</span>
               </div>
             </div>
             
@@ -621,21 +639,17 @@ onUnmounted(() => {
                 <span class="info-value">{{ selectedEmail.processedResult.summary }}</span>
               </div>
             </div>
-
-            <div class="info-card importance">
-              <div 
-                class="info-icon" 
-                :style="{ backgroundColor: getImportanceColor(selectedEmail.processedResult.importance) }"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </div>
-              <div class="info-content">
-                <span class="info-label">重要度</span>
-                <span class="info-value">{{ getImportanceLabel(selectedEmail.processedResult.importance) }}</span>
-              </div>
-            </div>
+          </div>
+          
+          <!-- 处理按钮 -->
+          <div class="action-buttons">
+            <button class="process-btn" @click="processCurrentEmail" :disabled="isProcessing">
+              <svg v-if="!isProcessing" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+              <span v-else class="loading-spinner small"></span>
+              {{ isProcessing ? '处理中...' : '处理邮件' }}
+            </button>
           </div>
 
           <!-- 邮件正文（聊天气泡形式） -->
@@ -1061,6 +1075,21 @@ onUnmounted(() => {
   min-width: 200px;
 }
 
+.info-card.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.info-card.clickable:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--success-color);
+  transform: scale(1.02);
+}
+
+.info-card.clickable:active {
+  transform: scale(0.98);
+}
+
 .info-icon {
   width: 42px;
   height: 42px;
@@ -1113,35 +1142,49 @@ onUnmounted(() => {
   letter-spacing: 3px;
 }
 
-.code-value-row {
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.process-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.copy-code-btn {
-  padding: 4px 12px;
+  gap: 8px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
-  background-color: var(--primary-color, #646cff);
+  border-radius: var(--radius-md, 10px);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   color: #fff;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
 }
 
-.copy-code-btn:hover {
-  background-color: #5558dd;
-  transform: scale(1.05);
+.process-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
 }
 
-.copy-code-btn:active {
-  transform: scale(0.95);
+.process-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
-.copy-code-btn.copied {
-  background-color: #4caf50;
+.process-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.process-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.process-btn .loading-spinner.small {
+  margin-bottom: 0;
 }
 
 /* 邮件气泡 */
