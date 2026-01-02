@@ -1191,36 +1191,38 @@ onUnmounted(() => {
   top: 100%;
   left: 0;
   margin-top: 8px;
-  padding: 8px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 100px;
+  gap: 6px;
+  min-width: 120px;
 }
 
 .importance-option {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 0.8125rem;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #333;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: all 0.15s;
 }
 
 .importance-option:hover {
-  background: var(--hover-bg);
+  background: #e8e8e8;
 }
 
 .importance-option.active {
   background: var(--opt-color);
+  border-color: var(--opt-color);
   color: #fff;
 }
 
