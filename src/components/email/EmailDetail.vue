@@ -32,8 +32,26 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
+// 图片预览相关
+const previewImage = ref<string | null>(null);
+const previewImageName = ref('');
+const loadingPreview = ref<string | null>(null);
+const imagePreviewUrls = ref<Map<string, string>>(new Map());
+
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
+
+// 判断是否为图片文件
+function isImageFile(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+}
+
+// 判断是否可以预览（小于20MB的图片）
+function canPreview(attachment: Attachment): boolean {
+  const maxPreviewSize = 20 * 1024 * 1024; // 20MB
+  return isImageFile(attachment.filename) && attachment.size <= maxPreviewSize;
+}
 
 // 加载附件列表
 async function loadAttachments() {
@@ -51,11 +69,58 @@ async function loadAttachments() {
         loadAttachments();
       }, 1500); // 1.5秒后重试
     }
+    
+    // 为可预览的图片加载缩略图
+    for (const att of result) {
+      if (canPreview(att)) {
+        loadImagePreview(att);
+      }
+    }
   } catch (err) {
     console.error('加载附件失败:', err);
   } finally {
     loadingAttachments.value = false;
   }
+}
+
+// 加载图片预览
+async function loadImagePreview(attachment: Attachment) {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  if (imagePreviewUrls.value.has(rawFilename)) return;
+  
+  loadingPreview.value = rawFilename;
+  try {
+    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      imagePreviewUrls.value.set(rawFilename, url);
+    }
+  } catch (err) {
+    console.error('加载图片预览失败:', err);
+  } finally {
+    loadingPreview.value = null;
+  }
+}
+
+// 获取图片预览URL
+function getPreviewUrl(attachment: Attachment): string | undefined {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  return imagePreviewUrls.value.get(rawFilename);
+}
+
+// 打开图片预览
+function openImagePreview(attachment: Attachment) {
+  const url = getPreviewUrl(attachment);
+  if (url) {
+    previewImage.value = url;
+    previewImageName.value = attachment.filename;
+  }
+}
+
+// 关闭图片预览
+function closeImagePreview() {
+  previewImage.value = null;
+  previewImageName.value = '';
 }
 
 // 下载附件
@@ -254,9 +319,28 @@ function handleForward() {
             v-for="attachment in attachments" 
             :key="attachment.raw_filename || attachment.filename"
             class="attachment-item"
-            @click="handleDownload(attachment)"
+            :class="{ 'has-preview': canPreview(attachment) && getPreviewUrl(attachment) }"
           >
-            <div class="attachment-icon" :class="getFileIcon(attachment.filename)">
+            <!-- 图片预览缩略图 -->
+            <div 
+              v-if="canPreview(attachment) && getPreviewUrl(attachment)" 
+              class="attachment-preview"
+              @click="openImagePreview(attachment)"
+            >
+              <img :src="getPreviewUrl(attachment)" :alt="attachment.filename" />
+              <div class="preview-overlay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+            </div>
+            <!-- 图片加载中 -->
+            <div v-else-if="canPreview(attachment) && loadingPreview === (attachment.raw_filename || attachment.filename)" class="attachment-preview loading">
+              <div class="spinner"></div>
+            </div>
+            <!-- 非图片文件图标 -->
+            <div v-else class="attachment-icon" :class="getFileIcon(attachment.filename)" @click="handleDownload(attachment)">
               <!-- 图片图标 -->
               <svg v-if="getFileIcon(attachment.filename) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -281,11 +365,11 @@ function handleForward() {
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
             </div>
-            <div class="attachment-info">
+            <div class="attachment-info" @click="handleDownload(attachment)">
               <span class="attachment-name">{{ attachment.filename }}</span>
               <span class="attachment-size">{{ formatFileSize(attachment.size) }}</span>
             </div>
-            <div class="attachment-action">
+            <div class="attachment-action" @click="handleDownload(attachment)">
               <div v-if="downloadingFile === (attachment.raw_filename || attachment.filename)" class="spinner small"></div>
               <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -300,6 +384,22 @@ function handleForward() {
         <div v-else class="attachments-empty">
           <p>{{ attachmentRetryCount >= maxRetries ? '附件需要重新同步邮件获取' : '附件正在解析中...' }}</p>
         </div>
+      </div>
+    </div>
+
+    <!-- 图片预览弹窗 -->
+    <div v-if="previewImage" class="image-preview-modal" @click="closeImagePreview">
+      <div class="preview-header">
+        <span class="preview-title">{{ previewImageName }}</span>
+        <button class="preview-close" @click="closeImagePreview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="preview-content" @click.stop>
+        <img :src="previewImage" :alt="previewImageName" />
       </div>
     </div>
   </div>
@@ -630,6 +730,128 @@ function handleForward() {
 
 .attachment-item:hover .attachment-action {
   color: var(--primary-color, #646cff);
+}
+
+/* 图片预览缩略图 */
+.attachment-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.attachment-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-preview .preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.attachment-preview:hover .preview-overlay {
+  opacity: 1;
+}
+
+.attachment-preview .preview-overlay svg {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+}
+
+.attachment-preview.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-bg, rgba(255, 255, 255, 0.03));
+}
+
+.attachment-item.has-preview {
+  padding: 8px 16px;
+}
+
+/* 图片预览弹窗 */
+.image-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.preview-title {
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.preview-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.preview-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.preview-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+}
+
+.preview-content img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 /* 响应式布局 */
