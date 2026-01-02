@@ -455,12 +455,21 @@ export const useEmailStore = defineStore('email', () => {
   // 获取附件 Blob（用于预览）
   async function getAttachmentBlob(emailId: number, rawFilename: string): Promise<Blob | null> {
     try {
+      console.log('Requesting attachment:', `/emails/${emailId}/attachments/${encodeURIComponent(rawFilename)}`);
       const response = await apiClient.get(`/emails/${emailId}/attachments/${encodeURIComponent(rawFilename)}`, {
         responseType: 'blob',
       });
+      console.log('Attachment response:', response);
       return new Blob([response.data as BlobPart]);
     } catch (err) {
       console.error('获取附件失败:', err);
+      console.error('Error details:', {
+        message: err.message,
+        code: err.code,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        url: `/emails/${emailId}/attachments/${encodeURIComponent(rawFilename)}`
+      });
       return null;
     }
   }
