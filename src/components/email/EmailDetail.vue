@@ -32,16 +32,10 @@ const downloadingFile = ref<string | null>(null);
 const attachmentRetryCount = ref(0);
 const maxRetries = 2;
 
-// 图片预览相关 - 使用简单的 ref
+// 图片预览相关
 const previewImage = ref<string | null>(null);
 const previewImageName = ref('');
-
-// 扩展附件类型，包含预览 URL
-interface AttachmentWithPreview extends Attachment {
-  previewUrl?: string;
-  loadingPreview?: boolean;
-}
-const attachmentsWithPreview = ref<AttachmentWithPreview[]>([]);
+const loadingPreview = ref(false);
 
 // 是否有处理结果
 const hasProcessedResult = computed(() => !!props.email.processedResult);
@@ -52,47 +46,14 @@ function isImageFile(filename: string): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
-// 加载单个图片预览
-async function loadSinglePreview(att: AttachmentWithPreview, index: number) {
-  const rawFilename = att.raw_filename || att.filename;
-  console.log('[loadSinglePreview] Starting for:', rawFilename, 'index:', index);
-  
-  // 标记为加载中
-  attachmentsWithPreview.value[index] = { ...att, loadingPreview: true };
-  
-  try {
-    console.log('[loadSinglePreview] Calling getAttachmentBlob');
-    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
-    console.log('[loadSinglePreview] Got blob:', blob, 'size:', blob?.size);
-    if (blob && blob.size > 0) {
-      const url = URL.createObjectURL(blob);
-      console.log('[loadSinglePreview] Created URL:', url);
-      attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], previewUrl: url, loadingPreview: false };
-      console.log('[loadSinglePreview] Updated attachmentsWithPreview[', index, ']:', attachmentsWithPreview.value[index]);
-    } else {
-      console.log('[loadSinglePreview] Blob is empty or null');
-      attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], loadingPreview: false };
-    }
-  } catch (err) {
-    console.error('[loadSinglePreview] Error:', err);
-    attachmentsWithPreview.value[index] = { ...attachmentsWithPreview.value[index], loadingPreview: false };
-  }
-}
-
 // 加载附件列表
 async function loadAttachments() {
-  console.log('[loadAttachments] Called, hasAttachments:', props.email.hasAttachments);
   if (!props.email.hasAttachments) return;
   
   loadingAttachments.value = true;
   try {
     const result = await emailStore.fetchAttachments(props.email.id);
-    console.log('[loadAttachments] Fetched attachments:', result);
     attachments.value = result;
-    
-    // 初始化带预览的附件列表
-    attachmentsWithPreview.value = result.map(att => ({ ...att }));
-    console.log('[loadAttachments] Initialized attachmentsWithPreview:', attachmentsWithPreview.value);
     
     // 如果附件列表为空且还有重试次数，延迟后重试
     if (result.length === 0 && attachmentRetryCount.value < maxRetries) {
@@ -100,34 +61,41 @@ async function loadAttachments() {
       setTimeout(() => {
         loadAttachments();
       }, 1500);
-      return;
     }
-    
-    // 为可预览的图片加载缩略图
-    result.forEach((att, index) => {
-      const isImg = isImageFile(att.filename);
-      console.log('[loadAttachments] Checking attachment:', att.filename, 'isImage:', isImg);
-      if (isImg) {
-        loadSinglePreview(att, index);
-      }
-    });
   } catch (err) {
-    console.error('[loadAttachments] Error:', err);
+    console.error('加载附件失败:', err);
   } finally {
     loadingAttachments.value = false;
   }
 }
 
-// 打开图片预览
-function openImagePreview(att: AttachmentWithPreview) {
-  if (att.previewUrl) {
-    previewImage.value = att.previewUrl;
-    previewImageName.value = att.filename;
+// 点击图片图标时预览图片
+async function handleImageClick(attachment: Attachment) {
+  const rawFilename = attachment.raw_filename || attachment.filename;
+  
+  loadingPreview.value = true;
+  previewImageName.value = attachment.filename;
+  
+  try {
+    const blob = await emailStore.getAttachmentBlob(props.email.id, rawFilename);
+    if (blob && blob.size > 0) {
+      previewImage.value = URL.createObjectURL(blob);
+    } else {
+      alert('无法加载图片预览');
+    }
+  } catch (err) {
+    console.error('加载图片预览失败:', err);
+    alert('加载图片预览失败');
+  } finally {
+    loadingPreview.value = false;
   }
 }
 
 // 关闭图片预览
 function closeImagePreview() {
+  if (previewImage.value) {
+    URL.revokeObjectURL(previewImage.value);
+  }
   previewImage.value = null;
   previewImageName.value = '';
 }
@@ -172,7 +140,7 @@ function getFileIcon(filename: string): string {
 watch(() => props.email.id, () => {
   attachmentRetryCount.value = 0;
   attachments.value = [];
-  attachmentsWithPreview.value = [];
+  closeImagePreview();
   loadAttachments();
 }, { immediate: true });
 
@@ -314,7 +282,7 @@ function handleForward() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
-          附件 ({{ attachmentsWithPreview.length }})
+          附件 ({{ attachments.length }})
         </h3>
         
         <!-- 加载中 -->
@@ -324,33 +292,18 @@ function handleForward() {
         </div>
         
         <!-- 附件列表 -->
-        <div v-else-if="attachmentsWithPreview.length > 0" class="attachments-list">
+        <div v-else-if="attachments.length > 0" class="attachments-list">
           <div 
-            v-for="attachment in attachmentsWithPreview" 
+            v-for="attachment in attachments" 
             :key="attachment.raw_filename || attachment.filename"
             class="attachment-item"
-            :class="{ 'has-preview': attachment.previewUrl }"
           >
-            <!-- 图片预览缩略图 -->
+            <!-- 文件图标 - 图片类型点击预览，其他类型点击下载 -->
             <div 
-              v-if="attachment.previewUrl" 
-              class="attachment-preview"
-              @click="openImagePreview(attachment)"
+              class="attachment-icon" 
+              :class="getFileIcon(attachment.filename)"
+              @click="isImageFile(attachment.filename) ? handleImageClick(attachment) : handleDownload(attachment)"
             >
-              <img :src="attachment.previewUrl" :alt="attachment.filename" />
-              <div class="preview-overlay">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </div>
-            </div>
-            <!-- 图片加载中 -->
-            <div v-else-if="attachment.loadingPreview" class="attachment-preview loading">
-              <div class="spinner"></div>
-            </div>
-            <!-- 非图片文件图标 -->
-            <div v-else class="attachment-icon" :class="getFileIcon(attachment.filename)" @click="handleDownload(attachment)">
               <!-- 图片图标 -->
               <svg v-if="getFileIcon(attachment.filename) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -398,7 +351,7 @@ function handleForward() {
     </div>
 
     <!-- 图片预览弹窗 -->
-    <div v-if="previewImage" class="image-preview-modal" @click="closeImagePreview">
+    <div v-if="previewImage || loadingPreview" class="image-preview-modal" @click="closeImagePreview">
       <div class="preview-header">
         <span class="preview-title">{{ previewImageName }}</span>
         <button class="preview-close" @click="closeImagePreview">
@@ -409,11 +362,16 @@ function handleForward() {
         </button>
       </div>
       <div class="preview-content" @click.stop>
-        <img :src="previewImage" :alt="previewImageName" />
+        <div v-if="loadingPreview" class="preview-loading">
+          <div class="spinner large"></div>
+          <span>加载中...</span>
+        </div>
+        <img v-else-if="previewImage" :src="previewImage" :alt="previewImageName" />
       </div>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .email-detail {
@@ -629,7 +587,6 @@ function handleForward() {
   gap: 12px;
 }
 
-.attachments-loading .spinner,
 .spinner {
   width: 20px;
   height: 20px;
@@ -642,6 +599,12 @@ function handleForward() {
 .spinner.small {
   width: 16px;
   height: 16px;
+}
+
+.spinner.large {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
 }
 
 @keyframes spin {
@@ -661,7 +624,6 @@ function handleForward() {
   padding: 12px 16px;
   background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
   border-radius: 10px;
-  cursor: pointer;
   transition: background-color 0.2s;
 }
 
@@ -679,6 +641,12 @@ function handleForward() {
   background-color: var(--primary-bg, rgba(100, 108, 255, 0.1));
   color: var(--primary-color, #646cff);
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.attachment-icon:hover {
+  transform: scale(1.1);
 }
 
 .attachment-icon.image {
@@ -707,6 +675,7 @@ function handleForward() {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  cursor: pointer;
 }
 
 .attachment-name {
@@ -731,6 +700,7 @@ function handleForward() {
   justify-content: center;
   color: var(--text-secondary, #888);
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .attachment-action svg {
@@ -740,55 +710,6 @@ function handleForward() {
 
 .attachment-item:hover .attachment-action {
   color: var(--primary-color, #646cff);
-}
-
-/* 图片预览缩略图 */
-.attachment-preview {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-  position: relative;
-  cursor: pointer;
-}
-
-.attachment-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.attachment-preview .preview-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.attachment-preview:hover .preview-overlay {
-  opacity: 1;
-}
-
-.attachment-preview .preview-overlay svg {
-  width: 24px;
-  height: 24px;
-  color: #fff;
-}
-
-.attachment-preview.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-bg, rgba(255, 255, 255, 0.03));
-}
-
-.attachment-item.has-preview {
-  padding: 8px 16px;
 }
 
 /* 图片预览弹窗 */
@@ -854,6 +775,14 @@ function handleForward() {
   justify-content: center;
   padding: 24px;
   overflow: auto;
+}
+
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #fff;
 }
 
 .preview-content img {
