@@ -276,16 +276,25 @@ watch(() => accountStore.currentAccountId, (newId) => {
     </div>
 
     <!-- 移动端侧边栏（独立于主布局） -->
-    <Teleport to="body">
-      <Transition name="mobile-sidebar">
-        <div v-if="isMobileView && showMobileSidebar" class="mobile-sidebar-container">
-          <div class="mobile-sidebar-overlay" @click="showMobileSidebar = false"></div>
-          <div class="mobile-sidebar-content">
-            <Sidebar @account-change="showMobileSidebar = false" />
-          </div>
+    <Transition name="mobile-sidebar">
+      <div 
+        v-if="isMobileView && showMobileSidebar" 
+        class="mobile-sidebar-container"
+        style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;"
+      >
+        <div 
+          class="mobile-sidebar-overlay" 
+          @click="showMobileSidebar = false"
+          style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);"
+        ></div>
+        <div 
+          class="mobile-sidebar-content"
+          style="position: absolute; top: 0; left: 0; bottom: 0; width: 280px; max-width: 85vw; background: var(--sidebar-bg); box-shadow: 4px 0 24px rgba(0,0,0,0.3);"
+        >
+          <Sidebar @account-change="showMobileSidebar = false" />
         </div>
-      </Transition>
-    </Teleport>
+      </div>
+    </Transition>
 
     <!-- 全局加载指示器 -->
     <div v-if="isLoading" class="global-loading">
