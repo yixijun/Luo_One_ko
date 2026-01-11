@@ -339,13 +339,15 @@ watch(() => accountStore.currentAccountId, (newId) => {
   position: fixed;
   top: 0;
   left: 0;
+  right: 0;
   bottom: 0;
   z-index: 100;
   display: flex;
+  width: 100%;
 }
 
 .sidebar-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -353,7 +355,7 @@ watch(() => accountStore.currentAccountId, (newId) => {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 99;
+  z-index: 1;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -364,8 +366,12 @@ watch(() => accountStore.currentAccountId, (newId) => {
 
 .mobile-sidebar :deep(.sidebar) {
   position: relative;
-  z-index: 100;
+  z-index: 2;
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
   animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideInLeft {
