@@ -418,7 +418,54 @@ onUnmounted(() => {
         </button>
         
         <!-- 主题下拉菜单 -->
-        <div v-if="showThemeMenu" class="theme-dropdown">
+        <Teleport to="body">
+          <div v-if="showThemeMenu" class="mobile-menu-overlay" @click="showThemeMenu = false">
+            <div class="mobile-menu-card theme-card" @click.stop>
+              <div class="mobile-menu-header">
+                <span class="mobile-menu-title">主题设置</span>
+                <button class="mobile-menu-close" @click="showThemeMenu = false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="mobile-menu-body">
+                <div class="dropdown-title">选择主题</div>
+                <button
+                  v-for="theme in themes"
+                  :key="theme.name"
+                  class="theme-option"
+                  :class="{ active: themeStore.currentTheme === theme.name }"
+                  @click="selectTheme(theme.name)"
+                >
+                  <span class="theme-color" :style="{ backgroundColor: theme.primaryColor }"></span>
+                  <span class="theme-name">{{ theme.label }}</span>
+                  <svg v-if="themeStore.currentTheme === theme.name" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-title">选择字体</div>
+                <button
+                  v-for="font in fonts"
+                  :key="font.name"
+                  class="theme-option font-option"
+                  :class="{ active: themeStore.currentFont === font.name }"
+                  @click="selectFont(font.name)"
+                >
+                  <span class="font-preview-text" :style="{ fontFamily: font.fontFamily }">Aa</span>
+                  <span class="theme-name">{{ font.label }}</span>
+                  <svg v-if="themeStore.currentFont === font.name" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+        
+        <!-- PC端主题下拉菜单 -->
+        <div v-if="showThemeMenu" class="theme-dropdown desktop-only">
           <div class="dropdown-title">选择主题</div>
           <button
             v-for="theme in themes"
@@ -462,8 +509,64 @@ onUnmounted(() => {
           <span v-else class="avatar-initial">{{ userInitial }}</span>
         </div>
         
-        <!-- 下拉菜单 -->
-        <div v-if="showUserMenu" class="user-dropdown">
+        <!-- 移动端用户菜单卡片 -->
+        <Teleport to="body">
+          <div v-if="showUserMenu" class="mobile-menu-overlay" @click="showUserMenu = false">
+            <div class="mobile-menu-card user-card" @click.stop>
+              <div class="mobile-menu-header">
+                <div class="mobile-user-info">
+                  <div class="mobile-user-avatar">
+                    <img v-if="user?.avatar" :src="user.avatar" :alt="user.nickname || user.username" />
+                    <span v-else class="avatar-initial">{{ userInitial }}</span>
+                  </div>
+                  <div class="mobile-user-text">
+                    <div class="mobile-user-name">{{ user?.nickname || user?.username }}</div>
+                    <div class="mobile-user-username">@{{ user?.username }}</div>
+                  </div>
+                </div>
+                <button class="mobile-menu-close" @click="showUserMenu = false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="mobile-menu-body">
+                <button class="mobile-menu-item" @click="openProfileModal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  个人信息
+                </button>
+                <button class="mobile-menu-item" @click="openAccountModal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                  添加邮箱
+                </button>
+                <button class="mobile-menu-item" @click="goToSettings">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                  设置
+                </button>
+                <div class="mobile-menu-divider"></div>
+                <button class="mobile-menu-item danger" @click="handleLogout">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16,17 21,12 16,7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  退出登录
+                </button>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+        
+        <!-- PC端下拉菜单 -->
+        <div v-if="showUserMenu" class="user-dropdown desktop-only">
           <div class="dropdown-header">
             <div class="dropdown-avatar">
               <img v-if="user?.avatar" :src="user.avatar" :alt="user.nickname || user.username" />
@@ -1411,28 +1514,293 @@ onUnmounted(() => {
     flex: 1;
   }
   
-  .theme-dropdown,
-  .user-dropdown {
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    border-radius: var(--radius-xl, 20px) var(--radius-xl, 20px) 0 0;
-    max-height: 70vh;
-    animation: slideUp 0.2s ease-out;
+  /* PC端下拉菜单在移动端隐藏 */
+  .theme-dropdown.desktop-only,
+  .user-dropdown.desktop-only {
+    display: none;
   }
-  
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(100%);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+}
+
+/* 移动端弹出卡片样式 - 全局样式（不在 scoped 内） */
+</style>
+
+<style>
+/* 移动端菜单遮罩层 */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: mobileOverlayFadeIn 0.2s ease;
+}
+
+@keyframes mobileOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 移动端弹出卡片 */
+.mobile-menu-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 320px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  animation: mobileCardPopIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mobileCardPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 卡片头部 */
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
+}
+
+.mobile-menu-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mobile-menu-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--hover-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-close:hover {
+  background: var(--active-bg);
+  color: var(--text-primary);
+}
+
+.mobile-menu-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* 卡片内容 */
+.mobile-menu-body {
+  padding: 8px 0;
+  max-height: calc(80vh - 60px);
+  overflow-y: auto;
+}
+
+/* 用户信息头部 */
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.mobile-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-user-avatar .avatar-initial {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mobile-user-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-user-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-user-username {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+/* 菜单项 */
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.mobile-menu-item:hover {
+  background: var(--hover-bg);
+}
+
+.mobile-menu-item:active {
+  background: var(--active-bg);
+}
+
+.mobile-menu-item svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.mobile-menu-item.danger {
+  color: var(--error-color);
+}
+
+.mobile-menu-item.danger svg {
+  color: var(--error-color);
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+/* 主题卡片内的选项样式 */
+.mobile-menu-card .dropdown-title {
+  padding: 12px 18px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mobile-menu-card .theme-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.mobile-menu-card .theme-option:hover {
+  background: var(--hover-bg);
+}
+
+.mobile-menu-card .theme-option:active {
+  background: var(--active-bg);
+}
+
+.mobile-menu-card .theme-option.active {
+  background: var(--active-bg);
+  color: var(--primary-color);
+}
+
+.mobile-menu-card .theme-option .theme-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--border-color);
+}
+
+.mobile-menu-card .theme-option .theme-name {
+  flex: 1;
+}
+
+.mobile-menu-card .theme-option .check-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary-color);
+}
+
+.mobile-menu-card .font-option .font-preview-text {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--hover-bg);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.mobile-menu-card .font-option.active .font-preview-text {
+  color: var(--primary-color);
+  background: var(--primary-light);
+}
+
+.mobile-menu-card .dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+/* PC端不显示移动端弹出卡片 */
+@media (min-width: 769px) {
+  .mobile-menu-overlay {
+    display: none !important;
   }
 }
 
