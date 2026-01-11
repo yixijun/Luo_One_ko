@@ -568,13 +568,19 @@ async function refreshGoogleToken(id: number) {
     const response = await apiClient.post(`/oauth/google/refresh/${id}`);
     console.log('[RefreshToken] Response:', response);
     console.log('[RefreshToken] Response data:', response.data);
-    if (response.data?.success) {
-      const expiresAt = response.data.data?.expires_at;
+    
+    // 检查响应是否成功 - 兼容多种格式
+    const data = response.data;
+    const isSuccess = data?.success === true || 
+                      (response.status === 200 && (data?.data?.message || data?.message));
+    
+    if (isSuccess) {
+      const expiresAt = data?.data?.expires_at || data?.expires_at;
       const expiresStr = expiresAt ? new Date(expiresAt).toLocaleString('zh-CN') : '未知';
       addLog('success', `Token 刷新成功，新过期时间: ${expiresStr}`);
       successMessage.value = 'Token 刷新成功';
     } else {
-      const errMsg = response.data?.error?.message || 'Token 刷新失败';
+      const errMsg = data?.error?.message || data?.message || 'Token 刷新失败';
       addLog('error', `Token 刷新失败: ${errMsg}`);
       errorMessage.value = errMsg;
     }
