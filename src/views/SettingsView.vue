@@ -1347,15 +1347,128 @@ onMounted(async () => {
 .log-item.error .log-type { background: rgba(239,68,68,0.2); color: var(--error-color); }
 .log-message { flex: 1; word-break: break-all; color: var(--text-secondary); }
 @media (max-width: 640px) {
-  .settings-view { padding: 16px; }
-  .tabs { overflow-x: auto; flex-wrap: nowrap; }
-  .tab { white-space: nowrap; padding: 10px 14px; font-size: 0.875rem; }
-  .panel { padding: 18px; }
+  .settings-view { padding: 0; padding-bottom: 24px; }
+  
+  /* 移动端头部优化 */
+  .settings-header { 
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin: 0;
+    padding: 0 16px;
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-bottom: 12px;
+    background: var(--header-bg);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid var(--border-color);
+    max-width: none;
+  }
+  
+  .settings-header h1 { 
+    font-size: 1.125rem;
+    flex: 1;
+    text-align: center;
+    margin-right: 50px; /* 平衡返回按钮的宽度 */
+  }
+  
+  .back-btn { 
+    padding: 8px 12px;
+    border-radius: 50px;
+    font-size: 0.875rem;
+  }
+  
+  .back-btn span { display: none; }
+  
+  .back-btn svg { width: 20px; height: 20px; }
+  
+  /* 消息提示 */
+  .message { 
+    margin: 12px 16px;
+    border-radius: 12px;
+  }
+  
+  /* 标签栏优化 */
+  .tabs { 
+    position: sticky;
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    z-index: 99;
+    margin: 0;
+    padding: 0 12px;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 0;
+    max-width: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .tabs::-webkit-scrollbar { display: none; }
+  
+  .tab { 
+    white-space: nowrap; 
+    padding: 12px 16px; 
+    font-size: 0.8125rem;
+    flex-shrink: 0;
+  }
+  
+  /* 内容区域 */
+  .tab-content { 
+    padding: 16px;
+    max-width: none;
+  }
+  
+  .panel { 
+    padding: 18px;
+    border-radius: 16px;
+  }
+  
+  .panel h2 { font-size: 1.125rem; margin-bottom: 18px; }
+  
   .form-row { flex-direction: column; }
   .form-row .form-group.small { flex: 1; }
   .account-item { flex-direction: column; align-items: flex-start; }
   .account-actions { width: 100%; }
   .theme-grid { grid-template-columns: 1fr; }
+  .font-grid { grid-template-columns: 1fr; }
+  
+  /* 按钮优化 */
+  .btn { 
+    padding: 10px 18px;
+    font-size: 0.875rem;
+  }
+  
+  .btn.small { 
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+  
+  /* 账户列表优化 */
+  .account-list { gap: 10px; }
+  
+  .account-item { 
+    padding: 14px;
+    border-radius: 12px;
+  }
+  
+  .account-actions .action-row { 
+    justify-content: flex-start;
+  }
+  
+  /* 日志面板优化 */
+  .logs-panel { 
+    margin-top: 16px;
+    border-radius: 12px;
+  }
+  
+  .logs-content { max-height: 200px; }
+  
+  .log-item { 
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
 }
 </style>
 
