@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# 依赖
+node_modules
+
+# 构建产物
+dist
+dist-server
+electron-dist
+
+# Electron/Capacitor
+electron
+capacitor
+android
+ios
+
+# 日志
+*.log
+npm-debug.log*
+
+# 测试
+coverage
+*.test.ts
+*.spec.ts
+
+# 临时文件
+tmp/
+temp/
+.cache
