@@ -1343,29 +1343,64 @@ onUnmounted(() => {
   
   .header-right {
     flex-shrink: 0;
-    gap: 4px;
+    gap: 8px;
   }
   
-  .icon-btn {
-    width: 34px;
-    height: 34px;
+  /* 移动端隐藏同步和添加邮箱按钮（直接子元素的 icon-btn） */
+  .header-right > .icon-btn {
+    display: none;
   }
   
-  .icon-btn svg {
+  /* 移动端主题按钮样式 - 圆形带边框 */
+  .theme-menu-container .theme-btn {
+    display: flex;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+  }
+  
+  .theme-menu-container .theme-btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+  }
+  
+  .theme-menu-container .theme-btn .theme-indicator {
+    width: 10px;
+    height: 10px;
+    top: 2px;
+    right: 2px;
+    border-width: 2px;
+    border-color: var(--card-bg);
+  }
+  
+  .theme-menu-container .theme-btn svg {
     width: 18px;
     height: 18px;
   }
   
-  .user-avatar {
-    width: 34px;
-    height: 34px;
+  /* 移动端头像按钮样式 - 圆形带主题色边框 */
+  .user-menu-container .user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
   }
   
-  .theme-indicator {
-    width: 6px;
-    height: 6px;
-    top: 5px;
-    right: 5px;
+  .user-menu-container .user-avatar:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 3px var(--primary-light), 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .user-menu-container .avatar-initial {
+    font-size: 0.8125rem;
+    font-weight: 700;
   }
   
   .form-row {
