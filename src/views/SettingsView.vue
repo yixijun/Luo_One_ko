@@ -566,8 +566,12 @@ async function refreshGoogleToken(id: number) {
   
   try {
     const response = await apiClient.post(`/oauth/google/refresh/${id}`);
+    console.log('[RefreshToken] Response:', response);
+    console.log('[RefreshToken] Response data:', response.data);
     if (response.data?.success) {
-      addLog('success', `Token 刷新成功，新过期时间: ${new Date(response.data.data.expires_at).toLocaleString('zh-CN')}`);
+      const expiresAt = response.data.data?.expires_at;
+      const expiresStr = expiresAt ? new Date(expiresAt).toLocaleString('zh-CN') : '未知';
+      addLog('success', `Token 刷新成功，新过期时间: ${expiresStr}`);
       successMessage.value = 'Token 刷新成功';
     } else {
       const errMsg = response.data?.error?.message || 'Token 刷新失败';
@@ -575,6 +579,8 @@ async function refreshGoogleToken(id: number) {
       errorMessage.value = errMsg;
     }
   } catch (err: any) {
+    console.error('[RefreshToken] Error:', err);
+    console.error('[RefreshToken] Error response:', err?.response);
     const errMsg = err?.response?.data?.error?.message || err?.message || '未知错误';
     addLog('error', `Token 刷新异常: ${errMsg}`);
     errorMessage.value = errMsg;
