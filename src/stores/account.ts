@@ -52,6 +52,7 @@ export const useAccountStore = defineStore('account', () => {
       useSSL: data.use_ssl as boolean,
       enabled: data.enabled as boolean,
       syncDays: (data.sync_days as number) ?? -1,
+      sortOrder: (data.sort_order as number) ?? 0,
       lastSyncAt: data.last_sync_at as number,
       createdAt: data.created_at as number,
       emailCount: (data.email_count as number) ?? 0,
@@ -187,6 +188,36 @@ export const useAccountStore = defineStore('account', () => {
     return updateAccount(id, { enabled: !account.enabled });
   }
 
+  // 重新排序账户
+  async function reorderAccounts(accountIds: number[]): Promise<boolean> {
+    loading.value = true;
+    error.value = null;
+    try {
+      await apiClient.put('/accounts/reorder', { account_ids: accountIds });
+      // 更新本地排序
+      const newAccounts: EmailAccount[] = [];
+      for (const id of accountIds) {
+        const account = accounts.value.find(a => a.id === id);
+        if (account) {
+          newAccounts.push(account);
+        }
+      }
+      accounts.value = newAccounts;
+      return true;
+    } catch (err) {
+      error.value = (err as Error).message || '排序失败';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 本地移动账户（用于拖拽预览）
+  function moveAccountLocally(fromIndex: number, toIndex: number): void {
+    const item = accounts.value.splice(fromIndex, 1)[0];
+    accounts.value.splice(toIndex, 0, item);
+  }
+
   // 设置当前账户
   function setCurrentAccount(account: EmailAccount | null): void {
     currentAccount.value = account;
@@ -219,6 +250,8 @@ export const useAccountStore = defineStore('account', () => {
     testConnection,
     testConnectionDirect,
     toggleEnabled,
+    reorderAccounts,
+    moveAccountLocally,
     setCurrentAccount,
     setCurrentAccountById,
     reset,

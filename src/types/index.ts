@@ -28,6 +28,7 @@ export interface EmailAccount {
   useSSL: boolean;
   enabled: boolean;
   syncDays: number; // 收取天数: -1=全部, 0=增量, >0=指定天数
+  sortOrder?: number; // 排序顺序
   lastSyncAt: number;
   createdAt?: number;
   emailCount?: number; // 已收取的邮件数量

@@ -30,6 +30,11 @@ const syncingAccountId = ref<number | null>(null);
 const fullSyncingAccountId = ref<number | null>(null);
 const processingAccountId = ref<number | null>(null);
 
+// 拖拽排序相关状态
+const isDragging = ref(false);
+const dragIndex = ref<number | null>(null);
+const dragOverIndex = ref<number | null>(null);
+
 const operationLogs = ref<Array<{ time: string; type: 'info' | 'success' | 'error'; message: string }>>([]);
 
 function addLog(type: 'info' | 'success' | 'error', message: string) {
@@ -328,6 +333,81 @@ async function testAIConnection() {
     addLog('error', `AI 连接测试失败: ${errMsg}`);
   } finally {
     testingAI.value = false;
+  }
+}
+
+// 拖拽排序函数
+function handleDragStart(index: number) {
+  isDragging.value = true;
+  dragIndex.value = index;
+}
+
+function handleDragOver(e: DragEvent, index: number) {
+  e.preventDefault();
+  dragOverIndex.value = index;
+}
+
+function handleDragLeave() {
+  dragOverIndex.value = null;
+}
+
+async function handleDrop(index: number) {
+  if (dragIndex.value === null || dragIndex.value === index) {
+    isDragging.value = false;
+    dragIndex.value = null;
+    dragOverIndex.value = null;
+    return;
+  }
+  
+  // 本地移动
+  accountStore.moveAccountLocally(dragIndex.value, index);
+  
+  // 保存到后端
+  const accountIds = accounts.value.map(a => a.id);
+  const success = await accountStore.reorderAccounts(accountIds);
+  
+  if (success) {
+    addLog('success', '账户排序已保存');
+  } else {
+    addLog('error', '保存排序失败');
+    // 重新获取账户列表恢复原顺序
+    await accountStore.fetchAccounts();
+  }
+  
+  isDragging.value = false;
+  dragIndex.value = null;
+  dragOverIndex.value = null;
+}
+
+function handleDragEnd() {
+  isDragging.value = false;
+  dragIndex.value = null;
+  dragOverIndex.value = null;
+}
+
+// 上移账户
+async function moveAccountUp(index: number) {
+  if (index <= 0) return;
+  accountStore.moveAccountLocally(index, index - 1);
+  const accountIds = accounts.value.map(a => a.id);
+  const success = await accountStore.reorderAccounts(accountIds);
+  if (success) addLog('success', '账户已上移');
+  else {
+    addLog('error', '移动失败');
+    await accountStore.fetchAccounts();
+  }
+}
+
+// 下移账户
+async function moveAccountDown(index: number) {
+  if (index >= accounts.value.length - 1) return;
+  accountStore.moveAccountLocally(index, index + 1);
+  const accountIds = accounts.value.map(a => a.id);
+  const success = await accountStore.reorderAccounts(accountIds);
+  if (success) addLog('success', '账户已下移');
+  else {
+    addLog('error', '移动失败');
+    await accountStore.fetchAccounts();
   }
 }
 
@@ -780,13 +860,38 @@ onMounted(async () => {
           <p>暂无邮箱账户，点击上方按钮添加</p>
         </div>
         <div v-else class="account-list">
-          <div v-for="account in accounts" :key="account.id" class="account-item">
+          <div 
+            v-for="(account, index) in accounts" 
+            :key="account.id" 
+            :class="['account-item', { 'dragging': dragIndex === index, 'drag-over': dragOverIndex === index }]"
+            draggable="true"
+            @dragstart="handleDragStart(index)"
+            @dragover="handleDragOver($event, index)"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop(index)"
+            @dragend="handleDragEnd"
+          >
+            <div class="account-drag-handle" title="拖拽排序">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="16" y2="6"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="8" y1="18" x2="16" y2="18"/>
+              </svg>
+            </div>
             <div class="account-info">
               <span class="account-email">{{ account.email }}</span>
               <span v-if="account.displayName" class="account-name">{{ account.displayName }}</span>
               <span :class="['account-status', { enabled: account.enabled }]">{{ account.enabled ? '已启用' : '已禁用' }}</span>
               <span class="account-email-count">已收取: {{ account.emailCount ?? 0 }} 封</span>
               <span class="account-sync-time" v-if="account.lastSyncAt">上次同步: {{ new Date(account.lastSyncAt * 1000).toLocaleString('zh-CN') }}</span>
+            </div>
+            <div class="account-sort-btns">
+              <button class="sort-btn" @click="moveAccountUp(index)" :disabled="index === 0" title="上移">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+              </button>
+              <button class="sort-btn" @click="moveAccountDown(index)" :disabled="index === accounts.length - 1" title="下移">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
             </div>
             <div class="account-actions">
               <div class="action-row">
@@ -1149,9 +1254,19 @@ onMounted(async () => {
 .empty-state svg { width: 72px; height: 72px; margin-bottom: 18px; opacity: 0.4; }
 .empty-state p { margin: 0; }
 .account-list { display: flex; flex-direction: column; gap: 12px; }
-.account-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--card-bg); flex-wrap: wrap; gap: 12px; transition: all var(--transition-fast, 0.15s ease); }
+.account-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--card-bg); flex-wrap: wrap; gap: 12px; transition: all var(--transition-fast, 0.15s ease); cursor: grab; }
 .account-item:hover { border-color: var(--text-tertiary); }
-.account-info { display: flex; flex-direction: column; gap: 4px; }
+.account-item.dragging { opacity: 0.5; cursor: grabbing; border-color: var(--primary-color); background: var(--primary-light); }
+.account-item.drag-over { border-color: var(--primary-color); border-style: dashed; background: var(--primary-light); transform: scale(1.02); }
+.account-drag-handle { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--text-tertiary); cursor: grab; flex-shrink: 0; border-radius: var(--radius-sm, 6px); transition: all var(--transition-fast, 0.15s ease); }
+.account-drag-handle:hover { color: var(--text-primary); background: var(--hover-bg); }
+.account-drag-handle svg { width: 18px; height: 18px; }
+.account-sort-btns { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.sort-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 22px; border: none; background: var(--hover-bg); color: var(--text-tertiary); border-radius: var(--radius-sm, 4px); cursor: pointer; transition: all var(--transition-fast, 0.15s ease); }
+.sort-btn:hover:not(:disabled) { background: var(--primary-light); color: var(--primary-color); }
+.sort-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.sort-btn svg { width: 16px; height: 16px; }
+.account-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .account-email { font-weight: 600; color: var(--text-primary); }
 .account-name { font-size: 0.8125rem; color: var(--text-secondary); }
 .account-status { font-size: 0.75rem; color: var(--text-tertiary); }
