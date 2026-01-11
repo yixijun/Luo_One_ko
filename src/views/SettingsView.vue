@@ -555,6 +555,34 @@ async function processAccount(id: number) {
   }
 }
 
+// 刷新 Google OAuth Token
+const refreshingTokenId = ref<number | null>(null);
+
+async function refreshGoogleToken(id: number) {
+  clearMessages();
+  refreshingTokenId.value = id;
+  const account = accounts.value.find(a => a.id === id);
+  addLog('info', `开始刷新 Token: ${account?.email || id}`);
+  
+  try {
+    const response = await apiClient.post(`/oauth/google/refresh/${id}`);
+    if (response.data?.success) {
+      addLog('success', `Token 刷新成功，新过期时间: ${new Date(response.data.data.expires_at).toLocaleString('zh-CN')}`);
+      successMessage.value = 'Token 刷新成功';
+    } else {
+      const errMsg = response.data?.error?.message || 'Token 刷新失败';
+      addLog('error', `Token 刷新失败: ${errMsg}`);
+      errorMessage.value = errMsg;
+    }
+  } catch (err: any) {
+    const errMsg = err?.response?.data?.error?.message || err?.message || '未知错误';
+    addLog('error', `Token 刷新异常: ${errMsg}`);
+    errorMessage.value = errMsg;
+  } finally {
+    refreshingTokenId.value = null;
+  }
+}
+
 async function testModalConnection() {
   modalTestResult.value = null; modalTestingConnection.value = true;
   addLog('info', `测试连接配置: IMAP=${accountForm.imapHost}:${accountForm.imapPort}, SMTP=${accountForm.smtpHost}:${accountForm.smtpPort}, SSL=${accountForm.useSSL}`);
@@ -754,6 +782,7 @@ onMounted(async () => {
                 <button class="btn small sync-btn" @click="syncAllAccount(account.id)" :disabled="fullSyncingAccountId === account.id" title="同步所有邮件（可能需要较长时间）">{{ fullSyncingAccountId === account.id ? '全量同步中...' : '同步全部' }}</button>
                 <button class="btn small process-btn" @click="processAccount(account.id)" :disabled="processingAccountId === account.id" title="处理邮件（提取验证码等）">{{ processingAccountId === account.id ? '处理中...' : '处理' }}</button>
                 <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
+                <button v-if="account.authType === 'oauth2' && account.oauthProvider === 'google'" class="btn small refresh-token-btn" @click="refreshGoogleToken(account.id)" :disabled="refreshingTokenId === account.id" title="刷新 Google OAuth Token">{{ refreshingTokenId === account.id ? '刷新中...' : '刷新Token' }}</button>
               </div>
               <div class="action-row">
                 <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
@@ -1122,6 +1151,9 @@ onMounted(async () => {
 .process-btn { background-color: #9c27b0 !important; color: white !important; }
 .process-btn:hover { background-color: #7b1fa2 !important; }
 .process-btn:disabled { background-color: #ce93d8 !important; }
+.refresh-token-btn { background: linear-gradient(135deg, #4285f4, #34a853) !important; color: white !important; border: none !important; }
+.refresh-token-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.refresh-token-btn:disabled { opacity: 0.6; }
 .sync-progress { width: 100%; margin-top: 12px; padding: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px); }
 .sync-progress .progress-info { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; flex-wrap: wrap; }
 .sync-progress .progress-bar { height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; }

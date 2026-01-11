@@ -31,6 +31,9 @@ export interface EmailAccount {
   lastSyncAt: number;
   createdAt?: number;
   emailCount?: number; // 已收取的邮件数量
+  // OAuth 相关字段
+  authType?: 'password' | 'oauth2';
+  oauthProvider?: string; // google, microsoft, etc.
 }
 
 // 处理结果
