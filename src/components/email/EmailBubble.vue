@@ -251,6 +251,7 @@ function handleClick() {
 
 .html-content {
   word-break: break-word;
+  overflow-wrap: break-word;
   background-color: #ffffff;
   padding: 20px;
   border-radius: var(--radius-md, 10px);
@@ -258,15 +259,29 @@ function handleClick() {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* 重置HTML邮件的默认样式 - 使用更强的选择器 */
 .html-content :deep(*) {
-  max-width: 100%;
-  box-sizing: border-box;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
   border-left: none !important;
   border-left-width: 0 !important;
   border-left-style: none !important;
+}
+
+/* 限制表格宽度 */
+.html-content :deep(table) {
+  border-collapse: collapse;
+  max-width: 100% !important;
+  width: auto !important;
+  table-layout: fixed;
+  border-left: none !important;
+  margin: 12px 0;
+  overflow-x: auto;
+  display: block;
 }
 
 .html-content :deep(body),
@@ -302,19 +317,13 @@ function handleClick() {
 }
 
 .html-content :deep(img) {
-  max-width: 100%;
-  height: auto;
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
   border-radius: 8px;
   border: none !important;
   display: block;
   margin: 8px 0;
-}
-
-.html-content :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  border-left: none !important;
-  margin: 12px 0;
 }
 
 .html-content :deep(td),
@@ -322,6 +331,7 @@ function handleClick() {
   border: 1px solid #e5e7eb !important;
   padding: 10px 12px;
   text-align: left;
+  word-break: break-word;
 }
 
 .html-content :deep(th) {

@@ -304,6 +304,8 @@ function handleForward() { emit('forward'); }
   flex-direction: column;
   height: 100%;
   background-color: var(--content-bg);
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .detail-header {
@@ -383,7 +385,14 @@ function handleForward() { emit('forward'); }
 .detail-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
+  max-width: 100%;
+}
+
+.email-body-section {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .email-meta {
