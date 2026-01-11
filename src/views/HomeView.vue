@@ -243,14 +243,9 @@ watch(() => accountStore.currentAccountId, (newId) => {
     
     <!-- 主体内容 -->
     <div class="home-body">
-      <!-- 侧边栏 - 桌面端始终显示，移动端通过遮罩层显示 -->
-      <div 
-        v-if="!isMobileView || showMobileSidebar" 
-        class="sidebar-wrapper"
-        :class="{ 'mobile-sidebar': isMobileView }"
-      >
-        <Sidebar @account-change="showMobileSidebar = false" />
-        <div v-if="isMobileView" class="sidebar-overlay" @click="showMobileSidebar = false"></div>
+      <!-- PC端侧边栏 -->
+      <div v-if="!isMobileView" class="sidebar-wrapper">
+        <Sidebar />
       </div>
       
       <!-- 主内容区 -->
@@ -279,6 +274,18 @@ watch(() => accountStore.currentAccountId, (newId) => {
         </Transition>
       </div>
     </div>
+
+    <!-- 移动端侧边栏（独立于主布局） -->
+    <Teleport to="body">
+      <Transition name="mobile-sidebar">
+        <div v-if="isMobileView && showMobileSidebar" class="mobile-sidebar-container">
+          <div class="mobile-sidebar-overlay" @click="showMobileSidebar = false"></div>
+          <div class="mobile-sidebar-content">
+            <Sidebar @account-change="showMobileSidebar = false" />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- 全局加载指示器 -->
     <div v-if="isLoading" class="global-loading">
@@ -334,29 +341,17 @@ watch(() => accountStore.currentAccountId, (newId) => {
   color: var(--primary-color);
 }
 
-/* 移动端侧边栏 */
-.mobile-sidebar {
+/* ========== 移动端侧边栏（完全独立） ========== */
+.mobile-sidebar-container {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 9999;
 }
 
-.mobile-sidebar :deep(.sidebar) {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 2;
-  width: 280px;
-  max-width: 85vw;
-  animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-overlay {
+.mobile-sidebar-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -365,27 +360,52 @@ watch(() => accountStore.currentAccountId, (newId) => {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 1;
-  animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.mobile-sidebar-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: var(--sidebar-bg);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+.mobile-sidebar-content :deep(.sidebar) {
+  width: 100%;
+  height: 100%;
 }
 
-/* 邮件详情覆盖层 */
+/* 移动端侧边栏动画 */
+.mobile-sidebar-enter-active {
+  transition: opacity 0.25s ease;
+}
+
+.mobile-sidebar-enter-active .mobile-sidebar-content {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-sidebar-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.mobile-sidebar-leave-active .mobile-sidebar-content {
+  transition: transform 0.2s ease;
+}
+
+.mobile-sidebar-enter-from,
+.mobile-sidebar-leave-to {
+  opacity: 0;
+}
+
+.mobile-sidebar-enter-from .mobile-sidebar-content,
+.mobile-sidebar-leave-to .mobile-sidebar-content {
+  transform: translateX(-100%);
+}
+
+/* ========== 邮件详情覆盖层 ========== */
 .email-detail-overlay {
   position: absolute;
   top: 0;
@@ -477,11 +497,6 @@ watch(() => accountStore.currentAccountId, (newId) => {
 @media (max-width: 768px) {
   .home-body {
     flex-direction: column;
-  }
-  
-  /* 移动端隐藏默认侧边栏 */
-  .sidebar-wrapper:not(.mobile-sidebar) {
-    display: none;
   }
   
   .email-detail-overlay {
