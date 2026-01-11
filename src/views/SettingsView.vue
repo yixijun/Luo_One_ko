@@ -782,7 +782,7 @@ onMounted(async () => {
                 <button class="btn small sync-btn" @click="syncAllAccount(account.id)" :disabled="fullSyncingAccountId === account.id" title="同步所有邮件（可能需要较长时间）">{{ fullSyncingAccountId === account.id ? '全量同步中...' : '同步全部' }}</button>
                 <button class="btn small process-btn" @click="processAccount(account.id)" :disabled="processingAccountId === account.id" title="处理邮件（提取验证码等）">{{ processingAccountId === account.id ? '处理中...' : '处理' }}</button>
                 <button class="btn small" @click="testConnection(account.id)" :disabled="testingConnection">测试</button>
-                <button v-if="account.auth_type === 'oauth2' && account.oauth_provider === 'google'" class="btn small refresh-token-btn" @click="refreshGoogleToken(account.id)" :disabled="refreshingTokenId === account.id" title="刷新 Google OAuth Token">{{ refreshingTokenId === account.id ? '刷新中...' : '刷新Token' }}</button>
+                <button v-if="account.auth_type === 'oauth2' || account.email.includes('gmail.com')" class="btn small refresh-token-btn" @click="refreshGoogleToken(account.id)" :disabled="refreshingTokenId === account.id" title="刷新 Google OAuth Token">{{ refreshingTokenId === account.id ? '刷新中...' : '刷新Token' }}</button>
               </div>
               <div class="action-row">
                 <button class="btn small" @click="toggleAccountEnabled(account.id)">{{ account.enabled ? '禁用' : '启用' }}</button>
