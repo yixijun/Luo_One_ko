@@ -1446,12 +1446,26 @@ onUnmounted(() => {
   
   .header-right {
     flex-shrink: 0;
-    gap: 8px;
+    gap: 6px;
   }
   
-  /* 移动端隐藏同步和添加邮箱按钮（直接子元素的 icon-btn） */
-  .header-right > .icon-btn {
+  /* 移动端只隐藏添加邮箱按钮，保留同步按钮 */
+  .header-right > .icon-btn:not(:first-child) {
     display: none;
+  }
+  
+  /* 移动端同步按钮样式 */
+  .header-right > .icon-btn:first-child {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+  }
+  
+  .header-right > .icon-btn:first-child svg {
+    width: 18px;
+    height: 18px;
   }
   
   /* 移动端主题按钮样式 - 圆形带边框 */
