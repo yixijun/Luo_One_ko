@@ -249,8 +249,8 @@ watch(() => accountStore.currentAccountId, (newId) => {
         class="sidebar-wrapper"
         :class="{ 'mobile-sidebar': isMobileView }"
       >
-        <div v-if="isMobileView" class="sidebar-overlay" @click="showMobileSidebar = false"></div>
         <Sidebar @account-change="showMobileSidebar = false" />
+        <div v-if="isMobileView" class="sidebar-overlay" @click="showMobileSidebar = false"></div>
       </div>
       
       <!-- 主内容区 -->
@@ -342,8 +342,18 @@ watch(() => accountStore.currentAccountId, (newId) => {
   right: 0;
   bottom: 0;
   z-index: 100;
-  display: flex;
-  width: 100%;
+}
+
+.mobile-sidebar :deep(.sidebar) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 280px;
+  max-width: 85vw;
+  animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-overlay {
@@ -362,16 +372,6 @@ watch(() => accountStore.currentAccountId, (newId) => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-.mobile-sidebar :deep(.sidebar) {
-  position: relative;
-  z-index: 2;
-  width: 280px;
-  max-width: 85vw;
-  height: 100%;
-  animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideInLeft {
