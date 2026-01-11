@@ -314,91 +314,132 @@ async function testConnection() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 20px;
+  padding: 24px;
   background: var(--bg-gradient);
   position: relative;
+  overflow: hidden;
+}
+
+/* 背景装饰 */
+.login-view::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 20%, var(--primary-glow) 0%, transparent 40%),
+              radial-gradient(circle at 70% 80%, var(--accent-light, var(--primary-light)) 0%, transparent 40%);
+  opacity: 0.4;
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, 2%) rotate(1deg); }
+  66% { transform: translate(-1%, 1%) rotate(-1deg); }
 }
 
 .login-container {
   width: 100%;
-  max-width: 420px;
-  padding: 44px;
+  max-width: 440px;
+  padding: 48px;
   background-color: var(--panel-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl, 20px);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-2xl, 32px);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
+  position: relative;
+  z-index: 1;
+  animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .logo-icon {
-  font-size: 2rem;
+  font-size: 2.25rem;
+  filter: drop-shadow(0 4px 8px var(--shadow-color));
 }
 
 .logo-text {
-  font-size: 1.875rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: var(--primary-color);
-  letter-spacing: -0.02em;
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
 }
 
 .login-title {
-  margin: 0 0 8px 0;
-  font-size: 1.5rem;
+  margin: 0 0 10px 0;
+  font-size: 1.625rem;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .login-subtitle {
   margin: 0;
   font-size: 0.9375rem;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .error-message {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  border-radius: var(--radius-md, 10px);
+  gap: 10px;
+  padding: 14px 18px;
+  background-color: var(--error-light, rgba(239, 68, 68, 0.12));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-lg, 16px);
   color: var(--error-color);
   font-size: 0.875rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .error-message svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .form-label {
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -410,18 +451,23 @@ async function testConnection() {
 
 .input-icon {
   position: absolute;
-  left: 14px;
-  width: 18px;
-  height: 18px;
-  color: var(--text-tertiary);
+  left: 16px;
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted, var(--text-tertiary));
   pointer-events: none;
+  transition: color var(--transition-fast, 0.15s ease);
+}
+
+.input-wrapper:focus-within .input-icon {
+  color: var(--primary-color);
 }
 
 .form-input {
   width: 100%;
-  padding: 13px 14px 13px 44px;
+  padding: 15px 16px 15px 48px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-lg, 16px);
   background-color: var(--input-bg);
   color: var(--text-primary);
   font-size: 0.9375rem;
@@ -431,78 +477,101 @@ async function testConnection() {
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  box-shadow: 0 0 0 4px var(--primary-light), var(--shadow-sm);
+  background-color: var(--panel-bg);
+}
+
+.form-input:hover:not(:focus) {
+  border-color: var(--text-tertiary);
 }
 
 .form-input::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-muted, var(--text-tertiary));
 }
 
 .toggle-password-btn {
   position: absolute;
-  right: 14px;
+  right: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--text-muted, var(--text-tertiary));
   cursor: pointer;
-  transition: color var(--transition-fast, 0.15s ease);
+  border-radius: var(--radius-sm, 8px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .toggle-password-btn:hover {
   color: var(--text-primary);
+  background-color: var(--hover-bg);
 }
 
 .toggle-password-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 14px 24px;
-  margin-top: 8px;
+  padding: 16px 28px;
+  margin-top: 10px;
   border: none;
-  border-radius: var(--radius-md, 10px);
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  border-radius: var(--radius-lg, 16px);
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
   color: #fff;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast, 0.15s ease);
-  box-shadow: 0 4px 12px var(--shadow-color);
+  transition: all var(--transition-normal, 0.2s ease);
+  box-shadow: var(--shadow-md), 0 0 0 0 var(--primary-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.15s ease);
 }
 
 .login-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--shadow-color);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg), 0 0 32px var(--primary-glow);
+}
+
+.login-btn:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .login-btn:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(-1px) scale(0.99);
 }
 
 .login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .loading-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -510,8 +579,8 @@ async function testConnection() {
 }
 
 .login-footer {
-  margin-top: 24px;
-  padding-top: 24px;
+  margin-top: 28px;
+  padding-top: 28px;
   border-top: 1px solid var(--border-color);
   text-align: center;
 }
@@ -519,39 +588,42 @@ async function testConnection() {
 .footer-text {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
+  color: var(--text-tertiary);
+  line-height: 1.6;
 }
 
 /* 右下角设置按钮 */
 .settings-fab {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 28px;
+  right: 28px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-lg);
-  transition: all var(--transition-fast, 0.15s ease);
+  transition: all var(--transition-normal, 0.2s ease);
+  z-index: 10;
 }
 
 .settings-fab:hover {
   background: var(--primary-color);
   color: #fff;
   border-color: var(--primary-color);
-  transform: scale(1.05);
+  transform: scale(1.08) rotate(45deg);
+  box-shadow: var(--shadow-xl), 0 0 24px var(--primary-glow);
 }
 
 .settings-fab svg {
   width: 24px;
   height: 24px;
+  transition: transform var(--transition-normal, 0.2s ease);
 }
 
 /* 弹窗样式 */
@@ -561,50 +633,58 @@ async function testConnection() {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-xl, 20px);
+  border-radius: var(--radius-2xl, 32px);
   width: 90%;
-  max-width: 420px;
-  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 24px 28px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .modal-header h3 {
   margin: 0;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   font-size: 24px;
   cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--text-muted, var(--text-tertiary));
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-md, 12px);
   transition: all var(--transition-fast, 0.15s ease);
 }
 
@@ -614,70 +694,72 @@ async function testConnection() {
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 28px;
 }
 
 .hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin-top: 6px;
+  color: var(--text-muted, var(--text-tertiary));
+  margin-top: 8px;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
+  gap: 14px;
+  padding: 20px 28px;
   border-top: 1px solid var(--border-color);
 }
 
 .btn {
-  padding: 11px 22px;
+  padding: 12px 24px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-md, 12px);
   background: transparent;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   transition: all var(--transition-fast, 0.15s ease);
 }
 
 .btn:hover {
   background: var(--hover-bg);
+  transform: translateY(-1px);
 }
 
 .btn.primary {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
+  border-color: transparent;
   color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn.primary:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md), 0 0 16px var(--primary-glow);
 }
 
 /* 测试连接 */
 .test-connection {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 18px;
+  gap: 14px;
+  margin-top: 20px;
 }
 
 .test-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md, 10px);
+  border-radius: var(--radius-md, 12px);
   background: transparent;
   color: var(--text-primary);
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast, 0.15s ease);
 }
@@ -685,6 +767,7 @@ async function testConnection() {
 .test-btn:hover:not(:disabled) {
   background: var(--hover-bg);
   border-color: var(--primary-color);
+  transform: translateY(-2px);
 }
 
 .test-btn:disabled {
@@ -698,46 +781,53 @@ async function testConnection() {
 }
 
 .loading-spinner.small {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-width: 2px;
 }
 
 .connection-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md, 10px);
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md, 12px);
   font-size: 0.875rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .connection-status.success {
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--success-light, rgba(34, 197, 94, 0.12));
   color: var(--success-color);
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .connection-status.error {
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--error-light, rgba(239, 68, 68, 0.12));
   color: var(--error-color);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .connection-status svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
 /* 响应式布局 */
 @media (max-width: 480px) {
   .login-container {
-    padding: 24px;
+    padding: 32px 24px;
+    border-radius: var(--radius-xl, 24px);
   }
   
   .login-title {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
   }
   
   .login-subtitle {
@@ -745,15 +835,15 @@ async function testConnection() {
   }
   
   .settings-fab {
-    bottom: 16px;
-    right: 16px;
-    width: 48px;
-    height: 48px;
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
   }
   
   .settings-fab svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
 }
 </style>

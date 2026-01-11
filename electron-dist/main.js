@@ -2,9 +2,10 @@
  * Electron 主进程入口
  * Requirements: 12.1, 12.2, 12.3
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,8 +16,33 @@ let tray = null;
 let isQuitting = false;
 // 是否为开发环境
 const isDev = process.env.NODE_ENV === 'development';
-// 内置服务器端口
-const SERVER_PORT = 3000;
+// 前端地址（从配置文件读取）
+function getFrontendUrl() {
+    // 尝试多个可能的配置文件路径
+    const possiblePaths = [
+        path.join(__dirname, 'config.json'), // electron-dist/config.json (开发)
+        path.join(__dirname, '../electron/config.json'), // electron/config.json (打包后)
+        path.join(app.getPath('userData'), 'config.json'), // 用户数据目录
+    ];
+    for (const configPath of possiblePaths) {
+        try {
+            if (fs.existsSync(configPath)) {
+                console.log(`[Config] Found config at: ${configPath}`);
+                const data = fs.readFileSync(configPath, 'utf-8');
+                const config = JSON.parse(data);
+                if (config.frontendUrl) {
+                    return config.frontendUrl;
+                }
+            }
+        }
+        catch (e) {
+            console.error(`[Config] Failed to read config from ${configPath}:`, e);
+        }
+    }
+    console.log('[Config] No config found, using default');
+    // 默认使用本地服务器
+    return 'http://localhost:3000';
+}
 /**
  * 创建主窗口
  */
@@ -28,12 +54,19 @@ function createWindow() {
         minHeight: 600,
         title: '洛一 (Luo One)',
         icon: path.join(__dirname, '../public/icon.png'),
+        titleBarStyle: 'hidden',
+        titleBarOverlay: {
+            color: '#1a1a2e',
+            symbolColor: '#ffffff',
+            height: 36,
+        },
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
+            webSecurity: false, // 临时禁用以调试跨域问题
         },
-        show: false, // 等待 ready-to-show 事件再显示
+        show: false,
     });
     // 窗口准备好后显示
     mainWindow.once('ready-to-show', () => {
@@ -41,15 +74,70 @@ function createWindow() {
     });
     // 加载应用
     if (isDev) {
-        // 开发环境：加载 Vite 开发服务器
         mainWindow.loadURL('http://localhost:5173');
         mainWindow.webContents.openDevTools();
     }
     else {
-        // 生产环境：加载内置服务器
-        mainWindow.loadURL(`http://localhost:${SERVER_PORT}`);
+        // 生产环境：加载配置的前端地址
+        const frontendUrl = getFrontendUrl();
+        console.log(`[Electron] Loading: ${frontendUrl}`);
+        // 设置 User-Agent 为普通浏览器
+        mainWindow.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        // 修改请求头，移除 Electron 相关标识
+        session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+            // 移除可能暴露 Electron 的头
+            delete details.requestHeaders['Electron'];
+            delete details.requestHeaders['electron'];
+            // 确保 Origin 和 Referer 正确设置
+            const url = new URL(frontendUrl);
+            if (!details.requestHeaders['Origin']) {
+                details.requestHeaders['Origin'] = url.origin;
+            }
+            if (!details.requestHeaders['Referer']) {
+                details.requestHeaders['Referer'] = frontendUrl;
+            }
+            callback({ requestHeaders: details.requestHeaders });
+        });
+        mainWindow.loadURL(frontendUrl);
+        // 添加 F12 快捷键打开 DevTools（用于调试）
+        mainWindow.webContents.on('before-input-event', (event, input) => {
+            if (input.key === 'F12') {
+                mainWindow?.webContents.toggleDevTools();
+                event.preventDefault();
+            }
+        });
     }
-    // 窗口关闭时隐藏到托盘而不是退出
+    // 加载失败处理
+    mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+        console.error(`[Electron] Failed to load: ${validatedURL}, Error: ${errorCode} - ${errorDescription}`);
+    });
+    // 页面加载完成
+    mainWindow.webContents.on('did-finish-load', () => {
+        console.log('[Electron] Page loaded successfully');
+        // 注入 CSS 为 header 添加右侧 padding，避免与窗口控制按钮重叠
+        mainWindow?.webContents.insertCSS(`
+      /* Electron 窗口控制按钮区域预留 */
+      .app-header {
+        padding-right: 150px !important;
+      }
+      .header-right {
+        margin-right: 0 !important;
+      }
+      /* 让 header 可拖动窗口 */
+      .app-header {
+        -webkit-app-region: drag;
+      }
+      .app-header button,
+      .app-header input,
+      .app-header .user-avatar,
+      .app-header .search-bar,
+      .app-header .user-menu-container,
+      .app-header .theme-menu-container {
+        -webkit-app-region: no-drag;
+      }
+    `);
+    });
+    // 窗口关闭时隐藏到托盘
     mainWindow.on('close', (event) => {
         if (!isQuitting) {
             event.preventDefault();
@@ -62,15 +150,12 @@ function createWindow() {
 }
 /**
  * 创建系统托盘
- * Requirement: 12.6
  */
 function createTray() {
-    // 创建托盘图标
     const iconPath = path.join(__dirname, '../public/icon.png');
     const icon = nativeImage.createFromPath(iconPath);
     tray = new Tray(icon.resize({ width: 16, height: 16 }));
     tray.setToolTip('洛一 (Luo One)');
-    // 托盘菜单
     const contextMenu = Menu.buildFromTemplate([
         {
             label: '显示主窗口',
@@ -95,7 +180,6 @@ function createTray() {
         },
     ]);
     tray.setContextMenu(contextMenu);
-    // 点击托盘图标显示窗口
     tray.on('click', () => {
         if (mainWindow?.isVisible()) {
             mainWindow.hide();
@@ -108,7 +192,6 @@ function createTray() {
 }
 /**
  * 显示桌面通知
- * Requirement: 12.6
  */
 function showNotification(title, body) {
     if (Notification.isSupported()) {
@@ -125,30 +208,19 @@ function showNotification(title, body) {
     }
 }
 /**
- * 启动内置 Express 服务器（生产环境）
- * Requirement: 12.3
- */
-async function startEmbeddedServer() {
-    if (isDev)
-        return;
-    // 动态导入服务器模块
-    // @ts-ignore - 模块在构建后存在
-    const { startServer } = await import('../dist-server/electron-server.js');
-    startServer(SERVER_PORT);
-}
-/**
  * 应用初始化
  */
 async function initialize() {
-    // 启动内置服务器
-    await startEmbeddedServer();
-    // 创建窗口
     createWindow();
-    // 创建托盘
     createTray();
 }
 // 应用准备就绪
 app.whenReady().then(initialize);
+// 忽略证书错误（用于自签名证书）
+app.on('certificate-error', (event, _webContents, _url, _error, _certificate, callback) => {
+    event.preventDefault();
+    callback(true);
+});
 // macOS: 点击 dock 图标时重新创建窗口
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -160,7 +232,6 @@ app.on('activate', () => {
 });
 // 所有窗口关闭时的处理
 app.on('window-all-closed', () => {
-    // macOS 上保持应用运行
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -179,27 +250,17 @@ ipcMain.handle('get-app-version', () => {
 ipcMain.handle('get-platform', () => {
     return process.platform;
 });
-/**
- * 设置托盘图标上的未读数量徽章
- */
 ipcMain.handle('set-badge-count', (_event, count) => {
     if (process.platform === 'darwin') {
         app.dock.setBadge(count > 0 ? String(count) : '');
     }
-    // Windows 托盘提示更新
     if (tray) {
         tray.setToolTip(count > 0 ? `洛一 (Luo One) - ${count} 封未读邮件` : '洛一 (Luo One)');
     }
 });
-/**
- * 显示新邮件通知
- */
 ipcMain.handle('notify-new-email', (_event, sender, subject) => {
     showNotification(`新邮件来自 ${sender}`, subject);
 });
-/**
- * 窗口控制
- */
 ipcMain.handle('window-minimize', () => {
     mainWindow?.minimize();
 });

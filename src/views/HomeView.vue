@@ -293,7 +293,7 @@ watch(() => accountStore.currentAccountId, (newId) => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: var(--bg-primary, #0f0f1a);
+  background: var(--bg-gradient, var(--bg-primary));
   overflow: hidden;
 }
 
@@ -319,18 +319,19 @@ watch(() => accountStore.currentAccountId, (newId) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: transparent;
+  width: 44px;
+  height: 44px;
+  background: var(--hover-bg);
   border: none;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  border-radius: var(--radius-md, 12px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .mobile-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--active-bg);
+  color: var(--primary-color);
 }
 
 /* 移动端侧边栏 */
@@ -349,22 +350,32 @@ watch(() => accountStore.currentAccountId, (newId) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 99;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .mobile-sidebar :deep(.sidebar) {
   position: relative;
   z-index: 100;
-  animation: slideInLeft 0.2s ease-out;
+  animation: slideInLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes slideInLeft {
   from {
     transform: translateX(-100%);
+    opacity: 0;
   }
   to {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
@@ -373,11 +384,12 @@ watch(() => accountStore.currentAccountId, (newId) => {
   position: absolute;
   top: 0;
   right: 0;
-  width: 50%;
+  width: 55%;
   height: 100%;
-  background-color: var(--content-bg, #0f0f1a);
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+  background-color: var(--content-bg);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
   z-index: 10;
+  border-left: 1px solid var(--border-color-subtle, var(--border-color));
 }
 
 .email-detail-overlay.mobile-overlay {
@@ -387,12 +399,13 @@ watch(() => accountStore.currentAccountId, (newId) => {
   top: 0;
   bottom: 0;
   z-index: 50;
+  border-left: none;
 }
 
 /* 邮件详情滑动动画 */
 .slide-detail-enter-active,
 .slide-detail-leave-active {
-  transition: transform 0.25s ease-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .slide-detail-enter-from {
@@ -411,17 +424,6 @@ watch(() => accountStore.currentAccountId, (newId) => {
   transform: translateX(100%);
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
 /* 全局加载指示器 */
 .global-loading {
   position: fixed;
@@ -429,7 +431,7 @@ watch(() => accountStore.currentAccountId, (newId) => {
   left: 0;
   right: 0;
   height: 3px;
-  background-color: rgba(100, 108, 255, 0.2);
+  background-color: var(--primary-light);
   z-index: 1000;
   overflow: hidden;
 }
@@ -439,15 +441,16 @@ watch(() => accountStore.currentAccountId, (newId) => {
   position: absolute;
   top: 0;
   left: 0;
-  width: 30%;
+  width: 40%;
   height: 100%;
-  background-color: var(--primary-color, #646cff);
-  animation: loading 1.5s ease-in-out infinite;
+  background: var(--primary-gradient, linear-gradient(90deg, var(--primary-color), var(--primary-hover)));
+  animation: loading 1.2s ease-in-out infinite;
+  border-radius: var(--radius-full, 9999px);
 }
 
 @keyframes loading {
   0% {
-    left: -30%;
+    left: -40%;
   }
   100% {
     left: 100%;
@@ -483,26 +486,5 @@ watch(() => accountStore.currentAccountId, (newId) => {
   .main-wrapper {
     flex-direction: column;
   }
-}
-
-/* 深色主题变量 */
-:root {
-  --bg-primary: #0f0f1a;
-  --panel-bg: #1a1a2e;
-  --sidebar-bg: #16162a;
-  --header-bg: #1a1a2e;
-  --content-bg: #0f0f1a;
-  --input-bg: #2d2d44;
-  --border-color: #2d2d44;
-  --hover-bg: rgba(255, 255, 255, 0.05);
-  --active-bg: rgba(100, 108, 255, 0.15);
-  --primary-color: #646cff;
-  --primary-hover: #535bf2;
-  --text-primary: #ffffff;
-  --text-secondary: #888888;
-  --text-tertiary: #666666;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
 }
 </style>

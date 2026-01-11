@@ -6,7 +6,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createApiProxy, getBackendUrl } from './proxy.js';
+import { createApiProxy, createConfigRoutes, getBackendUrl } from './proxy.js';
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +16,26 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 // 静态资源目录（Vite 构建输出目录）
 const DIST_DIR = path.resolve(__dirname, '../dist');
+// 解析 JSON 请求体
+app.use(express.json());
+/**
+ * 配置路由 - 用于设置后端地址
+ */
+app.use('/config', createConfigRoutes());
+/**
+ * Health check 代理 - 转发到后端的 /health
+ */
+app.get('/health', async (req, res) => {
+    const backendUrl = getBackendUrl();
+    try {
+        const response = await fetch(`${backendUrl}/health`);
+        const data = await response.json();
+        res.json(data);
+    }
+    catch (e) {
+        res.status(502).json({ status: 'error', message: 'Backend unavailable' });
+    }
+});
 /**
  * 配置 API 反向代理
  * 将 /api/* 请求转发到后端服务 (Requirement 11.1)

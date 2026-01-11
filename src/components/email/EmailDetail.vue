@@ -303,178 +303,205 @@ function handleForward() { emit('forward'); }
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--content-bg, #0f0f1a);
+  background-color: var(--content-bg);
 }
 
 .detail-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
-  background-color: var(--panel-bg, #1a1a2e);
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color-subtle, var(--border-color));
+  background-color: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary, #888);
+  border-radius: var(--radius-md, 12px);
+  background: var(--hover-bg);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .back-btn:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
-  color: var(--text-primary, #fff);
+  background-color: var(--active-bg);
+  color: var(--primary-color);
+  transform: translateX(-2px);
 }
 
-.back-btn svg { width: 20px; height: 20px; }
+.back-btn svg { width: 22px; height: 22px; }
 
 .detail-title {
   flex: 1;
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #fff);
+  font-weight: 700;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
-.header-actions { display: flex; gap: 4px; }
+.header-actions { display: flex; gap: 6px; }
 
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 12px);
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .action-btn:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.1));
-  color: var(--text-primary, #fff);
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+  transform: translateY(-2px);
 }
 
 .action-btn.delete:hover {
-  background-color: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+  background-color: var(--error-light, rgba(244, 67, 54, 0.12));
+  color: var(--error-color);
 }
 
-.action-btn svg { width: 18px; height: 18px; }
+.action-btn svg { width: 20px; height: 20px; }
 
 .detail-content {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
 }
 
 .email-meta {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 16px;
-  background-color: var(--meta-bg, rgba(255, 255, 255, 0.03));
-  border-radius: 12px;
-  margin-bottom: 16px;
+  padding: 18px 20px;
+  background-color: var(--meta-bg);
+  border-radius: var(--radius-lg, 16px);
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color-subtle, var(--border-color));
 }
 
-.meta-main { display: flex; gap: 12px; }
+.meta-main { display: flex; gap: 14px; }
 
 .sender-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: var(--primary-color, #646cff);
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg, 16px);
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.375rem;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
+  box-shadow: var(--shadow-md);
 }
 
-.meta-info { display: flex; flex-direction: column; gap: 4px; }
+.meta-info { display: flex; flex-direction: column; gap: 5px; }
 
-.sender-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sender-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 
-.sender-name { font-size: 1rem; font-weight: 600; color: var(--text-primary, #fff); }
+.sender-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
 
-.sender-email { font-size: 0.8125rem; color: var(--text-secondary, #888); }
+.sender-email { font-size: 0.8125rem; color: var(--text-tertiary); }
 
-.recipient-row, .date-row { display: flex; gap: 6px; font-size: 0.8125rem; }
+.recipient-row, .date-row { display: flex; gap: 8px; font-size: 0.8125rem; }
 
-.meta-label { color: var(--text-secondary, #888); }
+.meta-label { color: var(--text-muted, var(--text-tertiary)); font-weight: 500; }
 
-.meta-value { color: var(--text-primary, #fff); }
+.meta-value { color: var(--text-secondary); }
 
 .read-status {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  background-color: var(--success-bg, rgba(76, 175, 80, 0.1));
-  color: #4caf50;
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--success-light, rgba(76, 175, 80, 0.12));
+  color: var(--success-color);
 }
 
 .read-status.unread {
-  background-color: var(--primary-bg, rgba(100, 108, 255, 0.1));
-  color: var(--primary-color, #646cff);
+  background: var(--primary-light);
+  color: var(--primary-color);
 }
 
 /* 验证码显示区域 */
 .verification-code-section {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .code-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  border-radius: 12px;
+  gap: 16px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, var(--success-light, rgba(76, 175, 80, 0.12)), rgba(76, 175, 80, 0.04));
+  border: 1px solid rgba(76, 175, 80, 0.25);
+  border-radius: var(--radius-xl, 24px);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal, 0.2s ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.code-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.15s ease);
 }
 
 .code-card:hover {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.08));
-  border-color: #4caf50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.18), rgba(76, 175, 80, 0.08));
+  border-color: var(--success-color);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.25);
+}
+
+.code-card:hover::before {
+  opacity: 1;
 }
 
 .code-card:active {
-  transform: scale(0.98);
+  transform: translateY(-1px);
 }
 
 .code-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #4caf50;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg, 16px);
+  background: linear-gradient(135deg, var(--success-color), #059669);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .code-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   color: #fff;
 }
 
@@ -482,41 +509,46 @@ function handleForward() { emit('forward'); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .code-label {
   font-size: 0.6875rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .code-value {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #4caf50;
-  letter-spacing: 3px;
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--success-color);
+  letter-spacing: 4px;
 }
 
 .code-copy-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(76, 175, 80, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md, 12px);
+  background: rgba(76, 175, 80, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .code-copy-icon svg {
-  width: 16px;
-  height: 16px;
-  color: #4caf50;
+  width: 18px;
+  height: 18px;
+  color: var(--success-color);
 }
 
 .code-card:hover .code-copy-icon {
-  background: #4caf50;
+  background: var(--success-color);
+  transform: scale(1.1);
 }
 
 .code-card:hover .code-copy-icon svg {
@@ -526,118 +558,129 @@ function handleForward() { emit('forward'); }
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 12px 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-secondary, #888);
+  gap: 10px;
+  margin: 0 0 14px 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.section-title svg { width: 16px; height: 16px; }
+.section-title svg { width: 18px; height: 18px; }
 
-.email-body-section, .attachments-section { margin-bottom: 16px; }
+.email-body-section, .attachments-section { margin-bottom: 20px; }
 
 .attachments-loading, .attachments-empty {
-  padding: 24px;
-  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
-  border-radius: 12px;
+  padding: 28px;
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg, 16px);
   text-align: center;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
+  border: 1px solid var(--border-color-subtle, var(--border-color));
 }
 
 .spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-color, #2d2d44);
-  border-top-color: var(--primary-color, #646cff);
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.7s linear infinite;
 }
 
-.spinner.small { width: 16px; height: 16px; }
+.spinner.small { width: 18px; height: 18px; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.attachments-list { display: flex; flex-direction: column; gap: 8px; }
+.attachments-list { display: flex; flex-direction: column; gap: 10px; }
 
 .attachment-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background-color: var(--card-bg, rgba(255, 255, 255, 0.03));
-  border-radius: 10px;
+  gap: 14px;
+  padding: 14px 18px;
+  background-color: var(--card-bg);
+  border-radius: var(--radius-lg, 16px);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast, 0.15s ease);
+  border: 1px solid var(--border-color-subtle, var(--border-color));
 }
 
 .attachment-item:hover {
-  background-color: var(--hover-bg, rgba(255, 255, 255, 0.08));
+  background-color: var(--card-bg-hover, var(--hover-bg));
+  border-color: var(--primary-color);
+  transform: translateX(4px);
 }
 
 .attachment-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary-bg, rgba(100, 108, 255, 0.1));
-  color: var(--primary-color, #646cff);
+  background-color: var(--primary-light);
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 
-.attachment-icon.image { background-color: rgba(76, 175, 80, 0.1); color: #4caf50; }
-.attachment-icon.pdf { background-color: rgba(244, 67, 54, 0.1); color: #f44336; }
+.attachment-icon.image { background-color: var(--success-light, rgba(76, 175, 80, 0.12)); color: var(--success-color); }
+.attachment-icon.pdf { background-color: var(--error-light, rgba(244, 67, 54, 0.12)); color: var(--error-color); }
 
-.attachment-icon svg { width: 20px; height: 20px; }
+.attachment-icon svg { width: 22px; height: 22px; }
 
-.attachment-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.attachment-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 
 .attachment-name {
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary, #fff);
+  font-weight: 600;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.attachment-size { font-size: 0.75rem; color: var(--text-secondary, #888); }
+.attachment-size { font-size: 0.75rem; color: var(--text-muted, var(--text-tertiary)); }
 
 .attachment-action {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   flex-shrink: 0;
+  border-radius: var(--radius-sm, 8px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
-.attachment-action svg { width: 18px; height: 18px; }
+.attachment-action svg { width: 20px; height: 20px; }
 
-.attachment-item:hover .attachment-action { color: var(--primary-color, #646cff); }
+.attachment-item:hover .attachment-action { 
+  color: var(--primary-color);
+  background: var(--primary-light);
+}
 
 @media (max-width: 768px) {
   .detail-header {
-    padding: 12px 16px;
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    padding: 14px 18px;
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
     position: sticky;
     top: 0;
     z-index: 10;
   }
-  .back-btn { width: 40px; height: 40px; background-color: var(--hover-bg, rgba(255, 255, 255, 0.1)); }
-  .back-btn svg { width: 24px; height: 24px; }
+  .back-btn { width: 44px; height: 44px; background-color: var(--hover-bg); }
+  .back-btn svg { width: 26px; height: 26px; }
   .detail-title { font-size: 0.9375rem; }
-  .detail-content { padding: 12px; }
-  .email-meta { flex-direction: column; gap: 12px; }
+  .detail-content { padding: 16px; }
+  .email-meta { flex-direction: column; gap: 14px; }
   .read-status { align-self: flex-start; }
-  .header-actions { gap: 2px; }
-  .action-btn { width: 40px; height: 40px; }
+  .header-actions { gap: 4px; }
+  .action-btn { width: 44px; height: 44px; }
 }
 </style>

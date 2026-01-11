@@ -1,4 +1,5 @@
-/* 字体引入 */
+/* 字体引入 - Inter 现代无衬线字体 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
 
 /* MiSans 字体 - 需要本地安装或使用 CDN */
@@ -35,10 +36,12 @@
 }
 
 :root {
-  --font-family: 'Inter', 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-family: var(--font-family);
+  --font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-family-cn: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-family), var(--font-family-cn);
   line-height: 1.6;
   font-weight: 400;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 
   color-scheme: light dark;
   font-synthesis: none;
@@ -47,131 +50,185 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 深色主题（默认） */
+/* 深色主题（默认） - 现代化渐变 */
 :root,
 [data-theme="dark"] {
-  color: rgba(255, 255, 255, 0.92);
-  background-color: #0d0d14;
+  color: rgba(255, 255, 255, 0.95);
+  background-color: #09090b;
   
-  --bg-primary: #0d0d14;
-  --bg-gradient: linear-gradient(145deg, #0d0d14 0%, #151520 40%, #1a1a28 100%);
-  --panel-bg: #16161f;
-  --sidebar-bg: #121218;
-  --header-bg: rgba(22, 22, 31, 0.85);
-  --content-bg: #0d0d14;
-  --input-bg: #1e1e2a;
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --hover-bg: rgba(255, 255, 255, 0.06);
-  --active-bg: rgba(100, 108, 255, 0.18);
-  --selected-bg: rgba(100, 108, 255, 0.22);
-  --unread-bg: rgba(100, 108, 255, 0.1);
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: rgba(99, 102, 241, 0.18);
-  --primary-glow: rgba(99, 102, 241, 0.4);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --success-color: #22c55e;
+  --bg-primary: #09090b;
+  --bg-gradient: linear-gradient(165deg, #09090b 0%, #0c0c10 30%, #111118 60%, #0f0f14 100%);
+  --panel-bg: #111113;
+  --sidebar-bg: #0c0c0e;
+  --header-bg: rgba(17, 17, 19, 0.75);
+  --content-bg: #09090b;
+  --input-bg: #18181b;
+  --card-bg: rgba(255, 255, 255, 0.025);
+  --card-bg-hover: rgba(255, 255, 255, 0.05);
+  --border-color: rgba(255, 255, 255, 0.06);
+  --border-color-subtle: rgba(255, 255, 255, 0.04);
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --active-bg: rgba(139, 92, 246, 0.15);
+  --selected-bg: rgba(139, 92, 246, 0.2);
+  --unread-bg: rgba(139, 92, 246, 0.08);
+  --primary-color: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --primary-light: rgba(139, 92, 246, 0.15);
+  --primary-glow: rgba(139, 92, 246, 0.35);
+  --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  --accent-color: #06b6d4;
+  --accent-light: rgba(6, 182, 212, 0.15);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+  --success-color: #10b981;
+  --success-light: rgba(16, 185, 129, 0.12);
   --warning-color: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.12);
   --error-color: #ef4444;
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
-  --bubble-bg: rgba(255, 255, 255, 0.04);
-  --meta-bg: rgba(255, 255, 255, 0.03);
-  --glass-bg: rgba(22, 22, 31, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --error-light: rgba(239, 68, 68, 0.12);
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
+  --bubble-bg: rgba(255, 255, 255, 0.03);
+  --meta-bg: rgba(255, 255, 255, 0.025);
+  --glass-bg: rgba(17, 17, 19, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
 }
 
 /* Luo 主题 - 以 #66ccff 为主色调，清新蓝色 */
 [data-theme="luo"] {
   color: rgba(255, 255, 255, 0.95);
-  background-color: #061621;
+  background-color: #050d14;
   
-  --bg-primary: #061621;
-  --bg-gradient: linear-gradient(145deg, #061621 0%, #0a2035 40%, #0d2a45 100%);
-  --panel-bg: #0a1f32;
-  --sidebar-bg: #081a2a;
-  --header-bg: rgba(10, 31, 50, 0.9);
-  --content-bg: #061621;
-  --input-bg: #0f2d47;
-  --card-bg: rgba(102, 204, 255, 0.06);
-  --border-color: rgba(102, 204, 255, 0.15);
-  --hover-bg: rgba(102, 204, 255, 0.1);
-  --active-bg: rgba(102, 204, 255, 0.2);
-  --selected-bg: rgba(102, 204, 255, 0.25);
-  --unread-bg: rgba(102, 204, 255, 0.12);
+  --bg-primary: #050d14;
+  --bg-gradient: linear-gradient(165deg, #050d14 0%, #081620 30%, #0a1f30 60%, #071218 100%);
+  --panel-bg: #081620;
+  --sidebar-bg: #061018;
+  --header-bg: rgba(8, 22, 32, 0.85);
+  --content-bg: #050d14;
+  --input-bg: #0c2030;
+  --card-bg: rgba(102, 204, 255, 0.04);
+  --card-bg-hover: rgba(102, 204, 255, 0.08);
+  --border-color: rgba(102, 204, 255, 0.12);
+  --border-color-subtle: rgba(102, 204, 255, 0.06);
+  --hover-bg: rgba(102, 204, 255, 0.08);
+  --active-bg: rgba(102, 204, 255, 0.18);
+  --selected-bg: rgba(102, 204, 255, 0.22);
+  --unread-bg: rgba(102, 204, 255, 0.1);
   --primary-color: #66ccff;
   --primary-hover: #3db8ff;
-  --primary-light: rgba(102, 204, 255, 0.2);
-  --primary-glow: rgba(102, 204, 255, 0.5);
+  --primary-light: rgba(102, 204, 255, 0.18);
+  --primary-glow: rgba(102, 204, 255, 0.4);
+  --primary-gradient: linear-gradient(135deg, #66ccff 0%, #38bdf8 100%);
+  --accent-color: #22d3ee;
+  --accent-light: rgba(34, 211, 238, 0.15);
   --text-primary: #f0f9ff;
   --text-secondary: #7dd3fc;
   --text-tertiary: #38bdf8;
+  --text-muted: #0ea5e9;
   --success-color: #4ade80;
+  --success-light: rgba(74, 222, 128, 0.12);
   --warning-color: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.12);
   --error-color: #f87171;
+  --error-light: rgba(248, 113, 113, 0.12);
   --shadow-color: rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 40px rgba(0, 40, 80, 0.4);
-  --bubble-bg: rgba(102, 204, 255, 0.08);
-  --meta-bg: rgba(102, 204, 255, 0.05);
-  --glass-bg: rgba(10, 31, 50, 0.85);
-  --glass-border: rgba(102, 204, 255, 0.2);
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 20, 40, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 30, 60, 0.5);
+  --shadow-xl: 0 24px 48px rgba(0, 40, 80, 0.5);
+  --shadow-glow: 0 0 40px rgba(102, 204, 255, 0.2);
+  --bubble-bg: rgba(102, 204, 255, 0.06);
+  --meta-bg: rgba(102, 204, 255, 0.04);
+  --glass-bg: rgba(8, 22, 32, 0.9);
+  --glass-border: rgba(102, 204, 255, 0.15);
+  --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
 }
 
-/* 浅色主题 */
+/* 浅色主题 - 现代化清爽设计 */
 [data-theme="light"] {
-  color: #1e293b;
-  background-color: #f8fafc;
+  color: #18181b;
+  background-color: #fafafa;
   
-  --bg-primary: #f8fafc;
-  --bg-gradient: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 40%, #e2e8f0 100%);
+  --bg-primary: #fafafa;
+  --bg-gradient: linear-gradient(165deg, #fafafa 0%, #f4f4f5 30%, #e4e4e7 60%, #f4f4f5 100%);
   --panel-bg: #ffffff;
-  --sidebar-bg: #f1f5f9;
-  --header-bg: rgba(255, 255, 255, 0.9);
-  --content-bg: #f8fafc;
-  --input-bg: #f1f5f9;
+  --sidebar-bg: #f4f4f5;
+  --header-bg: rgba(255, 255, 255, 0.85);
+  --content-bg: #fafafa;
+  --input-bg: #f4f4f5;
   --card-bg: rgba(0, 0, 0, 0.02);
-  --border-color: rgba(0, 0, 0, 0.08);
+  --card-bg-hover: rgba(0, 0, 0, 0.04);
+  --border-color: rgba(0, 0, 0, 0.06);
+  --border-color-subtle: rgba(0, 0, 0, 0.04);
   --hover-bg: rgba(0, 0, 0, 0.04);
-  --active-bg: rgba(99, 102, 241, 0.12);
-  --selected-bg: rgba(99, 102, 241, 0.15);
-  --unread-bg: rgba(99, 102, 241, 0.08);
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: rgba(79, 70, 229, 0.12);
-  --primary-glow: rgba(79, 70, 229, 0.3);
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --success-color: #16a34a;
+  --active-bg: rgba(139, 92, 246, 0.1);
+  --selected-bg: rgba(139, 92, 246, 0.12);
+  --unread-bg: rgba(139, 92, 246, 0.06);
+  --primary-color: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-light: rgba(124, 58, 237, 0.1);
+  --primary-glow: rgba(124, 58, 237, 0.25);
+  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+  --accent-color: #0891b2;
+  --accent-light: rgba(8, 145, 178, 0.1);
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-tertiary: #71717a;
+  --text-muted: #a1a1aa;
+  --success-color: #059669;
+  --success-light: rgba(5, 150, 105, 0.1);
   --warning-color: #d97706;
+  --warning-light: rgba(217, 119, 6, 0.1);
   --error-color: #dc2626;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --error-light: rgba(220, 38, 38, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.1);
   --bubble-bg: rgba(0, 0, 0, 0.02);
   --meta-bg: rgba(0, 0, 0, 0.02);
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(0, 0, 0, 0.1);
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-full: 9999px;
 }
 
 * {
@@ -232,7 +289,7 @@ h3 {
 button {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  padding: 0.6em 1.2em;
+  padding: 0.65em 1.3em;
   font-size: 0.875em;
   font-weight: 500;
   font-family: inherit;
@@ -240,21 +297,38 @@ button {
   color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.05) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
 button:hover {
   border-color: var(--primary-color);
   background-color: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+button:hover::before {
+  opacity: 1;
 }
 
 button:focus,
 button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--primary-glow);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--primary-glow);
 }
 
 button:active {
-  transform: scale(0.98);
+  transform: scale(0.98) translateY(0);
 }
 
 .card {
@@ -262,25 +336,41 @@ button:active {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all var(--transition-normal);
 }
 
-/* 滚动条美化 */
+.card:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* 滚动条美化 - 更细腻的设计 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 4px;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* 选中文本样式 */
@@ -289,7 +379,7 @@ button:active {
   color: var(--text-primary);
 }
 
-/* 输入框通用样式 */
+/* 输入框通用样式 - 现代化设计 */
 input, select, textarea {
   font-family: inherit;
   font-size: inherit;
@@ -303,22 +393,28 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  box-shadow: 0 0 0 3px var(--primary-light), var(--shadow-sm);
+  background: var(--panel-bg);
+}
+
+input:hover:not(:focus), select:hover:not(:focus), textarea:hover:not(:focus) {
+  border-color: var(--text-tertiary);
 }
 
 input::placeholder, textarea::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
-/* 玻璃态效果 */
+/* 玻璃态效果 - 增强版 */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
 }
 
-/* 动画 */
+/* 动画 - 更流畅的过渡 */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -327,7 +423,7 @@ input::placeholder, textarea::placeholder {
 @keyframes slideUp {
   from { 
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to { 
     opacity: 1;
@@ -338,7 +434,7 @@ input::placeholder, textarea::placeholder {
 @keyframes slideDown {
   from { 
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-16px);
   }
   to { 
     opacity: 1;
@@ -349,7 +445,7 @@ input::placeholder, textarea::placeholder {
 @keyframes scaleIn {
   from { 
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
   to { 
     opacity: 1;
@@ -366,14 +462,29 @@ input::placeholder, textarea::placeholder {
   to { transform: rotate(360deg); }
 }
 
-/* 通用加载动画 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
+  50% { box-shadow: 0 0 40px var(--primary-glow), 0 0 60px var(--primary-light); }
+}
+
+/* 通用加载动画 - 更精致 */
 .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--border-color);
+  border: 2.5px solid var(--border-color);
   border-top-color: var(--primary-color);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.7s linear infinite;
 }
 
 .loading-spinner.small {
@@ -382,41 +493,67 @@ input::placeholder, textarea::placeholder {
   border-width: 2px;
 }
 
-/* 添加邮箱账户模态框 - 全局样式 */
+/* 骨架屏加载效果 */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--card-bg) 25%,
+    var(--hover-bg) 50%,
+    var(--card-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* 添加邮箱账户模态框 - 全局样式 - 现代化设计 */
 .account-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
+  padding: 24px;
   box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .account-modal {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl, 32px);
   width: 100%;
-  max-width: 480px;
-  max-height: calc(100vh - 40px);
+  max-width: 500px;
+  max-height: calc(100vh - 48px);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
   overflow: hidden;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .account-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
 }
@@ -424,23 +561,24 @@ input::placeholder, textarea::placeholder {
 .account-modal-header h3 {
   margin: 0;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .account-modal-close {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   font-size: 24px;
   cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--text-muted, var(--text-tertiary));
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  border-radius: var(--radius-md, 12px);
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .account-modal-close:hover {
@@ -449,59 +587,74 @@ input::placeholder, textarea::placeholder {
 }
 
 .account-modal-body {
-  padding: 16px 20px;
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
 .account-modal-message {
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md, 12px);
   font-size: 0.875rem;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .account-modal-message.success {
-  background: rgba(34, 197, 94, 0.12);
+  background: var(--success-light, rgba(34, 197, 94, 0.12));
   color: var(--success-color);
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .account-modal-message.error {
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--error-light, rgba(239, 68, 68, 0.12));
   color: var(--error-color);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .account-modal-message.warning {
-  background: rgba(251, 191, 36, 0.12);
-  color: #f59e0b;
-  border: 1px solid rgba(251, 191, 36, 0.25);
+  background: var(--warning-light, rgba(251, 191, 36, 0.12));
+  color: var(--warning-color);
+  border: 1px solid rgba(251, 191, 36, 0.2);
 }
 
 .account-modal-field {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .account-modal-field label {
   display: block;
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .account-modal-field input,
 .account-modal-field select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md, 12px);
   font-size: 0.875rem;
   background: var(--input-bg);
   color: var(--text-primary);
   box-sizing: border-box;
+  transition: all var(--transition-fast, 0.15s ease);
+}
+
+.account-modal-field input:hover,
+.account-modal-field select:hover {
+  border-color: var(--text-tertiary);
 }
 
 .account-modal-field input:focus,
@@ -509,19 +662,20 @@ input::placeholder, textarea::placeholder {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-light);
+  background: var(--panel-bg);
 }
 
 .account-modal-hint {
   display: block;
   font-size: 0.6875rem;
-  color: var(--text-tertiary);
-  margin-top: 4px;
+  color: var(--text-muted, var(--text-tertiary));
+  margin-top: 6px;
 }
 
 .account-modal-row {
   display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .account-modal-row .account-modal-field {
@@ -530,91 +684,97 @@ input::placeholder, textarea::placeholder {
 }
 
 .account-modal-row .account-modal-field.small {
-  flex: 0 0 90px;
+  flex: 0 0 100px;
 }
 
 .account-modal-checkbox {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .account-modal-checkbox label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 0.875rem;
   color: var(--text-primary);
   cursor: pointer;
+  padding: 8px 0;
 }
 
 .account-modal-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   accent-color: var(--primary-color);
+  cursor: pointer;
 }
 
 .account-modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 20px;
+  gap: 12px;
+  padding: 18px 24px;
   border-top: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
 .account-modal-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md, 12px);
   background: transparent;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .account-modal-btn:hover {
   background: var(--hover-bg);
+  transform: translateY(-1px);
 }
 
 .account-modal-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .account-modal-btn.primary {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary-gradient, linear-gradient(135deg, var(--primary-color), var(--primary-hover)));
+  border-color: transparent;
   color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 .account-modal-btn.primary:hover:not(:disabled) {
-  background: var(--primary-hover);
+  box-shadow: var(--shadow-md), 0 0 16px var(--primary-glow);
 }
 
 
-/* Google 登录按钮 */
+/* Google 登录按钮 - 现代化设计 */
 .google-login-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 16px;
-  margin-bottom: 8px;
+  padding: 14px 20px;
+  margin-bottom: 12px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--radius-md, 12px);
   background: #fff;
   color: #1f1f1f;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.9375rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--transition-fast, 0.15s ease);
 }
 
 .google-login-btn:hover {
   background: #f8f9fa;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .google-login-btn svg {
@@ -624,10 +784,15 @@ input::placeholder, textarea::placeholder {
 .account-modal-hint .hint-text {
   display: block;
   font-size: 0.6875rem;
-  color: var(--text-tertiary);
+  color: var(--text-muted, var(--text-tertiary));
   text-align: center;
 }
 
 .account-modal-hint .hint-text a {
   color: var(--primary-color);
+  text-decoration: none;
+}
+
+.account-modal-hint .hint-text a:hover {
+  text-decoration: underline;
 }
