@@ -67,7 +67,7 @@ const aiForm = reactive<UserSettings>({
   promptExtractCode: '', promptDetectAd: '', promptSummarize: '', promptJudgeImportance: '',
   googleClientId: '', googleClientSecret: '', googleRedirectUrl: '',
 });
-const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '' });
+const backendForm = reactive({ apiKey: apiKeyManager.getApiKey() || '', backendUrl: backendUrlManager.getBackendUrl() || '', syncInterval: 120 });
 const testingBackendConnection = ref(false);
 const backendTestResult = ref<{ success: boolean; message: string } | null>(null);
 const testingAI = ref(false);
@@ -215,6 +215,34 @@ function saveBackendSettings() {
   clearMessages();
   if (backendForm.apiKey.trim()) { apiKeyManager.setApiKey(backendForm.apiKey.trim()); successMessage.value = '后端设置已保存'; }
   else { apiKeyManager.removeApiKey(); successMessage.value = 'API 密钥已清除'; }
+}
+
+async function saveSyncInterval() {
+  clearMessages();
+  let val = backendForm.syncInterval;
+  if (!val || val < 30) val = 30;
+  if (val > 86400) val = 86400;
+  backendForm.syncInterval = val;
+  isSubmitting.value = true;
+  try {
+    const ok = await userStore.updateSettings({ syncInterval: val } as any);
+    if (ok) { successMessage.value = `自动同步间隔已设置为 ${formatInterval(val)}`; }
+    else { errorMessage.value = '保存失败'; }
+  } catch { errorMessage.value = '保存失败'; }
+  finally { isSubmitting.value = false; }
+}
+
+function formatInterval(seconds: number): string {
+  if (!seconds || seconds <= 0) return '默认';
+  if (seconds < 60) return `${seconds} 秒`;
+  if (seconds < 3600) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s > 0 ? `${m} 分 ${s} 秒` : `${m} 分钟`;
+  }
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return m > 0 ? `${h} 小时 ${m} 分` : `${h} 小时`;
 }
 
 async function loadBackendUrl() {
@@ -734,6 +762,7 @@ onMounted(async () => {
     aiForm.googleClientId = s.google_client_id ?? s.googleClientId ?? '';
     aiForm.googleClientSecret = s.google_client_secret ?? s.googleClientSecret ?? '';
     aiForm.googleRedirectUrl = s.google_redirect_url ?? s.googleRedirectUrl ?? '';
+    backendForm.syncInterval = s.sync_interval ?? s.syncInterval ?? 120;
   }
   await accountStore.fetchAccounts();
   await loadBackendUrl();
@@ -1101,6 +1130,21 @@ onMounted(async () => {
         </div>
         
         <div class="form-section">
+          <h3>自动同步</h3>
+          <form @submit.prevent="saveSyncInterval">
+            <div class="form-group">
+              <label class="form-label">同步间隔（秒）</label>
+              <div class="sync-interval-input">
+                <input v-model.number="backendForm.syncInterval" type="number" class="form-input" min="30" max="86400" step="10" />
+                <span class="interval-hint">{{ formatInterval(backendForm.syncInterval) }}</span>
+              </div>
+              <p class="hint">自动检查新邮件的时间间隔，最小 30 秒，最大 86400 秒（1 天）</p>
+            </div>
+            <button type="submit" class="btn primary" :disabled="isSubmitting">{{ isSubmitting ? '保存中...' : '保存同步设置' }}</button>
+          </form>
+        </div>
+        
+        <div class="form-section">
           <h3>Google OAuth 配置</h3>
           <p class="section-desc">配置 Google OAuth 以支持 Gmail 账户登录。需要在 <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> 创建 OAuth 凭据。</p>
           <form @submit.prevent="saveGoogleOAuthSettings">
@@ -1284,6 +1328,9 @@ onMounted(async () => {
 .form-input:disabled { background: var(--bg-primary); color: var(--text-tertiary); }
 .form-input::placeholder { color: var(--text-tertiary); }
 .hint { margin: 8px 0 0; font-size: 0.75rem; color: var(--text-tertiary); }
+.sync-interval-input { display: flex; align-items: center; gap: 12px; }
+.sync-interval-input .form-input { width: 160px; flex-shrink: 0; }
+.interval-hint { font-size: 0.8125rem; color: var(--text-secondary); white-space: nowrap; }
 .form-row { display: flex; gap: 12px; }
 .form-row .form-group { flex: 1; }
 .form-row .form-group.small { flex: 0 0 100px; }

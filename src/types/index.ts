@@ -102,6 +102,8 @@ export interface UserSettings {
   // 主题和字体配置
   theme?: string;
   font?: string;
+  // 自动同步间隔（秒）
+  syncInterval?: number;
 }
 
 

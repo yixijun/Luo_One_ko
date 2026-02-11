@@ -143,6 +143,7 @@ export const useUserStore = defineStore('user', () => {
       googleRedirectUrl: 'google_redirect_url',
       theme: 'theme',
       font: 'font',
+      syncInterval: 'sync_interval',
     };
     
     for (const [key, value] of Object.entries(data)) {
