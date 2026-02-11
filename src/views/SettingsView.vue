@@ -30,6 +30,19 @@ const syncingAccountId = ref<number | null>(null);
 const fullSyncingAccountId = ref<number | null>(null);
 const processingAccountId = ref<number | null>(null);
 
+// 移动端侧边栏状态
+const mobileSidebarOpen = ref(false);
+
+function selectTab(tab: typeof activeTab.value) {
+  activeTab.value = tab;
+  mobileSidebarOpen.value = false;
+}
+
+const tabLabels: Record<string, string> = {
+  profile: '用户信息', password: '修改密码', accounts: '邮箱账户',
+  appearance: '外观', ai: 'AI 配置', backend: '后端设置',
+};
+
 // 拖拽排序相关状态
 const isDragging = ref(false);
 const dragIndex = ref<number | null>(null);
@@ -736,6 +749,9 @@ onMounted(async () => {
         <span>返回</span>
       </button>
       <h1>设置</h1>
+      <button class="mobile-menu-btn" @click="mobileSidebarOpen = !mobileSidebarOpen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
     </header>
 
     <div v-if="successMessage" class="message success">
@@ -748,28 +764,30 @@ onMounted(async () => {
     </div>
 
     <div class="settings-layout">
-    <nav class="settings-sidebar">
-      <button :class="['sidebar-item', { active: activeTab === 'profile' }]" @click="activeTab = 'profile'">
+    <!-- 移动端遮罩 -->
+    <div class="sidebar-overlay" :class="{ visible: mobileSidebarOpen }" @click="mobileSidebarOpen = false"></div>
+    <nav class="settings-sidebar" :class="{ open: mobileSidebarOpen }">
+      <button :class="['sidebar-item', { active: activeTab === 'profile' }]" @click="selectTab('profile')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>用户信息</span>
       </button>
-      <button :class="['sidebar-item', { active: activeTab === 'password' }]" @click="activeTab = 'password'">
+      <button :class="['sidebar-item', { active: activeTab === 'password' }]" @click="selectTab('password')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span>修改密码</span>
       </button>
-      <button :class="['sidebar-item', { active: activeTab === 'accounts' }]" @click="activeTab = 'accounts'">
+      <button :class="['sidebar-item', { active: activeTab === 'accounts' }]" @click="selectTab('accounts')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         <span>邮箱账户</span>
       </button>
-      <button :class="['sidebar-item', { active: activeTab === 'appearance' }]" @click="activeTab = 'appearance'">
+      <button :class="['sidebar-item', { active: activeTab === 'appearance' }]" @click="selectTab('appearance')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <span>外观</span>
       </button>
-      <button :class="['sidebar-item', { active: activeTab === 'ai' }]" @click="activeTab = 'ai'">
+      <button :class="['sidebar-item', { active: activeTab === 'ai' }]" @click="selectTab('ai')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 1 1 0 4h-1.07A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.93-5H2a2 2 0 1 1 0-4h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
         <span>AI 配置</span>
       </button>
-      <button :class="['sidebar-item', { active: activeTab === 'backend' }]" @click="activeTab = 'backend'">
+      <button :class="['sidebar-item', { active: activeTab === 'backend' }]" @click="selectTab('backend')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
         <span>后端设置</span>
       </button>
@@ -1207,6 +1225,8 @@ onMounted(async () => {
 .sidebar-item:hover { color: var(--text-primary); background: var(--hover-bg); }
 .sidebar-item.active { color: var(--primary-color); background: var(--primary-light); font-weight: 600; }
 .sidebar-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-overlay { display: none; }
+.mobile-menu-btn { display: none; }
 .tab-content { flex: 1; min-width: 0; max-width: none; margin: 0; }
 .panel { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 14px); padding: 28px; box-shadow: var(--shadow-lg); }
 .panel h2 { margin: 0 0 24px; font-size: 1.25rem; font-weight: 700; }
@@ -1375,45 +1395,59 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .settings-view { padding: 0; padding-bottom: 24px; }
   
-  /* 移动端隐藏侧边栏，显示横向 tabs */
-  .settings-layout { flex-direction: column; gap: 0; min-height: auto; }
-  .settings-sidebar { 
+  /* 移动端菜单按钮 */
+  .mobile-menu-btn {
     display: flex;
-    flex-direction: row;
-    width: 100%;
-    position: sticky;
-    top: calc(52px + env(safe-area-inset-top, 0px));
-    z-index: 99;
-    border-radius: 0;
-    padding: 0 12px;
-    gap: 0;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .settings-sidebar::-webkit-scrollbar { display: none; }
-  .sidebar-item { 
-    flex-direction: column;
-    gap: 2px;
-    padding: 10px 14px;
-    border-radius: 0;
-    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md, 10px);
+    background: var(--panel-bg);
+    color: var(--text-primary);
+    cursor: pointer;
     flex-shrink: 0;
-    font-size: 0.75rem;
-    border-bottom: 2px solid transparent;
   }
-  .sidebar-item.active { 
-    background: none;
-    border-bottom-color: var(--primary-color);
-  }
-  .sidebar-item:hover { background: none; }
-  .sidebar-item svg { width: 16px; height: 16px; }
+  .mobile-menu-btn svg { width: 20px; height: 20px; }
   
-  /* 移动端头部优化 */
+  /* 移动端侧边栏抽屉 */
+  .settings-layout { flex-direction: column; gap: 0; min-height: auto; }
+  
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .sidebar-overlay.visible { opacity: 1; pointer-events: auto; }
+  
+  .settings-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    z-index: 201;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--border-color);
+    padding: 20px 12px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+  }
+  .settings-sidebar.open { transform: translateX(0); }
+  
+  .sidebar-item { padding: 14px 16px; font-size: 0.9375rem; }
+  
+  /* 移动端头部 */
   .settings-header { 
     position: sticky;
     top: 0;
@@ -1433,7 +1467,6 @@ onMounted(async () => {
     font-size: 1.125rem;
     flex: 1;
     text-align: center;
-    margin-right: 50px;
   }
   
   .back-btn { 
@@ -1441,28 +1474,15 @@ onMounted(async () => {
     border-radius: 50px;
     font-size: 0.875rem;
   }
-  
   .back-btn span { display: none; }
-  
   .back-btn svg { width: 20px; height: 20px; }
   
   /* 消息提示 */
-  .message { 
-    margin: 12px 16px;
-    border-radius: 12px;
-  }
+  .message { margin: 12px 16px; border-radius: 12px; }
   
   /* 内容区域 */
-  .tab-content { 
-    padding: 16px;
-    max-width: none;
-  }
-  
-  .panel { 
-    padding: 18px;
-    border-radius: 16px;
-  }
-  
+  .tab-content { padding: 16px; max-width: none; }
+  .panel { padding: 18px; border-radius: 16px; }
   .panel h2 { font-size: 1.125rem; margin-bottom: 18px; }
   
   .form-row { flex-direction: column; }
@@ -1472,41 +1492,16 @@ onMounted(async () => {
   .theme-grid { grid-template-columns: 1fr; }
   .font-grid { grid-template-columns: 1fr; }
   
-  /* 按钮优化 */
-  .btn { 
-    padding: 10px 18px;
-    font-size: 0.875rem;
-  }
+  .btn { padding: 10px 18px; font-size: 0.875rem; }
+  .btn.small { padding: 8px 12px; font-size: 0.75rem; }
   
-  .btn.small { 
-    padding: 8px 12px;
-    font-size: 0.75rem;
-  }
-  
-  /* 账户列表优化 */
   .account-list { gap: 10px; }
+  .account-item { padding: 14px; border-radius: 12px; }
+  .account-actions .action-row { justify-content: flex-start; }
   
-  .account-item { 
-    padding: 14px;
-    border-radius: 12px;
-  }
-  
-  .account-actions .action-row { 
-    justify-content: flex-start;
-  }
-  
-  /* 日志面板优化 */
-  .logs-panel { 
-    margin-top: 16px;
-    border-radius: 12px;
-  }
-  
+  .logs-panel { margin-top: 16px; border-radius: 12px; }
   .logs-content { max-height: 200px; }
-  
-  .log-item { 
-    padding: 8px 10px;
-    font-size: 0.75rem;
-  }
+  .log-item { padding: 8px 10px; font-size: 0.75rem; }
 }
 </style>
 
