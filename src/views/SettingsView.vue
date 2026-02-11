@@ -749,10 +749,12 @@ onMounted(async () => {
         <span>返回</span>
       </button>
       <h1>设置</h1>
-      <button class="mobile-menu-btn" @click="mobileSidebarOpen = !mobileSidebarOpen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
     </header>
+
+    <!-- 移动端侧边悬浮菜单按钮 -->
+    <button class="mobile-sidebar-trigger" :class="{ hidden: mobileSidebarOpen }" @click="mobileSidebarOpen = true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
 
     <div v-if="successMessage" class="message success">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -1226,7 +1228,7 @@ onMounted(async () => {
 .sidebar-item.active { color: var(--primary-color); background: var(--primary-light); font-weight: 600; }
 .sidebar-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 .sidebar-overlay { display: none; }
-.mobile-menu-btn { display: none; }
+.mobile-sidebar-trigger { display: none; }
 .tab-content { flex: 1; min-width: 0; max-width: none; margin: 0; }
 .panel { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 14px); padding: 28px; box-shadow: var(--shadow-lg); }
 .panel h2 { margin: 0 0 24px; font-size: 1.25rem; font-weight: 700; }
@@ -1395,21 +1397,30 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .settings-view { padding: 0; padding-bottom: 24px; }
   
-  /* 移动端菜单按钮 */
-  .mobile-menu-btn {
+  /* 移动端侧边悬浮触发按钮 */
+  .mobile-sidebar-trigger {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md, 10px);
-    background: var(--panel-bg);
-    color: var(--text-primary);
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 150;
+    width: 24px;
+    height: 56px;
+    border: none;
+    border-radius: 0 12px 12px 0;
+    background: var(--primary-color);
+    color: #fff;
     cursor: pointer;
-    flex-shrink: 0;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
   }
-  .mobile-menu-btn svg { width: 20px; height: 20px; }
+  .mobile-sidebar-trigger:active { opacity: 1; }
+  .mobile-sidebar-trigger.hidden { opacity: 0; pointer-events: none; transform: translateY(-50%) translateX(-100%); }
+  .mobile-sidebar-trigger svg { width: 16px; height: 16px; }
   
   /* 移动端侧边栏抽屉 */
   .settings-layout { flex-direction: column; gap: 0; min-height: auto; }
