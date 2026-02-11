@@ -5,6 +5,7 @@
  * 实现邮件列表和邮件内容展示
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
 import type { Email, EmailFolder, Attachment } from '@/types';
@@ -12,6 +13,8 @@ import type { Email, EmailFolder, Attachment } from '@/types';
 const emit = defineEmits<{
   (e: 'email-select', email: Email): void;
 }>();
+
+const router = useRouter();
 
 const accountStore = useAccountStore();
 const emailStore = useEmailStore();
@@ -147,6 +150,54 @@ async function deleteEmail() {
     }
   } finally {
     isDeleting.value = false;
+  }
+}
+
+// 回复邮件
+function handleReply() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const subject = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
+  router.push({
+    name: 'Compose',
+    query: { replyTo: email.id.toString(), to: email.from, subject },
+  });
+}
+
+// 回复全部
+function handleReplyAll() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const allRecipients = [email.from, ...email.to].filter((v, i, a) => a.indexOf(v) === i);
+  router.push({
+    name: 'Compose',
+    query: {
+      replyTo: email.id.toString(),
+      to: allRecipients.join(','),
+      subject: email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`,
+    },
+  });
+}
+
+// 转发邮件
+function handleForward() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const subject = email.subject.startsWith('Fwd:') ? email.subject : `Fwd: ${email.subject}`;
+  router.push({
+    name: 'Compose',
+    query: { forwardFrom: email.id.toString(), subject },
+  });
+}
+
+// 切换已读/未读
+async function handleToggleRead() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  if (email.isRead) {
+    await emailStore.markAsUnread(email.id);
+  } else {
+    await emailStore.markAsRead(email.id);
   }
 }
 
@@ -511,6 +562,52 @@ onUnmounted(() => {
             <span v-else class="loading-spinner small"></span>
           </button>
         </div>
+
+        <!-- 操作工具栏 -->
+        <div class="action-toolbar">
+          <button class="toolbar-btn" @click="handleReply" title="回复">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 17 4 12 9 7"/>
+              <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+            </svg>
+            <span>回复</span>
+          </button>
+          <button class="toolbar-btn" @click="handleReplyAll" title="回复全部">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="7 17 2 12 7 7"/>
+              <polyline points="12 17 7 12 12 7"/>
+              <path d="M22 18v-2a4 4 0 0 0-4-4H7"/>
+            </svg>
+            <span>全部回复</span>
+          </button>
+          <button class="toolbar-btn" @click="handleForward" title="转发">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 17 20 12 15 7"/>
+              <path d="M4 18v-2a4 4 0 0 1 4-4h12"/>
+            </svg>
+            <span>转发</span>
+          </button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn" @click="handleToggleRead" :title="selectedEmail.isRead ? '标记为未读' : '标记为已读'">
+            <svg v-if="selectedEmail.isRead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/>
+              <polyline points="22,6 12,13 2,6"/>
+              <circle cx="19" cy="19" r="3" fill="var(--primary-color)" stroke="none"/>
+            </svg>
+            <span>{{ selectedEmail.isRead ? '标为未读' : '标为已读' }}</span>
+          </button>
+          <button class="toolbar-btn danger" @click="deleteEmail" :disabled="isDeleting" title="删除">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span>删除</span>
+          </button>
+        </div>
         
         <div class="email-content">
           <!-- 邮件元信息 -->
@@ -799,6 +896,60 @@ onUnmounted(() => {
   width: 18px;
   height: 18px;
   border-width: 2px;
+}
+
+/* 操作工具栏 */
+.action-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--panel-bg);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.action-toolbar::-webkit-scrollbar { display: none; }
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.toolbar-btn:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.toolbar-btn.danger:hover {
+  background-color: rgba(244, 67, 54, 0.12);
+  color: var(--error-color);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+  margin: 0 4px;
+  flex-shrink: 0;
 }
 
 .emails-panel {
