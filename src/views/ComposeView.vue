@@ -206,6 +206,14 @@ function resetForm() {
   clearDraft();
 }
 
+// 构建引用原文
+function buildQuotedBody(original: { from: string; date: number; to: string[]; subject: string; body: string; htmlBody?: string }) {
+  const dateStr = new Date(original.date * 1000).toLocaleString('zh-CN');
+  const body = original.body || '';
+  const quoted = body.split('\n').map(line => `> ${line}`).join('\n');
+  return `\n\n---------- 原始邮件 ----------\n发件人: ${original.from}\n日期: ${dateStr}\n收件人: ${original.to.join(', ')}\n主题: ${original.subject}\n\n${quoted}`;
+}
+
 onMounted(async () => {
   try {
     if (!accountStore.hasAccounts) await accountStore.fetchAccounts();
@@ -220,6 +228,14 @@ onMounted(async () => {
     if (replyTo || forwardFrom || toParam) {
       if (toParam) toInput.value = toParam;
       if (replySubject) emailForm.subject = replySubject;
+      // 回复或转发时加载原邮件内容
+      const emailId = replyTo || forwardFrom;
+      if (emailId) {
+        const original = await emailStore.fetchEmailDetail(Number(emailId));
+        if (original) {
+          emailForm.body = buildQuotedBody(original);
+        }
+      }
     } else { loadDraft(); }
   } catch (err) { console.error('Failed to initialize compose view:', err); }
   finally { isPageLoading.value = false; }
