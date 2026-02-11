@@ -781,13 +781,13 @@ interface ExportData {
 
 async function exportAllConfig() {
   try {
-    // 获取设置
+    // 获取设置（apiClient 拦截器已自动解包 response.data.data）
     const settingsRes = await apiClient.get('/settings');
-    const settings = (settingsRes.data as any)?.data || {};
+    const settings = settingsRes.data as any || {};
 
     // 获取账户列表
     const accountsRes = await apiClient.get('/accounts');
-    const accountsList = (accountsRes.data as any)?.data || [];
+    const accountsList = (Array.isArray(accountsRes.data) ? accountsRes.data : []) as any[];
 
     // 构建导出数据（不含密码和 token）
     const exportData: ExportData = {
@@ -884,7 +884,8 @@ async function importConfig(data: ExportData) {
     // 导入账户（跳过已存在的）
     if (data.accounts?.length) {
       const existingRes = await apiClient.get('/accounts');
-      const existing = ((existingRes.data as any)?.data || []).map((a: any) => a.email);
+      const existingData = existingRes.data as any;
+      const existing = (Array.isArray(existingData) ? existingData : []).map((a: any) => a.email);
       let imported = 0;
       let skipped = 0;
       for (const acc of data.accounts) {
