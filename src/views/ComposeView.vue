@@ -917,8 +917,6 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 900px;
-  margin: 0 auto;
   width: 100%;
 }
 
