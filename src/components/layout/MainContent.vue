@@ -153,6 +153,12 @@ async function deleteEmail() {
   }
 }
 
+// 从 "Name <email>" 格式中提取纯邮箱地址
+function extractEmail(addr: string): string {
+  const match = addr.match(/<([^>]+)>/);
+  return match ? match[1] : addr.trim();
+}
+
 // 回复邮件
 function handleReply() {
   if (!selectedEmail.value) return;
@@ -160,7 +166,7 @@ function handleReply() {
   const subject = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
   router.push({
     name: 'Compose',
-    query: { replyTo: email.id.toString(), to: email.from, subject },
+    query: { replyTo: email.id.toString(), to: extractEmail(email.from), subject },
   });
 }
 
@@ -168,7 +174,7 @@ function handleReply() {
 function handleReplyAll() {
   if (!selectedEmail.value) return;
   const email = selectedEmail.value;
-  const allRecipients = [email.from, ...email.to].filter((v, i, a) => a.indexOf(v) === i);
+  const allRecipients = [email.from, ...email.to].map(extractEmail).filter((v, i, a) => a.indexOf(v) === i);
   router.push({
     name: 'Compose',
     query: {
