@@ -7,6 +7,7 @@
 import { ref, watch } from 'vue';
 import type { Email, Attachment } from '@/types';
 import { useEmailStore } from '@/stores/email';
+import { exportEmailAsTxt, exportEmailAsEml } from '@/utils/exportEmail';
 import EmailBubble from './EmailBubble.vue';
 
 // Props
@@ -144,6 +145,11 @@ function handleReply() { emit('reply'); }
 function handleReplyAll() { emit('replyAll'); }
 function handleForward() { emit('forward'); }
 function handleToggleRead() { emit('toggleRead'); }
+
+// 导出
+const showExportMenu = ref(false);
+function handleExportTxt() { exportEmailAsTxt(props.email); showExportMenu.value = false; }
+function handleExportEml() { exportEmailAsEml(props.email); showExportMenu.value = false; }
 </script>
 
 <template>
@@ -202,6 +208,21 @@ function handleToggleRead() { emit('toggleRead'); }
         </svg>
         <span>删除</span>
       </button>
+      <div class="toolbar-divider"></div>
+      <div class="export-dropdown" style="position:relative">
+        <button class="toolbar-btn" @click.stop="showExportMenu = !showExportMenu" title="导出">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>导出</span>
+        </button>
+        <div v-if="showExportMenu" class="dropdown-menu">
+          <button class="dropdown-item" @click="handleExportTxt">导出为 TXT</button>
+          <button class="dropdown-item" @click="handleExportEml">导出为 EML</button>
+        </div>
+      </div>
     </div>
 
     <!-- 详情内容 -->
@@ -741,5 +762,35 @@ function handleToggleRead() { emit('toggleRead'); }
   .toolbar-btn { padding: 8px 10px; font-size: 0.75rem; }
   .toolbar-btn span { display: none; }
   .toolbar-btn svg { width: 20px; height: 20px; }
+}
+
+/* 导出下拉菜单 */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  min-width: 140px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dropdown-item:hover {
+  background: var(--hover-bg);
 }
 </style>

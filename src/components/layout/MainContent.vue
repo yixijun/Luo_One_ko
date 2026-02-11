@@ -8,6 +8,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
+import { exportEmailAsTxt, exportEmailAsEml, exportEmailsAsCsv, exportEmailsAsJson } from '@/utils/exportEmail';
 import type { Email, EmailFolder, Attachment } from '@/types';
 
 const emit = defineEmits<{
@@ -317,6 +318,40 @@ async function batchMarkAsRead() {
   }
 }
 
+// 导出相关
+const showExportMenu = ref(false);
+const showBatchExportMenu = ref(false);
+
+function handleExportTxt() {
+  if (selectedEmail.value) exportEmailAsTxt(selectedEmail.value);
+  showExportMenu.value = false;
+}
+function handleExportEml() {
+  if (selectedEmail.value) exportEmailAsEml(selectedEmail.value);
+  showExportMenu.value = false;
+}
+function handleBatchExportCsv() {
+  const selected = emails.value.filter(e => selectedEmailIds.value.has(e.id));
+  if (selected.length) exportEmailsAsCsv(selected);
+  showBatchExportMenu.value = false;
+}
+function handleBatchExportJson() {
+  const selected = emails.value.filter(e => selectedEmailIds.value.has(e.id));
+  if (selected.length) exportEmailsAsJson(selected);
+  showBatchExportMenu.value = false;
+}
+
+// 点击外部关闭导出菜单
+function closeExportMenus(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.export-dropdown')) {
+    showExportMenu.value = false;
+    showBatchExportMenu.value = false;
+  }
+}
+onMounted(() => document.addEventListener('click', closeExportMenus));
+onUnmounted(() => document.removeEventListener('click', closeExportMenus));
+
 // 格式化日期
 function formatDate(timestamp: number): string {
   const date = new Date(timestamp * 1000);
@@ -468,6 +503,15 @@ onUnmounted(() => {
               <svg v-if="!isDeleting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               <span v-else class="loading-spinner small"></span>
             </button>
+            <div v-if="hasSelectedEmails" class="export-dropdown" style="position:relative">
+              <button class="action-btn" @click.stop="showBatchExportMenu = !showBatchExportMenu" title="导出">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+              <div v-if="showBatchExportMenu" class="dropdown-menu">
+                <button class="dropdown-item" @click="handleBatchExportCsv">导出为 CSV</button>
+                <button class="dropdown-item" @click="handleBatchExportJson">导出为 JSON</button>
+              </div>
+            </div>
             <button class="action-btn cancel" @click="toggleSelectMode">取消</button>
           </template>
           
@@ -613,6 +657,21 @@ onUnmounted(() => {
             </svg>
             <span>删除</span>
           </button>
+          <div class="toolbar-divider"></div>
+          <div class="export-dropdown" style="position:relative">
+            <button class="toolbar-btn" @click.stop="showExportMenu = !showExportMenu" title="导出">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>导出</span>
+            </button>
+            <div v-if="showExportMenu" class="dropdown-menu">
+              <button class="dropdown-item" @click="handleExportTxt">导出为 TXT</button>
+              <button class="dropdown-item" @click="handleExportEml">导出为 EML</button>
+            </div>
+          </div>
         </div>
         
         <div class="email-content">
@@ -1528,5 +1587,35 @@ onUnmounted(() => {
   .content-panel {
     display: none;
   }
+}
+
+/* 导出下拉菜单 */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  min-width: 140px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dropdown-item:hover {
+  background: var(--hover-bg);
 }
 </style>
