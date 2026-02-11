@@ -747,13 +747,32 @@ onMounted(async () => {
       <span>{{ errorMessage }}</span>
     </div>
 
-    <nav class="tabs">
-      <button :class="['tab', { active: activeTab === 'profile' }]" @click="activeTab = 'profile'">用户信息</button>
-      <button :class="['tab', { active: activeTab === 'password' }]" @click="activeTab = 'password'">修改密码</button>
-      <button :class="['tab', { active: activeTab === 'accounts' }]" @click="activeTab = 'accounts'">邮箱账户</button>
-      <button :class="['tab', { active: activeTab === 'appearance' }]" @click="activeTab = 'appearance'">外观</button>
-      <button :class="['tab', { active: activeTab === 'ai' }]" @click="activeTab = 'ai'">AI 配置</button>
-      <button :class="['tab', { active: activeTab === 'backend' }]" @click="activeTab = 'backend'">后端设置</button>
+    <div class="settings-layout">
+    <nav class="settings-sidebar">
+      <button :class="['sidebar-item', { active: activeTab === 'profile' }]" @click="activeTab = 'profile'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>用户信息</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'password' }]" @click="activeTab = 'password'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>修改密码</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'accounts' }]" @click="activeTab = 'accounts'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>邮箱账户</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'appearance' }]" @click="activeTab = 'appearance'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span>外观</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'ai' }]" @click="activeTab = 'ai'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a2 2 0 1 1 0 4h-1.07A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.93-5H2a2 2 0 1 1 0-4h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+        <span>AI 配置</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'backend' }]" @click="activeTab = 'backend'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        <span>后端设置</span>
+      </button>
     </nav>
 
     <div class="tab-content">
@@ -1094,6 +1113,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    </div><!-- end settings-layout -->
 
     <div v-if="showAccountModal" class="modal-overlay" @click.self="closeAccountModal">
       <div class="modal">
@@ -1168,20 +1188,26 @@ onMounted(async () => {
 
 <style scoped>
 .settings-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; padding: 24px; overflow-y: auto; background: var(--bg-gradient); color: var(--text-primary); }
-.settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; max-width: 800px; margin-left: auto; margin-right: auto; }
+.settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; max-width: 1100px; margin-left: auto; margin-right: auto; }
 .settings-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
 .back-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid var(--border-color); border-radius: var(--radius-md, 10px); background: var(--panel-bg); color: var(--text-primary); cursor: pointer; transition: all var(--transition-fast, 0.15s ease); }
 .back-btn:hover { background: var(--hover-bg); border-color: var(--primary-color); }
 .back-btn svg { width: 18px; height: 18px; }
-.message { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: var(--radius-md, 10px); margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; }
+.message { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: var(--radius-md, 10px); margin-bottom: 20px; max-width: 1100px; margin-left: auto; margin-right: auto; }
 .message svg { width: 20px; height: 20px; flex-shrink: 0; }
 .message.success { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25); color: var(--success-color); }
 .message.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: var(--error-color); }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; max-width: 800px; margin-left: auto; margin-right: auto; flex-wrap: wrap; }
-.tab { padding: 12px 20px; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 0.9375rem; font-weight: 500; transition: all var(--transition-fast, 0.15s ease); }
-.tab:hover { color: var(--text-primary); }
-.tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.tab-content { max-width: 800px; margin: 0 auto; }
+.tabs { display: none; }
+.tab { display: none; }
+
+/* 侧边栏布局 */
+.settings-layout { display: flex; gap: 24px; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 120px); }
+.settings-sidebar { display: flex; flex-direction: column; gap: 4px; width: 200px; flex-shrink: 0; position: sticky; top: 80px; align-self: flex-start; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 14px); padding: 12px; box-shadow: var(--shadow-lg); }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: none; background: none; cursor: pointer; border-radius: var(--radius-md, 10px); color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; transition: all var(--transition-fast, 0.15s ease); text-align: left; width: 100%; }
+.sidebar-item:hover { color: var(--text-primary); background: var(--hover-bg); }
+.sidebar-item.active { color: var(--primary-color); background: var(--primary-light); font-weight: 600; }
+.sidebar-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.tab-content { flex: 1; min-width: 0; max-width: none; margin: 0; }
 .panel { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg, 14px); padding: 28px; box-shadow: var(--shadow-lg); }
 .panel h2 { margin: 0 0 24px; font-size: 1.25rem; font-weight: 700; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -1349,6 +1375,44 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .settings-view { padding: 0; padding-bottom: 24px; }
   
+  /* 移动端隐藏侧边栏，显示横向 tabs */
+  .settings-layout { flex-direction: column; gap: 0; min-height: auto; }
+  .settings-sidebar { 
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    position: sticky;
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    z-index: 99;
+    border-radius: 0;
+    padding: 0 12px;
+    gap: 0;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .settings-sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-item { 
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-radius: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    border-bottom: 2px solid transparent;
+  }
+  .sidebar-item.active { 
+    background: none;
+    border-bottom-color: var(--primary-color);
+  }
+  .sidebar-item:hover { background: none; }
+  .sidebar-item svg { width: 16px; height: 16px; }
+  
   /* 移动端头部优化 */
   .settings-header { 
     position: sticky;
@@ -1369,7 +1433,7 @@ onMounted(async () => {
     font-size: 1.125rem;
     flex: 1;
     text-align: center;
-    margin-right: 50px; /* 平衡返回按钮的宽度 */
+    margin-right: 50px;
   }
   
   .back-btn { 
@@ -1386,32 +1450,6 @@ onMounted(async () => {
   .message { 
     margin: 12px 16px;
     border-radius: 12px;
-  }
-  
-  /* 标签栏优化 */
-  .tabs { 
-    position: sticky;
-    top: calc(52px + env(safe-area-inset-top, 0px));
-    z-index: 99;
-    margin: 0;
-    padding: 0 12px;
-    background: var(--panel-bg);
-    border-bottom: 1px solid var(--border-color);
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    gap: 0;
-    max-width: none;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  
-  .tabs::-webkit-scrollbar { display: none; }
-  
-  .tab { 
-    white-space: nowrap; 
-    padding: 12px 16px; 
-    font-size: 0.8125rem;
-    flex-shrink: 0;
   }
   
   /* 内容区域 */
