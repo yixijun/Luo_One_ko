@@ -256,7 +256,7 @@ function handleClick() {
   padding: 20px;
   border-radius: var(--radius-md, 10px);
   color: #1a1a2e;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   max-width: 100%;
@@ -292,7 +292,6 @@ function handleClick() {
 .html-content :deep(th),
 .html-content :deep(li) {
   color: #1a1a2e !important;
-  font-family: inherit !important;
 }
 
 .html-content :deep(a) {
