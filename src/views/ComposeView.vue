@@ -32,7 +32,7 @@ interface AttachmentFile {
   uploading: boolean;
   uploaded: boolean;
   error?: string;
-  previewUrl?: string; // 图片预览 URL
+  previewUrl?: string;
 }
 const attachments = ref<AttachmentFile[]>([]);
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -76,18 +76,15 @@ const totalAttachmentSize = computed(() => {
   return attachments.value.reduce((sum, a) => sum + a.size, 0);
 });
 
-// 清除消息
 function clearMessages() {
   successMessage.value = '';
   errorMessage.value = '';
 }
 
-// 返回首页
 function goBack() {
   router.push('/');
 }
 
-// 解析邮箱地址
 function parseEmails(input: string): string[] {
   if (!input.trim()) return [];
   return input
@@ -96,13 +93,11 @@ function parseEmails(input: string): string[] {
     .filter(email => email && isValidEmail(email));
 }
 
-// 验证邮箱格式
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
-// 更新收件人列表
 function updateTo() {
   emailForm.to = parseEmails(toInput.value);
 }
@@ -115,14 +110,12 @@ function updateBcc() {
   emailForm.bcc = parseEmails(bccInput.value);
 }
 
-// 格式化文件大小
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// 获取文件图标类型
 function getFileIcon(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) return 'image';
@@ -136,7 +129,6 @@ function getFileIcon(filename: string): string {
   return 'file';
 }
 
-// 判断是否为图片文件
 function isImageFile(file: File): boolean {
   const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp'];
   if (imageTypes.includes(file.type)) return true;
@@ -144,7 +136,6 @@ function isImageFile(file: File): boolean {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
 }
 
-// 打开图片预览
 function openImagePreview(att: AttachmentFile) {
   if (att.previewUrl) {
     previewImage.value = att.previewUrl;
@@ -152,27 +143,23 @@ function openImagePreview(att: AttachmentFile) {
   }
 }
 
-// 关闭图片预览
 function closeImagePreview() {
   previewImage.value = null;
   previewImageName.value = '';
 }
 
-// 触发文件选择
 function triggerFileSelect() {
   fileInputRef.value?.click();
 }
 
-// 处理文件选择
 function handleFileSelect(event: Event) {
   const input = event.target as HTMLInputElement;
   if (input.files) {
     addFiles(Array.from(input.files));
   }
-  input.value = ''; // 重置以允许选择相同文件
+  input.value = '';
 }
 
-// 处理拖拽
 function handleDragOver(event: DragEvent) {
   event.preventDefault();
   isDragging.value = true;
@@ -190,30 +177,23 @@ function handleDrop(event: DragEvent) {
   }
 }
 
-// 添加文件
 function addFiles(files: File[]) {
-  const maxSize = 25 * 1024 * 1024; // 25MB 单文件限制
-  const maxTotal = 50 * 1024 * 1024; // 50MB 总大小限制
-  const maxPreviewSize = 20 * 1024 * 1024; // 20MB 以下的图片才预览
+  const maxSize = 25 * 1024 * 1024;
+  const maxTotal = 50 * 1024 * 1024;
+  const maxPreviewSize = 20 * 1024 * 1024;
   
   for (const file of files) {
-    // 检查是否已存在
     if (attachments.value.some(a => a.name === file.name && a.size === file.size)) {
       continue;
     }
-    
-    // 检查单文件大小
     if (file.size > maxSize) {
       errorMessage.value = `文件 "${file.name}" 超过 25MB 限制`;
       continue;
     }
-    
-    // 检查总大小
     if (totalAttachmentSize.value + file.size > maxTotal) {
       errorMessage.value = '附件总大小不能超过 50MB';
       break;
     }
-    
     const attachment: AttachmentFile = {
       file,
       name: file.name,
@@ -222,31 +202,23 @@ function addFiles(files: File[]) {
       uploading: false,
       uploaded: false,
     };
-    
-    // 如果是图片且小于 20MB，生成预览
     if (isImageFile(file) && file.size <= maxPreviewSize) {
       attachment.previewUrl = URL.createObjectURL(file);
     }
-    
     attachments.value.push(attachment);
   }
 }
 
-// 移除附件
 function removeAttachment(index: number) {
   const att = attachments.value[index];
-  // 释放预览 URL
   if (att && att.previewUrl) {
     URL.revokeObjectURL(att.previewUrl);
   }
   attachments.value.splice(index, 1);
 }
 
-// 发送邮件
 async function sendEmail() {
   clearMessages();
-  
-  // 更新收件人列表
   updateTo();
   updateCc();
   updateBcc();
@@ -258,9 +230,7 @@ async function sendEmail() {
   
   isSending.value = true;
   try {
-    // 准备附件数据（Base64）
     const attachmentData: { filename: string; content: string; content_type: string }[] = [];
-    
     for (const att of attachments.value) {
       const base64 = await fileToBase64(att.file);
       attachmentData.push({
@@ -283,9 +253,7 @@ async function sendEmail() {
     if (success) {
       successMessage.value = '邮件发送成功';
       clearDraft();
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
+      setTimeout(() => { router.push('/'); }, 1500);
     } else {
       errorMessage.value = emailStore.error || '发送失败';
     }
@@ -294,13 +262,11 @@ async function sendEmail() {
   }
 }
 
-// 文件转 Base64
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // 移除 data:xxx;base64, 前缀
       const base64 = result.split(',')[1] || '';
       resolve(base64);
     };
@@ -309,7 +275,6 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-// 保存草稿
 function saveDraft() {
   const draft = {
     accountId: emailForm.accountId,
@@ -325,7 +290,6 @@ function saveDraft() {
   setTimeout(() => clearMessages(), 2000);
 }
 
-// 加载草稿
 function loadDraft() {
   const draftStr = localStorage.getItem('luo_one_draft');
   if (draftStr) {
@@ -340,17 +304,15 @@ function loadDraft() {
       if (draft.cc) showCc.value = true;
       if (draft.bcc) showBcc.value = true;
     } catch {
-      // 忽略解析错误
+      // ignore
     }
   }
 }
 
-// 清除草稿
 function clearDraft() {
   localStorage.removeItem('luo_one_draft');
 }
 
-// 重置表单
 function resetForm() {
   emailForm.accountId = accounts.value[0]?.id || 0;
   emailForm.to = [];
@@ -368,13 +330,11 @@ function resetForm() {
   clearDraft();
 }
 
-// 初始化
 onMounted(async () => {
   try {
     if (!accountStore.hasAccounts) {
       await accountStore.fetchAccounts();
     }
-    
     if (accounts.value.length > 0) {
       const accountId = route.query.accountId;
       if (accountId) {
@@ -386,19 +346,13 @@ onMounted(async () => {
         }
       }
     }
-    
     const replyTo = route.query.replyTo as string;
     const toParam = route.query.to as string;
     const replySubject = route.query.subject as string;
     const forwardFrom = route.query.forwardFrom as string;
     if (replyTo || forwardFrom || toParam) {
-      // 回复或转发模式
-      if (toParam) {
-        toInput.value = toParam;
-      }
-      if (replySubject) {
-        emailForm.subject = replySubject;
-      }
+      if (toParam) { toInput.value = toParam; }
+      if (replySubject) { emailForm.subject = replySubject; }
     } else {
       loadDraft();
     }
@@ -472,9 +426,7 @@ onMounted(async () => {
           <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
         </svg>
         <p>您还没有配置邮箱账户</p>
-        <button class="btn primary" @click="router.push('/settings')">
-          前往设置
-        </button>
+        <button class="btn primary" @click="router.push('/settings')">前往设置</button>
       </div>
 
       <!-- 邮件编辑表单 -->
@@ -506,20 +458,10 @@ onMounted(async () => {
               收件人
             </label>
             <div class="input-group">
-              <input 
-                type="text" 
-                v-model="toInput"
-                @blur="updateTo"
-                placeholder="多个收件人用逗号分隔"
-                class="input"
-              />
+              <input type="text" v-model="toInput" @blur="updateTo" placeholder="多个收件人用逗号分隔" class="input" />
               <div class="input-actions">
-                <button type="button" class="link-btn" @click="showCc = !showCc" :class="{ active: showCc }">
-                  抄送
-                </button>
-                <button type="button" class="link-btn" @click="showBcc = !showBcc" :class="{ active: showBcc }">
-                  密送
-                </button>
+                <button type="button" class="link-btn" @click="showCc = !showCc" :class="{ active: showCc }">抄送</button>
+                <button type="button" class="link-btn" @click="showBcc = !showBcc" :class="{ active: showBcc }">密送</button>
               </div>
             </div>
           </div>
@@ -535,13 +477,7 @@ onMounted(async () => {
               </svg>
               抄送
             </label>
-            <input 
-              type="text" 
-              v-model="ccInput"
-              @blur="updateCc"
-              placeholder="多个收件人用逗号分隔"
-              class="input"
-            />
+            <input type="text" v-model="ccInput" @blur="updateCc" placeholder="多个收件人用逗号分隔" class="input" />
           </div>
 
           <!-- 密送 -->
@@ -554,13 +490,7 @@ onMounted(async () => {
               </svg>
               密送
             </label>
-            <input 
-              type="text" 
-              v-model="bccInput"
-              @blur="updateBcc"
-              placeholder="多个收件人用逗号分隔"
-              class="input"
-            />
+            <input type="text" v-model="bccInput" @blur="updateBcc" placeholder="多个收件人用逗号分隔" class="input" />
           </div>
 
           <!-- 主题 -->
@@ -574,21 +504,12 @@ onMounted(async () => {
               </svg>
               主题
             </label>
-            <input 
-              type="text" 
-              v-model="emailForm.subject"
-              placeholder="请输入邮件主题"
-              class="input"
-            />
+            <input type="text" v-model="emailForm.subject" placeholder="请输入邮件主题" class="input" />
           </div>
 
           <!-- 正文 -->
           <div class="form-row body-row">
-            <textarea 
-              v-model="emailForm.body"
-              placeholder="请输入邮件内容..."
-              class="input textarea"
-            ></textarea>
+            <textarea v-model="emailForm.body" placeholder="请输入邮件内容..." class="input textarea"></textarea>
           </div>
 
           <!-- 附件区域 -->
@@ -607,18 +528,9 @@ onMounted(async () => {
             
             <!-- 附件列表 -->
             <div v-if="attachments.length > 0" class="attachments-list">
-              <div 
-                v-for="(att, index) in attachments" 
-                :key="att.name + att.size"
-                class="attachment-item"
-                :class="{ 'has-preview': att.previewUrl }"
-              >
-                <!-- 图片预览缩略图 -->
-                <div 
-                  v-if="att.previewUrl" 
-                  class="attachment-preview"
-                  @click="openImagePreview(att)"
-                >
+              <div v-for="(att, index) in attachments" :key="att.name + att.size"
+                class="attachment-item" :class="{ 'has-preview': att.previewUrl }">
+                <div v-if="att.previewUrl" class="attachment-preview" @click="openImagePreview(att)">
                   <img :src="att.previewUrl" :alt="att.name" />
                   <div class="preview-overlay">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -627,7 +539,6 @@ onMounted(async () => {
                     </svg>
                   </div>
                 </div>
-                <!-- 非图片文件图标 -->
                 <div v-else class="attachment-icon" :class="getFileIcon(att.name)">
                   <svg v-if="getFileIcon(att.name) === 'image'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -658,21 +569,9 @@ onMounted(async () => {
             </div>
             
             <!-- 添加附件区域 -->
-            <div 
-              class="attachment-dropzone"
-              :class="{ dragging: isDragging }"
-              @click="triggerFileSelect"
-              @dragover="handleDragOver"
-              @dragleave="handleDragLeave"
-              @drop="handleDrop"
-            >
-              <input 
-                ref="fileInputRef"
-                type="file" 
-                multiple 
-                @change="handleFileSelect"
-                style="display: none"
-              />
+            <div class="attachment-dropzone" :class="{ dragging: isDragging }"
+              @click="triggerFileSelect" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+              <input ref="fileInputRef" type="file" multiple @change="handleFileSelect" style="display: none" />
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
@@ -726,11 +625,12 @@ onMounted(async () => {
 
 <style scoped>
 .compose-view {
-  min-height: 100vh;
-  background: var(--bg-gradient, linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%));
+  height: 100vh;
+  background: var(--content-bg);
   display: flex;
   flex-direction: column;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
+  overflow: hidden;
 }
 
 .page-loading {
@@ -740,14 +640,14 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
 .loading-spinner, .btn-spinner {
   width: 24px;
   height: 24px;
-  border: 3px solid var(--border-color, #2d2d44);
-  border-top-color: var(--primary-color, #646cff);
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -764,138 +664,97 @@ onMounted(async () => {
   to { transform: rotate(360deg); }
 }
 
+/* 头部 */
 .compose-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
-  background: var(--header-bg, rgba(26, 26, 46, 0.95));
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color, #2d2d44);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  gap: 14px;
+  padding: 12px 20px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border: none;
   border-radius: var(--radius-md, 10px);
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  background: var(--hover-bg);
   cursor: pointer;
-  color: var(--text-secondary, #888);
-  transition: all 0.2s;
+  color: var(--text-secondary);
+  transition: all 0.15s;
 }
 
 .back-btn:hover {
-  color: var(--text-primary, #fff);
-  background: var(--active-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary);
+  background: var(--active-bg);
 }
 
-.back-btn svg {
-  width: 20px;
-  height: 20px;
-}
+.back-btn svg { width: 20px; height: 20px; }
 
 .compose-header h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   flex: 1;
-  color: var(--text-primary, #fff);
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* 按钮 */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid var(--border-color, #2d2d44);
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 10px);
-  background: var(--panel-bg, #1a1a2e);
+  background: var(--panel-bg);
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  transition: all 0.2s;
-  color: var(--text-primary, #fff);
+  transition: all 0.15s;
+  color: var(--text-primary);
 }
 
-.btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.btn:hover:not(:disabled) {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.08));
-  border-color: var(--primary-color, #646cff);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.btn svg { width: 16px; height: 16px; }
+.btn:hover:not(:disabled) { background: var(--hover-bg); border-color: var(--primary-color); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn.primary {
-  background: var(--primary-color, #646cff);
-  border-color: var(--primary-color, #646cff);
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: #fff;
 }
 
-.btn.primary:hover:not(:disabled) {
-  background: var(--primary-hover, #535bf2);
-  transform: translateY(-1px);
-}
+.btn.primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn.icon-btn { padding: 9px 12px; }
+.btn.icon-btn .btn-text { display: none; }
+.send-btn { min-width: 90px; }
 
-.btn.icon-btn {
-  padding: 10px 14px;
-}
-
-.btn.icon-btn .btn-text {
-  display: none;
-}
-
-.send-btn {
-  min-width: 100px;
-}
-
+/* 消息提示 */
 .message {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 24px;
-  margin: 16px 24px 0;
-  border-radius: var(--radius-md, 10px);
-  font-size: 0.875rem;
-}
-
-.message svg {
-  width: 18px;
-  height: 18px;
+  padding: 12px 20px;
+  font-size: 0.8125rem;
   flex-shrink: 0;
 }
 
-.message.success {
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--success-color, #22c55e);
-  border: 1px solid rgba(34, 197, 94, 0.25);
-}
+.message svg { width: 16px; height: 16px; flex-shrink: 0; }
+.message.success { background: rgba(34, 197, 94, 0.08); color: var(--success-color); }
+.message.error { background: rgba(239, 68, 68, 0.08); color: var(--error-color); }
 
-.message.error {
-  background: rgba(239, 68, 68, 0.12);
-  color: var(--error-color, #ef4444);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
+/* 无账户 */
 .no-accounts {
   flex: 1;
   display: flex;
@@ -903,242 +762,209 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: var(--text-secondary, #888);
-  padding: 48px;
+  color: var(--text-secondary);
 }
 
-.no-accounts svg {
-  width: 64px;
-  height: 64px;
-  opacity: 0.5;
-}
+.no-accounts svg { width: 64px; height: 64px; opacity: 0.4; }
 
+/* 主内容区 */
 .compose-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: 100%;
+  overflow: hidden;
 }
 
 .compose-form {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0 24px;
+  overflow: hidden;
 }
 
+/* 表单行 */
 .form-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border-color, #2d2d44);
-  background: var(--panel-bg, rgba(26, 26, 46, 0.6));
-}
-
-.form-row:first-child {
-  margin-top: 24px;
-  border-radius: var(--radius-lg, 14px) var(--radius-lg, 14px) 0 0;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  flex-shrink: 0;
 }
 
 .form-row label {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 80px;
+  width: 100px;
+  padding: 12px 16px;
   flex-shrink: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border-color);
 }
 
-.form-row label svg {
-  width: 16px;
-  height: 16px;
-}
+.form-row label svg { width: 15px; height: 15px; }
 
 .input {
   flex: 1;
-  padding: 10px 14px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 10px);
-  font-size: 0.9375rem;
-  background: var(--input-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #fff);
-  transition: all 0.2s;
-}
-
-.input:focus {
+  padding: 12px 16px;
+  border: none;
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--text-primary);
   outline: none;
-  border-color: var(--primary-color, #646cff);
-  background: var(--input-bg, rgba(255, 255, 255, 0.08));
 }
 
-.input::placeholder {
-  color: var(--text-tertiary, #666);
-}
+.input::placeholder { color: var(--text-tertiary); }
+.input:focus { background: var(--hover-bg); }
 
 .select-input {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 14px center;
   padding-right: 36px;
 }
 
 .select-input option {
-  background: var(--panel-bg, #1a1a2e);
-  color: var(--text-primary, #fff);
+  background: var(--panel-bg);
+  color: var(--text-primary);
 }
 
 .input-group {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
-.input-group .input {
-  flex: 1;
-}
+.input-group .input { flex: 1; }
 
 .input-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  padding-right: 12px;
+  flex-shrink: 0;
 }
 
 .link-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: var(--radius-sm, 6px);
+  padding: 5px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary, #888);
+  color: var(--text-tertiary);
   cursor: pointer;
-  font-size: 0.8125rem;
-  transition: all 0.2s;
+  font-size: 0.75rem;
+  transition: all 0.15s;
 }
 
 .link-btn:hover, .link-btn.active {
-  color: var(--primary-color, #646cff);
-  border-color: var(--primary-color, #646cff);
-  background: rgba(100, 108, 255, 0.1);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background: rgba(100, 108, 255, 0.08);
 }
 
+/* 正文区域 */
 .body-row {
   flex: 1;
-  align-items: flex-start;
-  border-radius: 0 0 var(--radius-lg, 14px) var(--radius-lg, 14px);
-  min-height: 250px;
+  align-items: stretch;
+  min-height: 0;
   padding: 0;
+  border-bottom: none;
 }
 
-.body-row label {
-  display: none;
-}
+.body-row label { display: none; }
 
 .textarea {
   width: 100%;
   height: 100%;
-  min-height: 250px;
+  min-height: 200px;
   resize: none;
   border: none;
-  border-radius: 0 0 var(--radius-lg, 14px) var(--radius-lg, 14px);
-  padding: 20px;
-  line-height: 1.7;
+  padding: 20px 24px;
+  line-height: 1.75;
   font-family: inherit;
+  font-size: 0.9375rem;
+  background: var(--content-bg);
 }
 
-.textarea:focus {
-  border: none;
-}
+.textarea:focus { background: var(--content-bg); }
 
 /* 附件区域 */
 .attachments-section {
-  margin: 24px 0;
-  padding: 0 24px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  flex-shrink: 0;
 }
 
 .attachments-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .attachments-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-secondary, #888);
+  color: var(--text-secondary);
 }
 
-.attachments-title svg {
-  width: 16px;
-  height: 16px;
-}
+.attachments-title svg { width: 15px; height: 15px; }
 
 .attachments-size {
   font-size: 0.75rem;
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
 }
 
 .attachments-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .attachment-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--panel-bg, rgba(26, 26, 46, 0.6));
-  border: 1px solid var(--border-color, #2d2d44);
-  border-radius: var(--radius-md, 10px);
-  transition: all 0.2s;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.15s;
+  max-width: 280px;
 }
 
-.attachment-item:hover {
-  border-color: var(--primary-color, #646cff);
-}
+.attachment-item:hover { border-color: var(--primary-color); }
 
 .attachment-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm, 6px);
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(100, 108, 255, 0.1);
-  color: var(--primary-color, #646cff);
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 
-.attachment-icon.image {
-  background: rgba(76, 175, 80, 0.1);
-  color: #4caf50;
-}
+.attachment-icon.image { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+.attachment-icon.pdf { background: rgba(244, 67, 54, 0.1); color: #f44336; }
+.attachment-icon svg { width: 16px; height: 16px; }
 
-.attachment-icon.pdf {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-}
-
-.attachment-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* 图片预览缩略图 */
 .attachment-preview {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--radius-sm, 6px);
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
   position: relative;
@@ -1154,166 +980,123 @@ onMounted(async () => {
 .attachment-preview .preview-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s;
 }
 
-.attachment-preview:hover .preview-overlay {
-  opacity: 1;
-}
-
-.attachment-preview .preview-overlay svg {
-  width: 24px;
-  height: 24px;
-  color: #fff;
-}
-
-.attachment-item.has-preview {
-  padding: 8px 16px;
-}
+.attachment-preview:hover .preview-overlay { opacity: 1; }
+.attachment-preview .preview-overlay svg { width: 20px; height: 20px; color: #fff; }
+.attachment-item.has-preview { padding: 6px 12px; }
 
 .attachment-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .attachment-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .attachment-size {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
 }
 
 .attachment-remove {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: 6px;
   background: transparent;
-  color: var(--text-tertiary, #666);
+  color: var(--text-tertiary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  flex-shrink: 0;
 }
 
 .attachment-remove:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: var(--error-color, #ef4444);
+  color: var(--error-color);
 }
 
-.attachment-remove svg {
-  width: 16px;
-  height: 16px;
-}
+.attachment-remove svg { width: 14px; height: 14px; }
 
 .attachment-dropzone {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 32px 24px;
-  border: 2px dashed var(--border-color, #2d2d44);
-  border-radius: var(--radius-lg, 14px);
-  background: var(--panel-bg, rgba(26, 26, 46, 0.3));
+  gap: 10px;
+  padding: 18px;
+  border: 1.5px dashed var(--border-color);
+  border-radius: 10px;
+  background: transparent;
   cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text-secondary, #888);
+  transition: all 0.15s;
+  color: var(--text-tertiary);
 }
 
 .attachment-dropzone:hover, .attachment-dropzone.dragging {
-  border-color: var(--primary-color, #646cff);
-  background: rgba(100, 108, 255, 0.05);
-  color: var(--primary-color, #646cff);
+  border-color: var(--primary-color);
+  background: rgba(100, 108, 255, 0.04);
+  color: var(--primary-color);
 }
 
-.attachment-dropzone svg {
-  width: 32px;
-  height: 32px;
-  opacity: 0.6;
-}
-
-.attachment-dropzone span {
-  font-size: 0.875rem;
-}
+.attachment-dropzone svg { width: 22px; height: 22px; flex-shrink: 0; }
+.attachment-dropzone span { font-size: 0.8125rem; }
 
 .dropzone-hint {
-  font-size: 0.75rem !important;
-  color: var(--text-tertiary, #666) !important;
+  font-size: 0.6875rem !important;
+  color: var(--text-tertiary) !important;
+  margin-left: 4px;
 }
 
 /* 底部操作栏 */
 .compose-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid var(--border-color, #2d2d44);
-  background: var(--panel-bg, rgba(26, 26, 46, 0.6));
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--panel-bg);
+  flex-shrink: 0;
 }
 
 /* 响应式 */
 @media (max-width: 768px) {
-  .compose-header {
-    padding: 12px 16px;
+  .compose-header { padding: 10px 14px; }
+  .compose-header h1 { font-size: 1rem; }
+  .form-row label { width: 72px; padding: 10px 12px; font-size: 0.75rem; }
+  .input { padding: 10px 12px; font-size: 0.8125rem; }
+  .input-actions { padding-right: 8px; }
+  .textarea { padding: 16px; }
+  .attachments-section { padding: 12px 14px; }
+  .attachment-item { max-width: 100%; }
+  .attachments-list { flex-direction: column; }
+  .compose-footer { padding: 12px 14px; }
+  .attachment-dropzone {
+    flex-direction: column;
+    padding: 20px;
+    gap: 6px;
   }
-  
-  .compose-header h1 {
-    font-size: 1.125rem;
-  }
-  
-  .btn.icon-btn .btn-text {
-    display: none;
-  }
-  
-  .compose-form {
-    padding: 0 16px;
-  }
-  
-  .form-row {
-    flex-wrap: wrap;
-    padding: 12px 16px;
-    gap: 8px;
-  }
-  
-  .form-row label {
-    width: 100%;
-  }
-  
-  .input-group {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-  
-  .input-actions {
-    width: 100%;
-    justify-content: flex-start;
-    margin-top: 4px;
-  }
-  
-  .attachments-section {
-    padding: 0 16px;
-  }
-  
-  .compose-footer {
-    padding: 16px;
-  }
+}
+
+@media (min-width: 1200px) {
+  .form-row label { width: 110px; }
 }
 
 /* 图片预览弹窗 */
@@ -1336,7 +1119,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 14px 20px;
   background: rgba(0, 0, 0, 0.5);
 }
 
@@ -1350,27 +1133,21 @@ onMounted(async () => {
 }
 
 .preview-close {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border: none;
-  border-radius: var(--radius-md, 10px);
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
-.preview-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.preview-close svg {
-  width: 20px;
-  height: 20px;
-}
+.preview-close:hover { background: rgba(255, 255, 255, 0.2); }
+.preview-close svg { width: 20px; height: 20px; }
 
 .preview-content {
   flex: 1;
@@ -1385,7 +1162,7 @@ onMounted(async () => {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: var(--radius-md, 10px);
+  border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 </style>
