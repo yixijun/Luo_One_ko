@@ -4,7 +4,7 @@
  * Requirements: 3.3
  * 实现邮件编辑和发送功能，支持附件
  */
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useEmailStore } from '@/stores/email';
@@ -77,6 +77,11 @@ function isValidEmail(email: string): boolean {
 function updateTo() { emailForm.to = parseEmails(toInput.value); }
 function updateCc() { emailForm.cc = parseEmails(ccInput.value); }
 function updateBcc() { emailForm.bcc = parseEmails(bccInput.value); }
+
+// 实时解析收件人，让发送按钮及时响应
+watch(toInput, () => updateTo());
+watch(ccInput, () => updateCc());
+watch(bccInput, () => updateBcc());
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
