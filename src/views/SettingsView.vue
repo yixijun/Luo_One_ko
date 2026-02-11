@@ -1397,66 +1397,35 @@ onMounted(async () => {
 @media (max-width: 640px) {
   .settings-view { padding: 0; padding-bottom: 24px; }
   
-  /* 移动端侧边悬浮触发按钮 */
-  .mobile-sidebar-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 150;
-    width: 24px;
-    height: 56px;
-    border: none;
-    border-radius: 0 12px 12px 0;
-    background: var(--primary-color);
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
-    opacity: 0.7;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-  }
-  .mobile-sidebar-trigger:active { opacity: 1; }
-  .mobile-sidebar-trigger.hidden { opacity: 0; pointer-events: none; transform: translateY(-50%) translateX(-100%); }
-  .mobile-sidebar-trigger svg { width: 16px; height: 16px; }
+  /* 移动端不需要触发按钮和遮罩 */
+  .mobile-sidebar-trigger { display: none !important; }
+  .sidebar-overlay { display: none !important; }
   
-  /* 移动端侧边栏抽屉 */
-  .settings-layout { flex-direction: column; gap: 0; min-height: auto; }
-  
-  .sidebar-overlay {
-    display: block;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(2px);
-    z-index: 200;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-  .sidebar-overlay.visible { opacity: 1; pointer-events: auto; }
+  /* 移动端侧边栏：始终显示，只显示图标 */
+  .settings-layout { flex-direction: row; gap: 0; min-height: calc(100vh - 60px); }
   
   .settings-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 220px;
-    z-index: 201;
+    position: sticky;
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    align-self: flex-start;
+    width: 56px;
+    flex-shrink: 0;
     border-radius: 0;
     border: none;
     border-right: 1px solid var(--border-color);
-    padding: 20px 12px;
-    padding-top: calc(20px + env(safe-area-inset-top, 0px));
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
+    padding: 8px 4px;
+    gap: 2px;
+    height: calc(100vh - 52px - env(safe-area-inset-top, 0px));
     overflow-y: auto;
   }
-  .settings-sidebar.open { transform: translateX(0); }
   
-  .sidebar-item { padding: 14px 16px; font-size: 0.9375rem; }
+  .sidebar-item { 
+    justify-content: center;
+    padding: 12px 0;
+    border-radius: 10px;
+  }
+  .sidebar-item span { display: none; }
+  .sidebar-item svg { width: 20px; height: 20px; }
   
   /* 移动端头部 */
   .settings-header { 
@@ -1478,6 +1447,7 @@ onMounted(async () => {
     font-size: 1.125rem;
     flex: 1;
     text-align: center;
+    margin-right: 40px;
   }
   
   .back-btn { 
@@ -1492,8 +1462,8 @@ onMounted(async () => {
   .message { margin: 12px 16px; border-radius: 12px; }
   
   /* 内容区域 */
-  .tab-content { padding: 16px; max-width: none; }
-  .panel { padding: 18px; border-radius: 16px; }
+  .tab-content { padding: 12px; max-width: none; flex: 1; min-width: 0; overflow-y: auto; }
+  .panel { padding: 16px; border-radius: 14px; }
   .panel h2 { font-size: 1.125rem; margin-bottom: 18px; }
   
   .form-row { flex-direction: column; }
