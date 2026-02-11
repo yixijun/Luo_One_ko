@@ -7,7 +7,7 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { apiKeyManager } from '@/api/client';
+import { apiKeyManager, backendUrlManager } from '@/api/client';
 
 const router = useRouter();
 const route = useRoute();
@@ -68,29 +68,59 @@ function togglePasswordVisibility() {
   showPassword.value = !showPassword.value;
 }
 
-// 打开设置
-function openSettings() {
-  showSettingsModal.value = true;
-}
-
 // 设置弹窗
 const showSettingsModal = ref(false);
 const apiKeyInput = ref(apiKeyManager.getApiKey() || '');
+const backendUrlInput = ref('');
 const isTestingConnection = ref(false);
 const connectionStatus = ref<'idle' | 'success' | 'error'>('idle');
 const connectionMessage = ref('');
 
-function saveSettings() {
+// 加载后端地址
+async function loadBackendUrl() {
+  try {
+    const response = await fetch('/config/backend');
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.data?.backendUrl) {
+        backendUrlInput.value = data.data.backendUrl;
+      }
+    }
+  } catch {
+    backendUrlInput.value = backendUrlManager.getBackendUrl();
+  }
+}
+
+function openSettings() {
+  loadBackendUrl();
+  showSettingsModal.value = true;
+}
+
+async function saveSettings() {
+  // 保存 API 密钥
   if (apiKeyInput.value.trim()) {
     apiKeyManager.setApiKey(apiKeyInput.value.trim());
   } else {
     apiKeyManager.removeApiKey();
+  }
+  // 保存后端地址
+  const url = backendUrlInput.value.trim();
+  if (url) {
+    try {
+      await fetch('/config/backend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backendUrl: url }),
+      });
+      backendUrlManager.setBackendUrl(url);
+    } catch { /* ignore */ }
   }
   showSettingsModal.value = false;
 }
 
 function closeSettings() {
   apiKeyInput.value = apiKeyManager.getApiKey() || '';
+  backendUrlInput.value = '';
   connectionStatus.value = 'idle';
   connectionMessage.value = '';
   showSettingsModal.value = false;
@@ -252,6 +282,22 @@ async function testConnection() {
           <button class="close-btn" @click="closeSettings">×</button>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">后端地址</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+              </svg>
+              <input
+                v-model="backendUrlInput"
+                type="text"
+                class="form-input"
+                placeholder="http://your-server:8080"
+              />
+            </div>
+            <p class="hint">后端服务器的完整地址，包含协议和端口</p>
+          </div>
+
           <div class="form-group">
             <label class="form-label">API 密钥</label>
             <div class="input-wrapper">
