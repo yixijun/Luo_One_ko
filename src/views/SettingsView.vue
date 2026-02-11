@@ -17,7 +17,7 @@ const accountStore = useAccountStore();
 const emailStore = useEmailStore();
 const themeStore = useThemeStore();
 
-const activeTab = ref<'profile' | 'password' | 'accounts' | 'ai' | 'backend' | 'appearance'>('profile');
+const activeTab = ref<'profile' | 'password' | 'accounts' | 'ai' | 'backend' | 'appearance' | 'data'>('profile');
 const isSubmitting = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
@@ -40,7 +40,7 @@ function selectTab(tab: typeof activeTab.value) {
 
 const tabLabels: Record<string, string> = {
   profile: '用户信息', password: '修改密码', accounts: '邮箱账户',
-  appearance: '外观', ai: 'AI 配置', backend: '后端设置',
+  appearance: '外观', ai: 'AI 配置', backend: '后端设置', data: '数据管理',
 };
 
 // 拖拽排序相关状态
@@ -768,6 +768,156 @@ onMounted(async () => {
   await loadBackendUrl();
   addLog('info', `已加载 ${accounts.value.length} 个邮箱账户`);
 });
+
+// ===== 数据导出/导入 =====
+const importingConfig = ref(false);
+
+interface ExportData {
+  version: 1;
+  exportedAt: string;
+  settings: Record<string, unknown>;
+  accounts: Array<Record<string, unknown>>;
+}
+
+async function exportAllConfig() {
+  try {
+    // 获取设置
+    const settingsRes = await apiClient.get('/settings');
+    const settings = (settingsRes.data as any)?.data || {};
+
+    // 获取账户列表
+    const accountsRes = await apiClient.get('/accounts');
+    const accountsList = (accountsRes.data as any)?.data || [];
+
+    // 构建导出数据（不含密码和 token）
+    const exportData: ExportData = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      settings: {
+        ai_enabled: settings.ai_enabled,
+        ai_provider: settings.ai_provider,
+        ai_api_key: settings.ai_api_key,
+        ai_base_url: settings.ai_base_url,
+        ai_model: settings.ai_model,
+        extract_code: settings.extract_code,
+        detect_ad: settings.detect_ad,
+        summarize: settings.summarize,
+        judge_importance: settings.judge_importance,
+        extract_code_mode: settings.extract_code_mode,
+        detect_ad_mode: settings.detect_ad_mode,
+        summarize_mode: settings.summarize_mode,
+        judge_importance_mode: settings.judge_importance_mode,
+        prompt_extract_code: settings.prompt_extract_code,
+        prompt_detect_ad: settings.prompt_detect_ad,
+        prompt_summarize: settings.prompt_summarize,
+        prompt_judge_importance: settings.prompt_judge_importance,
+        google_client_id: settings.google_client_id,
+        google_client_secret: settings.google_client_secret,
+        google_redirect_url: settings.google_redirect_url,
+        theme: settings.theme,
+        font: settings.font,
+        sync_interval: settings.sync_interval,
+      },
+      accounts: accountsList.map((a: any) => ({
+        email: a.email,
+        display_name: a.display_name,
+        imap_host: a.imap_host,
+        imap_port: a.imap_port,
+        smtp_host: a.smtp_host,
+        smtp_port: a.smtp_port,
+        username: a.username,
+        use_ssl: a.use_ssl,
+        sync_days: a.sync_days,
+        auth_type: a.auth_type,
+        oauth_provider: a.oauth_provider,
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `luo_one_config_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addLog('success', '配置已导出');
+    successMessage.value = '配置导出成功';
+  } catch (err) {
+    addLog('error', `导出失败: ${(err as Error).message}`);
+    errorMessage.value = '导出失败: ' + (err as Error).message;
+  }
+}
+
+function triggerImportFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as ExportData;
+      if (!data.version || !data.settings) {
+        throw new Error('无效的配置文件格式');
+      }
+      await importConfig(data);
+    } catch (err) {
+      addLog('error', `导入失败: ${(err as Error).message}`);
+      errorMessage.value = '导入失败: ' + (err as Error).message;
+    }
+  };
+  input.click();
+}
+
+async function importConfig(data: ExportData) {
+  importingConfig.value = true;
+  try {
+    // 导入设置
+    if (data.settings && Object.keys(data.settings).length > 0) {
+      await apiClient.put('/settings', data.settings);
+      addLog('success', '用户设置已导入');
+    }
+
+    // 导入账户（跳过已存在的）
+    if (data.accounts?.length) {
+      const existingRes = await apiClient.get('/accounts');
+      const existing = ((existingRes.data as any)?.data || []).map((a: any) => a.email);
+      let imported = 0;
+      let skipped = 0;
+      for (const acc of data.accounts) {
+        if (existing.includes(acc.email)) {
+          skipped++;
+          addLog('info', `跳过已存在的账户: ${acc.email}`);
+          continue;
+        }
+        // 账户需要密码才能创建，提示用户
+        addLog('info', `账户 ${acc.email} 的配置已记录，需要手动输入密码后添加`);
+        skipped++;
+      }
+      if (imported > 0) addLog('success', `成功导入 ${imported} 个账户`);
+      if (skipped > 0) addLog('info', `跳过 ${skipped} 个账户（已存在或需要密码）`);
+    }
+
+    // 刷新页面数据
+    await accountStore.fetchAccounts();
+    await userStore.fetchSettings();
+    // 更新本地表单
+    if (userStore.settings) {
+      Object.assign(aiForm, userStore.settings);
+      backendForm.syncInterval = userStore.settings.syncInterval ?? 120;
+    }
+    successMessage.value = '配置导入成功';
+    addLog('success', '配置导入完成');
+  } catch (err) {
+    addLog('error', `导入失败: ${(err as Error).message}`);
+    errorMessage.value = '导入失败: ' + (err as Error).message;
+  } finally {
+    importingConfig.value = false;
+  }
+}
 </script>
 
 <template>
@@ -821,6 +971,10 @@ onMounted(async () => {
       <button :class="['sidebar-item', { active: activeTab === 'backend' }]" @click="selectTab('backend')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
         <span>后端设置</span>
+      </button>
+      <button :class="['sidebar-item', { active: activeTab === 'data' }]" @click="selectTab('data')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>数据管理</span>
       </button>
     </nav>
 
@@ -1173,6 +1327,46 @@ onMounted(async () => {
               <li>添加授权重定向 URI（与上方填写的一致）</li>
               <li>复制 Client ID 和 Client Secret 填入上方</li>
             </ol>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="activeTab === 'data'" class="panel">
+        <h2>数据管理</h2>
+
+        <div class="form-section">
+          <h3>导出配置</h3>
+          <p class="section-desc">一键导出所有配置信息，包括邮箱账户配置、AI 设置、Google OAuth 配置、同步设置等。导出文件不包含邮箱密码和 OAuth Token。</p>
+          <button class="btn primary" @click="exportAllConfig">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            导出全部配置
+          </button>
+        </div>
+
+        <div class="form-section">
+          <h3>导入配置</h3>
+          <p class="section-desc">从之前导出的 JSON 文件中恢复配置。用户设置会被覆盖，已存在的邮箱账户会被跳过（账户需要手动输入密码后重新添加）。</p>
+          <button class="btn" @click="triggerImportFile" :disabled="importingConfig">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            {{ importingConfig ? '导入中...' : '导入配置文件' }}
+          </button>
+        </div>
+
+        <div class="form-section">
+          <h3>导出内容说明</h3>
+          <div class="export-info-list">
+            <div class="export-info-item">
+              <span class="info-label">用户设置</span>
+              <span class="info-desc">AI 配置、处理模式、自定义提示词、主题、字体、同步间隔</span>
+            </div>
+            <div class="export-info-item">
+              <span class="info-label">Google OAuth</span>
+              <span class="info-desc">Client ID、Client Secret、重定向 URL</span>
+            </div>
+            <div class="export-info-item">
+              <span class="info-label">邮箱账户</span>
+              <span class="info-desc">邮箱地址、服务器配置（IMAP/SMTP）、SSL 设置、收取天数（不含密码）</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1530,6 +1724,30 @@ onMounted(async () => {
   .logs-panel { margin-top: 16px; border-radius: 12px; }
   .logs-content { max-height: 200px; }
   .log-item { padding: 8px 10px; font-size: 0.75rem; }
+}
+
+/* 数据管理 - 导出信息列表 */
+.export-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.export-info-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--hover-bg);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+}
+.info-label {
+  flex-shrink: 0;
+  min-width: 90px;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+.info-desc {
+  color: var(--text-secondary);
 }
 </style>
 
