@@ -141,12 +141,14 @@ async function handleDeleteEmail() {
 // 回复邮件
 function handleReplyEmail() {
   if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const subject = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
   router.push({
     name: 'Compose',
     query: {
-      replyTo: selectedEmail.value.id.toString(),
-      to: selectedEmail.value.from,
-      subject: `Re: ${selectedEmail.value.subject}`,
+      replyTo: email.id.toString(),
+      to: email.from,
+      subject,
     },
   });
 }
@@ -154,13 +156,41 @@ function handleReplyEmail() {
 // 转发邮件
 function handleForwardEmail() {
   if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const subject = email.subject.startsWith('Fwd:') ? email.subject : `Fwd: ${email.subject}`;
   router.push({
     name: 'Compose',
     query: {
-      forwardFrom: selectedEmail.value.id.toString(),
-      subject: `Fwd: ${selectedEmail.value.subject}`,
+      forwardFrom: email.id.toString(),
+      subject,
     },
   });
+}
+
+// 回复全部
+function handleReplyAllEmail() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  const allRecipients = [email.from, ...email.to].filter((v, i, a) => a.indexOf(v) === i);
+  router.push({
+    name: 'Compose',
+    query: {
+      replyTo: email.id.toString(),
+      to: allRecipients.join(','),
+      subject: email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`,
+    },
+  });
+}
+
+// 切换已读/未读
+async function handleToggleReadEmail() {
+  if (!selectedEmail.value) return;
+  const email = selectedEmail.value;
+  if (email.isRead) {
+    await emailStore.markAsUnread(email.id);
+  } else {
+    await emailStore.markAsRead(email.id);
+  }
 }
 
 // 监听窗口大小变化
@@ -268,7 +298,9 @@ watch(() => accountStore.currentAccountId, (newId) => {
               @close="handleCloseDetail"
               @delete="handleDeleteEmail"
               @reply="handleReplyEmail"
+              @reply-all="handleReplyAllEmail"
               @forward="handleForwardEmail"
+              @toggle-read="handleToggleReadEmail"
             />
           </div>
         </Transition>

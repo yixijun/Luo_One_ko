@@ -208,6 +208,24 @@ export const useEmailStore = defineStore('email', () => {
     }
   }
 
+  // 标记未读
+  async function markAsUnread(id: number): Promise<boolean> {
+    try {
+      await apiClient.put(`/emails/${id}/unread`);
+      const email = emails.value.find(e => e.id === id);
+      if (email) {
+        email.isRead = false;
+      }
+      if (currentEmail.value?.id === id) {
+        currentEmail.value.isRead = false;
+      }
+      return true;
+    } catch (err) {
+      error.value = (err as Error).message || '标记未读失败';
+      return false;
+    }
+  }
+
   // 全部已读
   async function markAllAsRead(accountId?: number): Promise<number> {
     loading.value = true;
@@ -617,6 +635,7 @@ export const useEmailStore = defineStore('email', () => {
     fetchEmail,
     deleteEmail,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
     sendEmail,
     syncEmails,

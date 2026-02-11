@@ -388,11 +388,16 @@ onMounted(async () => {
     }
     
     const replyTo = route.query.replyTo as string;
+    const toParam = route.query.to as string;
     const replySubject = route.query.subject as string;
-    if (replyTo) {
-      toInput.value = replyTo;
+    const forwardFrom = route.query.forwardFrom as string;
+    if (replyTo || forwardFrom || toParam) {
+      // 回复或转发模式
+      if (toParam) {
+        toInput.value = toParam;
+      }
       if (replySubject) {
-        emailForm.subject = replySubject.startsWith('Re:') ? replySubject : `Re: ${replySubject}`;
+        emailForm.subject = replySubject;
       }
     } else {
       loadDraft();
