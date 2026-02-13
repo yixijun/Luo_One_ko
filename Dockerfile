@@ -18,7 +18,8 @@ RUN npm ci --ignore-scripts
 COPY . .
 
 # 构建前端静态资源
-RUN npm run build
+# 分别运行 vue-tsc 和 vite build，避免 esbuild 服务问题
+RUN npx vue-tsc -b && npx vite build
 
 # 编译服务端代码
 RUN npm run build:server
