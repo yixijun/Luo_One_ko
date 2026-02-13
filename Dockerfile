@@ -6,11 +6,6 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # 复制依赖文件
 COPY package.json package-lock.json ./
 
@@ -20,14 +15,9 @@ RUN npm ci --ignore-scripts
 # 复制源代码
 COPY . .
 
-# 强制 esbuild 使用本地二进制文件，跳过服务守护进程
-ENV ESBUILD_BINARY_PATH=/usr/local/bin/esbuild
-ENV ESBUILD_DONT_USE_CACHE=1
-ENV ESBUILD_LOG_PATH=/tmp/esbuild.log
-
-# 下载 esbuild 二进制文件
-RUN curl -sL https://github.com/evanw/esbuild/releases/download/v0.20.0/esbuild-linux-amd64 -o $ESBUILD_BINARY_PATH && \
-    chmod +x $ESBUILD_BINARY_PATH
+# 禁用 esbuild 服务守护进程，使用直接调用模式
+ENV ESBUILD_BINARY_PATH=
+ENV ESBUILD_DISABLE_CACHE=1
 
 # 构建前端静态资源
 RUN npx vue-tsc -b && npx vite build
@@ -51,7 +41,7 @@ COPY --from=builder /app/dist-server ./dist-server
 # 设置环境变量
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV BACKEND_URL=http://luo-one-core:8080
+ENV BACKEND_URL=http://127.0.0.1:8080
 
 # 暴露端口
 EXPOSE 3000
