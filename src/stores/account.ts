@@ -214,7 +214,7 @@ export const useAccountStore = defineStore('account', () => {
 
   // 本地移动账户（用于拖拽预览）
   function moveAccountLocally(fromIndex: number, toIndex: number): void {
-    const item = accounts.value.splice(fromIndex, 1)[0];
+    const item = accounts.value.splice(fromIndex, 1)[0]!;
     accounts.value.splice(toIndex, 0, item);
   }
 

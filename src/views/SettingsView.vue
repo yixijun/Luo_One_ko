@@ -38,11 +38,6 @@ function selectTab(tab: typeof activeTab.value) {
   mobileSidebarOpen.value = false;
 }
 
-const tabLabels: Record<string, string> = {
-  profile: '用户信息', password: '修改密码', accounts: '邮箱账户',
-  appearance: '外观', ai: 'AI 配置', backend: '后端设置', data: '数据管理',
-};
-
 // 拖拽排序相关状态
 const isDragging = ref(false);
 const dragIndex = ref<number | null>(null);

@@ -157,7 +157,7 @@ async function deleteEmail() {
 // 从 "Name <email>" 格式中提取纯邮箱地址
 function extractEmail(addr: string): string {
   const match = addr.match(/<([^>]+)>/);
-  return match ? match[1] : addr.trim();
+  return match ? match[1]! : addr.trim();
 }
 
 // 回复邮件
