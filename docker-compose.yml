@@ -8,15 +8,8 @@ services:
       dockerfile: Dockerfile
     container_name: luo-one-ko
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    network_mode: host
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - BACKEND_URL=${BACKEND_URL:-http://localhost:8080}
-    networks:
-      - luo-one-network
-
-networks:
-  luo-one-network:
-    external: true
+      - BACKEND_URL=${BACKEND_URL:-http://127.0.0.1:8080}
