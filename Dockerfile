@@ -9,18 +9,20 @@ WORKDIR /app
 # 复制依赖文件
 COPY package.json package-lock.json ./
 
-# 安装依赖
-# --ignore-scripts 跳过所有 postinstall 脚本（包括 electron 的）
+# 安装依赖（跳过所有脚本）
 RUN npm ci --ignore-scripts
 
-# 单独下载 esbuild 二进制文件（解决 Docker 中的服务问题）
-RUN npm install esbuild@0.20.0 --save-dev --ignore-scripts
+# 单独下载 esbuild 二进制文件并设置权限
+RUN wget -q https://github.com/evanw/esbuild/releases/download/v0.20.0/esbuild-linux-amd64 -O /tmp/esbuild && \
+    chmod +x /tmp/esbuild && \
+    mkdir -p /app/node_modules/.bin && \
+    cp /tmp/esbuild /app/node_modules/.bin/esbuild
 
 # 复制源代码
 COPY . .
 
-# 设置环境变量强制使用本地 esbuild
-ENV ESBUILD_BINARY_PATH=/app/node_modules/esbuild/bin/esbuild
+# 使用直接下载的 esbuild
+ENV ESBUILD_BINARY_PATH=/tmp/esbuild
 
 # 构建前端静态资源
 RUN npx vue-tsc -b && npx vite build
