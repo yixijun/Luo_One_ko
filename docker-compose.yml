@@ -1,0 +1,22 @@
+# Luo One Ko Docker Compose 配置
+# 前端 Web/移动端服务
+
+services:
+  luo-one-ko:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: luo-one-ko
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8080}
+    networks:
+      - luo-one-network
+
+networks:
+  luo-one-network:
+    external: true
