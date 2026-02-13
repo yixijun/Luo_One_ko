@@ -11,14 +11,18 @@ COPY package.json package-lock.json ./
 
 # 安装依赖
 # --ignore-scripts 跳过所有 postinstall 脚本（包括 electron 的）
-# electron 在 devDependencies 中，Docker 构建不需要 GUI
 RUN npm ci --ignore-scripts
+
+# 单独下载 esbuild 二进制文件（解决 Docker 中的服务问题）
+RUN npm install esbuild@0.20.0 --save-dev --ignore-scripts
 
 # 复制源代码
 COPY . .
 
+# 设置环境变量强制使用本地 esbuild
+ENV ESBUILD_BINARY_PATH=/app/node_modules/esbuild/bin/esbuild
+
 # 构建前端静态资源
-# 分别运行 vue-tsc 和 vite build，避免 esbuild 服务问题
 RUN npx vue-tsc -b && npx vite build
 
 # 编译服务端代码
