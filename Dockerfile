@@ -10,9 +10,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # 安装依赖
-# ELECTRON_SKIP_BINARY_DOWNLOAD=1 跳过 electron 二进制下载（不需要 GUI）
-# --unsafe-perm 解决 electron postinstall 权限问题
-RUN ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci --unsafe-perm
+# --ignore-scripts 跳过所有 postinstall 脚本（包括 electron 的）
+# electron 在 devDependencies 中，Docker 构建不需要 GUI
+RUN npm ci --ignore-scripts
 
 # 复制源代码
 COPY . .
