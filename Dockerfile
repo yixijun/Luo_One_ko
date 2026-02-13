@@ -12,8 +12,9 @@ COPY package.json package-lock.json ./
 # 安装依赖（跳过所有脚本）
 RUN npm ci --ignore-scripts
 
-# 单独下载 esbuild 二进制文件并设置权限
-RUN wget -q https://github.com/evanw/esbuild/releases/download/v0.20.0/esbuild-linux-amd64 -O /tmp/esbuild && \
+# 安装 curl 并下载 esbuild 二进制文件
+RUN apk add --no-cache curl && \
+    curl -sL https://github.com/evanw/esbuild/releases/download/v0.20.0/esbuild-linux-amd64 -o /tmp/esbuild && \
     chmod +x /tmp/esbuild && \
     mkdir -p /app/node_modules/.bin && \
     cp /tmp/esbuild /app/node_modules/.bin/esbuild
