@@ -98,7 +98,7 @@ export const useEmailStore = defineStore('email', () => {
       if (params.sort) queryParams.sort = params.sort;
       if (params.search) queryParams.search = params.search;
       
-      const response = await apiClient.get<{ total: number; page: number; limit: number; emails: Record<string, unknown>[] }>('/emails', { params: queryParams });
+      const response = await apiClient.get<{ total: number; page: number; limit: number; emails: Record<string, unknown>[] }>('/api/emails', { params: queryParams });
       emails.value = (response.data.emails || []).map(toEmailCamelCase);
       total.value = response.data.total;
       page.value = response.data.page;
@@ -129,7 +129,7 @@ export const useEmailStore = defineStore('email', () => {
       if (lastQueryParams.value.sort) queryParams.sort = lastQueryParams.value.sort;
       if (lastQueryParams.value.search) queryParams.search = lastQueryParams.value.search;
       
-      const response = await apiClient.get<{ total: number; page: number; limit: number; emails: Record<string, unknown>[] }>('/emails', { params: queryParams });
+      const response = await apiClient.get<{ total: number; page: number; limit: number; emails: Record<string, unknown>[] }>('/api/emails', { params: queryParams });
       const newEmails = (response.data.emails || []).map(toEmailCamelCase);
       
       // 追加到现有列表，去重
@@ -155,7 +155,7 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get<Record<string, unknown>>(`/emails/${id}`);
+      const response = await apiClient.get<Record<string, unknown>>(`/api/emails/${id}`);
       const email = toEmailCamelCase(response.data);
       currentEmail.value = email;
       // 更新列表中的邮件
@@ -175,7 +175,7 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.delete(`/emails/${id}`);
+      await apiClient.delete(`/api/emails/${id}`);
       emails.value = emails.value.filter(e => e.id !== id);
       if (currentEmail.value?.id === id) {
         currentEmail.value = null;
@@ -193,7 +193,7 @@ export const useEmailStore = defineStore('email', () => {
   // 标记已读
   async function markAsRead(id: number): Promise<boolean> {
     try {
-      await apiClient.put(`/emails/${id}/read`);
+      await apiClient.put(`/api/emails/${id}/read`);
       const email = emails.value.find(e => e.id === id);
       if (email) {
         email.isRead = true;
@@ -211,7 +211,7 @@ export const useEmailStore = defineStore('email', () => {
   // 标记未读
   async function markAsUnread(id: number): Promise<boolean> {
     try {
-      await apiClient.put(`/emails/${id}/unread`);
+      await apiClient.put(`/api/emails/${id}/unread`);
       const email = emails.value.find(e => e.id === id);
       if (email) {
         email.isRead = false;
@@ -235,7 +235,7 @@ export const useEmailStore = defineStore('email', () => {
       if (accountId) {
         payload.account_id = accountId;
       }
-      const response = await apiClient.put<{ success: boolean; data: { updated_count: number } }>('/emails/read-all', payload);
+      const response = await apiClient.put<{ success: boolean; data: { updated_count: number } }>('/api/emails/read-all', payload);
       const count = response.data?.data?.updated_count ?? 0;
       // 更新本地状态
       emails.value.forEach(email => {
@@ -273,7 +273,7 @@ export const useEmailStore = defineStore('email', () => {
       if (data.attachments && data.attachments.length > 0) {
         payload.attachments = data.attachments;
       }
-      await apiClient.post('/emails/send', payload);
+      await apiClient.post('/api/emails/send', payload);
       return true;
     } catch (err) {
       error.value = (err as Error).message || '发送邮件失败';
@@ -299,7 +299,7 @@ export const useEmailStore = defineStore('email', () => {
       }
       // 同步可能需要很长时间，使用 10 分钟超时（全量同步需要更长时间）
       const timeout = data.fullSync ? 600000 : 300000;
-      const response = await apiClient.post<{ synced_count: number }>('/emails/sync', payload, {
+      const response = await apiClient.post<{ synced_count: number }>('/api/emails/sync', payload, {
         timeout,
       });
       return response.data?.synced_count ?? 0;
@@ -314,7 +314,7 @@ export const useEmailStore = defineStore('email', () => {
   // 获取全量同步进度
   async function getSyncProgress(accountId: number): Promise<SyncProgress | null> {
     try {
-      const response = await apiClient.get<Record<string, unknown>>(`/emails/sync/progress?account_id=${accountId}`);
+      const response = await apiClient.get<Record<string, unknown>>(`/api/emails/sync/progress?account_id=${accountId}`);
       const data = response.data;
       if (!data) return null;
       // 转换 snake_case 到 camelCase
@@ -339,7 +339,7 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.post<{ processed_count: number }>('/emails/process', {
+      const response = await apiClient.post<{ processed_count: number }>('/api/emails/process', {
         account_id: accountId,
       }, {
         timeout: 300000, // 5分钟超时
@@ -358,7 +358,7 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.post('/emails/process-single', {
+      await apiClient.post('/api/emails/process-single', {
         email_id: emailId,
       }, {
         timeout: 60000, // 1分钟超时
@@ -376,7 +376,7 @@ export const useEmailStore = defineStore('email', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.delete(`/emails/${emailId}/processed-result`);
+      await apiClient.delete(`/api/emails/${emailId}/processed-result`);
       // 更新本地状态
       const email = emails.value.find(e => e.id === emailId);
       if (email) {

@@ -283,7 +283,7 @@ async function loginWithGoogle() {
   try {
     // 传递昵称参数
     const displayName = accountForm.displayName || '';
-    const response = await apiClient.get('/oauth/google/auth', {
+    const response = await apiClient.get('/api/oauth/google/auth', {
       params: { display_name: displayName }
     });
     console.log('[AppHeader] loginWithGoogle response:', response.data);

@@ -26,7 +26,7 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+      const response = await apiClient.post<LoginResponse>('/api/auth/login', credentials);
       // 响应拦截器已自动解包 { success: true, data: ... } 格式
       tokenManager.setToken(response.data.token);
       await fetchProfile();
@@ -53,7 +53,7 @@ export const useUserStore = defineStore('user', () => {
   async function fetchProfile(): Promise<void> {
     loading.value = true;
     try {
-      const response = await apiClient.get<User>('/user/profile');
+      const response = await apiClient.get<User>('/api/user/profile');
       user.value = response.data;
     } catch (err) {
       error.value = (err as Error).message || '获取用户信息失败';
@@ -67,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.put<User>('/user/profile', data);
+      const response = await apiClient.put<User>('/api/user/profile', data);
       user.value = response.data;
       return true;
     } catch (err) {
@@ -83,7 +83,7 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.put('/user/password', data);
+      await apiClient.put('/api/user/password', data);
       return true;
     } catch (err) {
       error.value = (err as Error).message || '修改密码失败';
@@ -98,7 +98,7 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true;
     console.log('[UserStore] fetchSettings called');
     try {
-      const response = await apiClient.get<UserSettings>('/settings');
+      const response = await apiClient.get<UserSettings>('/api/settings');
       console.log('[UserStore] fetchSettings response:', JSON.stringify(response.data).substring(0, 300));
       settings.value = response.data;
       
@@ -153,7 +153,7 @@ export const useUserStore = defineStore('user', () => {
     
     console.log('[UserStore] updateSettings called with:', JSON.stringify(snakeCaseData).substring(0, 200));
     try {
-      const response = await apiClient.put<UserSettings>('/settings', snakeCaseData);
+      const response = await apiClient.put<UserSettings>('/api/settings', snakeCaseData);
       console.log('[UserStore] updateSettings response:', JSON.stringify(response.data).substring(0, 200));
       settings.value = response.data;
       return true;

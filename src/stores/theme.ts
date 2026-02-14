@@ -75,7 +75,7 @@ export const useThemeStore = defineStore('theme', () => {
     
     // 保存到后端
     try {
-      await apiClient.put('/settings', { theme });
+      await apiClient.put('/api/settings', { theme });
     } catch (err) {
       console.error('[Theme] Failed to save theme to backend:', err);
     }
@@ -89,7 +89,7 @@ export const useThemeStore = defineStore('theme', () => {
     
     // 保存到后端
     try {
-      await apiClient.put('/settings', { font });
+      await apiClient.put('/api/settings', { font });
     } catch (err) {
       console.error('[Theme] Failed to save font to backend:', err);
     }
@@ -111,7 +111,7 @@ export const useThemeStore = defineStore('theme', () => {
   async function loadFromBackend() {
     loading.value = true;
     try {
-      const response = await apiClient.get<{ theme?: string; font?: string }>('/settings');
+      const response = await apiClient.get<{ theme?: string; font?: string }>('/api/settings');
       const data = response.data as any;
       
       // 处理 snake_case 到 camelCase 的转换

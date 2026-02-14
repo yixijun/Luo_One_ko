@@ -64,7 +64,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get<Record<string, unknown>[]>('/accounts');
+      const response = await apiClient.get<Record<string, unknown>[]>('/api/accounts');
       accounts.value = (response.data || []).map(toCamelCase);
     } catch (err) {
       error.value = (err as Error).message || '获取账户列表失败';
@@ -79,7 +79,7 @@ export const useAccountStore = defineStore('account', () => {
     error.value = null;
     try {
       const payload = toSnakeCase(data);
-      const response = await apiClient.post<Record<string, unknown>>('/accounts', payload);
+      const response = await apiClient.post<Record<string, unknown>>('/api/accounts', payload);
       accounts.value.push(toCamelCase(response.data));
       return true;
     } catch (err) {
@@ -97,7 +97,7 @@ export const useAccountStore = defineStore('account', () => {
     error.value = null;
     try {
       const payload = toSnakeCase(data);
-      const response = await apiClient.put<Record<string, unknown>>(`/accounts/${id}`, payload);
+      const response = await apiClient.put<Record<string, unknown>>(`/api/accounts/${id}`, payload);
       const updated = toCamelCase(response.data);
       const index = accounts.value.findIndex(a => a.id === id);
       if (index !== -1) {
@@ -120,7 +120,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.delete(`/accounts/${id}`);
+      await apiClient.delete(`/api/accounts/${id}`);
       accounts.value = accounts.value.filter(a => a.id !== id);
       if (currentAccount.value?.id === id) {
         currentAccount.value = null;
@@ -139,7 +139,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.post<TestConnectionResponse>(`/accounts/${id}/test`);
+      const response = await apiClient.post<TestConnectionResponse>(`/api/accounts/${id}/test`);
       return response.data;
     } catch (err) {
       error.value = (err as Error).message || '测试连接失败';
@@ -171,7 +171,7 @@ export const useAccountStore = defineStore('account', () => {
         password: data.password,
         use_ssl: data.useSSL,
       };
-      const response = await apiClient.post<TestConnectionResponse>('/accounts/test', payload);
+      const response = await apiClient.post<TestConnectionResponse>('/api/accounts/test', payload);
       return response.data;
     } catch (err) {
       error.value = (err as Error).message || '测试连接失败';
@@ -193,7 +193,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.put('/accounts/reorder', { account_ids: accountIds });
+      await apiClient.put('/api/accounts/reorder', { account_ids: accountIds });
       // 更新本地排序
       const newAccounts: EmailAccount[] = [];
       for (const id of accountIds) {
