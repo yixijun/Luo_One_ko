@@ -79,6 +79,12 @@ export default defineConfig({
     vue(),
     configApiPlugin(),
   ],
+  // 强制使用本地安装的 esbuild
+  esbuild: {
+    supported: {
+      'top-level-await': true,
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
