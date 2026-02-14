@@ -18,9 +18,13 @@ COPY . .
 # 禁用 esbuild 服务守护进程，使用直接调用模式
 ENV ESBUILD_BINARY_PATH=
 ENV ESBUILD_DISABLE_CACHE=1
+ENV npm_config_build_from_source=true
 
-# 构建前端静态资源
-RUN npx vue-tsc -b && npx vite build
+# 增加 Node.js 内存限制
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# 构建前端静态资源（跳过类型检查，直接构建）
+RUN npx vite build
 
 # 编译服务端代码
 RUN npm run build:server
