@@ -18,14 +18,10 @@ COPY . .
 # 禁用 esbuild 服务守护进程，使用直接调用模式
 ENV ESBUILD_BINARY_PATH=
 ENV ESBUILD_DISABLE_CACHE=1
-ENV npm_config_build_from_source=true
 ENV VITE_SKIP_ESBUILD_BINARY=1
 
 # 增加 Node.js 内存限制
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-
-# 确保 esbuild 以源码方式安装
-RUN npm install esbuild --save-dev --force
 
 # 构建前端静态资源（跳过类型检查，直接构建）
 RUN npx vite build
