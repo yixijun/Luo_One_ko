@@ -59,7 +59,7 @@ async function checkForNewEmails() {
     }
     
     console.log('[AutoRefresh] 检查邮件数量...', params);
-    const response = await apiClient.get<{ total: number }>('/api/emails/count', { params });
+    const response = await apiClient.get<{ total: number }>('/emails/count', { params });
     const newCount = (response.data as { total?: number; data?: { total: number } })?.total ?? (response.data as { data?: { total: number } })?.data?.total ?? 0;
     
     console.log('[AutoRefresh] 当前数量:', newCount, '上次数量:', lastEmailCount.value);

@@ -64,7 +64,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      const response = await apiClient.get<Record<string, unknown>[]>('/api/accounts');
+      const response = await apiClient.get<Record<string, unknown>[]>('/accounts');
       accounts.value = (response.data || []).map(toCamelCase);
     } catch (err) {
       error.value = (err as Error).message || '获取账户列表失败';
@@ -79,7 +79,7 @@ export const useAccountStore = defineStore('account', () => {
     error.value = null;
     try {
       const payload = toSnakeCase(data);
-      const response = await apiClient.post<Record<string, unknown>>('/api/accounts', payload);
+      const response = await apiClient.post<Record<string, unknown>>('/accounts', payload);
       accounts.value.push(toCamelCase(response.data));
       return true;
     } catch (err) {
@@ -171,7 +171,7 @@ export const useAccountStore = defineStore('account', () => {
         password: data.password,
         use_ssl: data.useSSL,
       };
-      const response = await apiClient.post<TestConnectionResponse>('/api/accounts/test', payload);
+      const response = await apiClient.post<TestConnectionResponse>('/accounts/test', payload);
       return response.data;
     } catch (err) {
       error.value = (err as Error).message || '测试连接失败';
@@ -193,7 +193,7 @@ export const useAccountStore = defineStore('account', () => {
     loading.value = true;
     error.value = null;
     try {
-      await apiClient.put('/api/accounts/reorder', { account_ids: accountIds });
+      await apiClient.put('/accounts/reorder', { account_ids: accountIds });
       // 更新本地排序
       const newAccounts: EmailAccount[] = [];
       for (const id of accountIds) {
